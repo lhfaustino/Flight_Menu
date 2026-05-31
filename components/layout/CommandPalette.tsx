@@ -1,16 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Search, FileText, Users, Settings, HelpCircle, MessageSquare, ArrowRight, LayoutGrid } from "lucide-react";
+import { ArrowRight, ClipboardList, HelpCircle, Search, Settings } from "lucide-react";
 import { Dialog, Modal, ModalOverlay } from "@/components/ui/Modal";
-import { Badge } from "@/components/ui/Badge";
 
 interface CommandItem {
     id: string;
     title: string;
     description?: string;
     icon: React.ElementType;
-    category: "Pages" | "Users" | "Actions" | "Help";
+    category: "Pages";
     onClick: () => void;
 }
 
@@ -23,60 +22,57 @@ export const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
     const [search, setSearch] = React.useState("");
 
     React.useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-                e.preventDefault();
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+                event.preventDefault();
                 setIsOpen(true);
             }
         };
 
-        const handleOpen = (e: any) => {
+        const handleOpen = (event: CustomEvent<{ search?: string }>) => {
             setIsOpen(true);
-            if (e.detail?.search) {
-                setSearch(e.detail.search);
-            }
+            if (event.detail?.search) setSearch(event.detail.search);
         };
 
         window.addEventListener("keydown", handleKeyDown);
-        window.addEventListener("open-command-palette", handleOpen);
+        window.addEventListener("open-command-palette", handleOpen as EventListener);
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
-            window.removeEventListener("open-command-palette", handleOpen);
+            window.removeEventListener("open-command-palette", handleOpen as EventListener);
         };
     }, []);
 
     const commands: CommandItem[] = [
-        // Pages
-        { id: "dashboard", title: "Dashboard", description: "View your metrics and overview", icon: LayoutGrid, category: "Pages", onClick: () => onNavigate?.("dashboard") },
-        { id: "projects", title: "Projects", description: "Manage your active projects", icon: FileText, category: "Pages", onClick: () => onNavigate?.("projects") },
-        { id: "users", title: "User Directory", description: "Manage your team and roles", icon: Users, category: "Pages", onClick: () => onNavigate?.("users") },
-        { id: "settings", title: "Settings", description: "Workspace and profile configuration", icon: Settings, category: "Pages", onClick: () => onNavigate?.("settings") },
-        { id: "notifications", title: "Inbox", description: "View your activity feed", icon: MessageSquare, category: "Pages", onClick: () => onNavigate?.("notifications") },
-        { id: "support", title: "Support", description: "Get help and support", icon: HelpCircle, category: "Pages", onClick: () => onNavigate?.("support") },
-
-        // Users (Simulated Search Results)
-        { id: "user-olivia", title: "Olivia Rhye", description: "Product Designer @ Untitled UI", icon: Users, category: "Users", onClick: () => onNavigate?.("users") },
-        { id: "user-phoenix", title: "Phoenix Baker", description: "Engineering Manager @ Untitled UI", icon: Users, category: "Users", onClick: () => onNavigate?.("users") },
-
-        // Projects (Simulated Search Results)
-        { id: "proj-ui", title: "UI Redesign", description: "Active Project • Milestone: Phase 2", icon: FileText, category: "Actions", onClick: () => onNavigate?.("projects") },
-        { id: "proj-api", title: "API Documentation", description: "Internal Project • Due Feb 15", icon: FileText, category: "Actions", onClick: () => onNavigate?.("projects") },
-
-        // Actions
-        { id: "invite", title: "Invite Member", description: "Send an invitation email", icon: Users, category: "Actions", onClick: () => onNavigate?.("users") },
-        { id: "new-project", title: "Create New Project", description: "Start a fresh workspace project", icon: FileText, category: "Actions", onClick: () => window.dispatchEvent(new CustomEvent("open-new-project-wizard")) },
-
-        // Help
-        { id: "feedback", title: "Send Feedback", description: "Tell us what you think", icon: MessageSquare, category: "Help", onClick: () => onNavigate?.("support") },
+        {
+            id: "meal-plan",
+            title: "Meal Plan",
+            description: "Upload PDFs and view flight meal service",
+            icon: ClipboardList,
+            category: "Pages",
+            onClick: () => onNavigate?.("meal-plan"),
+        },
+        {
+            id: "settings",
+            title: "Settings",
+            description: "Profile and workspace settings",
+            icon: Settings,
+            category: "Pages",
+            onClick: () => onNavigate?.("settings"),
+        },
+        {
+            id: "support",
+            title: "Support",
+            description: "Get help and support",
+            icon: HelpCircle,
+            category: "Pages",
+            onClick: () => onNavigate?.("support"),
+        },
     ];
 
-    const filteredCommands = commands.filter(cmd =>
-        cmd.title.toLowerCase().includes(search.toLowerCase()) ||
-        cmd.description?.toLowerCase().includes(search.toLowerCase()) ||
-        cmd.category.toLowerCase().includes(search.toLowerCase())
+    const filteredCommands = commands.filter((command) =>
+        command.title.toLowerCase().includes(search.toLowerCase()) ||
+        command.description?.toLowerCase().includes(search.toLowerCase())
     );
-
-    const categories = ["Pages", "Users", "Actions", "Help"] as const;
 
     if (!isOpen) return null;
 
@@ -84,60 +80,54 @@ export const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
         <ModalOverlay isOpen={isOpen} onOpenChange={setIsOpen} isDismissable className="items-start pt-[10dvh]">
             <Modal className="max-w-2xl w-full p-0 overflow-hidden bg-white shadow-2xl border-none">
                 <Dialog className="outline-hidden">
-                    <div className="flex flex-col h-full max-h-[60vh]">
-                        <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+                    <div className="flex max-h-[60vh] flex-col">
+                        <div className="flex items-center gap-3 border-b border-gray-100 p-4">
                             <Search className="size-5 text-gray-400" />
                             <input
                                 autoFocus
-                                placeholder="Search for pages, users, or actions..."
-                                className="flex-1 bg-transparent border-none outline-hidden text-lg text-gray-900 placeholder:text-gray-400"
+                                placeholder="Search pages..."
+                                className="flex-1 border-none bg-transparent text-lg text-gray-900 outline-hidden placeholder:text-gray-400"
                                 value={search}
-                                onChange={(e) => setSearch(e.target.value)}
+                                onChange={(event) => setSearch(event.target.value)}
                             />
-                            <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-md border border-gray-200">
-                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">ESC</span>
+                            <div className="flex items-center gap-1.5 rounded-md border border-gray-200 bg-gray-50 px-2 py-1">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">ESC</span>
                             </div>
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-2">
                             {filteredCommands.length > 0 ? (
-                                categories.map(cat => {
-                                    const catCmds = filteredCommands.filter(c => c.category === cat);
-                                    if (catCmds.length === 0) return null;
-
-                                    return (
-                                        <div key={cat} className="mb-4 last:mb-0">
-                                            <h3 className="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{cat}</h3>
-                                            <div className="space-y-1">
-                                                {catCmds.map(cmd => (
-                                                    <button
-                                                        key={cmd.id}
-                                                        onClick={() => {
-                                                            cmd.onClick();
-                                                            setIsOpen(false);
-                                                        }}
-                                                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors group text-left"
-                                                    >
-                                                        <div className="size-9 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100 group-hover:bg-white group-hover:border-brand-200 transition-colors">
-                                                            <cmd.icon className="size-5 text-gray-500 group-hover:text-brand-600 transition-colors" />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="font-semibold text-gray-900">{cmd.title}</span>
-                                                                {cmd.id === "new-project" && <Badge variant="brand" size="sm">Hot</Badge>}
-                                                            </div>
-                                                            {cmd.description && <p className="text-xs text-gray-500 truncate">{cmd.description}</p>}
-                                                        </div>
-                                                        <ArrowRight className="size-4 text-gray-300 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    );
-                                })
+                                <div className="mb-4 last:mb-0">
+                                    <h3 className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                                        Pages
+                                    </h3>
+                                    <div className="space-y-1">
+                                        {filteredCommands.map((command) => (
+                                            <button
+                                                key={command.id}
+                                                onClick={() => {
+                                                    command.onClick();
+                                                    setIsOpen(false);
+                                                }}
+                                                className="group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-gray-50"
+                                            >
+                                                <div className="flex size-9 items-center justify-center rounded-lg border border-gray-100 bg-gray-50 transition-colors group-hover:border-brand-200 group-hover:bg-white">
+                                                    <command.icon className="size-5 text-gray-500 transition-colors group-hover:text-brand-600" />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <span className="font-semibold text-gray-900">{command.title}</span>
+                                                    {command.description && (
+                                                        <p className="truncate text-xs text-gray-500">{command.description}</p>
+                                                    )}
+                                                </div>
+                                                <ArrowRight className="size-4 -translate-x-2 text-gray-300 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                             ) : (
                                 <div className="py-12 text-center">
-                                    <div className="size-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-gray-50">
                                         <Search className="size-6 text-gray-300" />
                                     </div>
                                     <h4 className="font-bold text-gray-900">No results found</h4>
@@ -146,12 +136,11 @@ export const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
                             )}
                         </div>
 
-                        <div className="p-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest px-6">
-                            <div className="flex gap-4">
-                                <span className="flex items-center gap-1.5"><ArrowRight className="size-3 rotate-90" /> Select</span>
-                                <span className="flex items-center gap-1.5"><ArrowRight className="size-3" /> Execute</span>
-                            </div>
-                            <span>Untitled UI Pro</span>
+                        <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                            <span className="flex items-center gap-1.5">
+                                <ArrowRight className="size-3 rotate-90" /> Select
+                            </span>
+                            <span>Flight Menu</span>
                         </div>
                     </div>
                 </Dialog>

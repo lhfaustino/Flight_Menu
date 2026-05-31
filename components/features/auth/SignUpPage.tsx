@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { createOrganization } from "@/app/actions/organizations";
 import { useToast } from "@/components/ui/Toast";
+import { AUTH_CONFIG } from "@/lib/constants";
 
 export const SignUpPage = () => {
     const router = useRouter();
@@ -64,7 +65,7 @@ export const SignUpPage = () => {
                     type: "success",
                 });
 
-                router.push("/dashboard");
+                router.push(AUTH_CONFIG.afterLoginPath);
             }
         } catch (err: any) {
             const errorMessage = err.message || "Something went wrong. Please try again.";

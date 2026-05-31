@@ -7,8 +7,13 @@ import { AuthProvider } from "@/components/features/auth/AuthProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "Next.js + Supabase Boilerplate",
-    description: "A premium SaaS boilerplate with Untitled UI and Supabase",
+    title: "Flight Menu",
+    description: "Flight meal service planning and roster upload application.",
+    icons: {
+        icon: "/logo.svg",
+        shortcut: "/logo.svg",
+        apple: "/logo.svg",
+    },
 };
 
 export default function RootLayout({

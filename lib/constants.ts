@@ -3,21 +3,21 @@
  */
 
 export const APP_CONFIG = {
-    name: "Befree Boilerplate",
-    description: "A premium Next.js-inspired boilerplate using Untitled UI and Tailwind CSS.",
+    name: "Flight Menu",
+    description: "Flight meal service planning and roster upload application.",
     version: "1.0.0",
 };
 
 export const BRAND_CONFIG = {
-    name: "Befree",
+    name: "Flight Menu",
     logo: {
-        light: "/logo-light.svg",
-        dark: "/logo-dark.svg",
-        icon: "/icon.svg",
+        light: "/logo.svg",
+        dark: "/logo.svg",
+        icon: "/logo.svg",
     },
     name_logo: true, // Show brand name alongside logo
     theme: {
-        primaryColor: "#4146F6", // Brand primary color
+        primaryColor: "#1A454C", // Brand primary color from logo.svg
     },
 };
 
@@ -38,5 +38,5 @@ export const NAVIGATION = {
 export const AUTH_CONFIG = {
     loginPath: "/login",
     signupPath: "/signup",
-    afterLoginPath: "/dashboard",
+    afterLoginPath: "/roster-upload",
 };

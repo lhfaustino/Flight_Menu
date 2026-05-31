@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
+import { AUTH_CONFIG } from "@/lib/constants";
 
 export const LoginPage = () => {
     const router = useRouter();
@@ -51,7 +52,7 @@ export const LoginPage = () => {
                 type: "success",
             });
 
-            router.push("/dashboard");
+            router.push(AUTH_CONFIG.afterLoginPath);
             router.refresh();
         } catch (err: any) {
             const errorMessage = err.message || "Invalid email or password.";

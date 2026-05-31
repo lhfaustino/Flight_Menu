@@ -1,7 +1,7 @@
 "use client";
 
 import type { FC, HTMLAttributes } from "react";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Placement } from "@react-types/overlays";
 import { BookOpen, ChevronsUpDown as ChevronSelectorVertical, LogOut, Plus, Settings, User as User01 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,8 @@ import { useAuth } from "@/components/features/auth/AuthProvider";
 import type { DialogProps as AriaDialogProps } from "react-aria-components";
 import { Button as AriaButton, Dialog as AriaDialog, DialogTrigger as AriaDialogTrigger, Popover as AriaPopover } from "react-aria-components";
 import { AvatarLabelGroup } from "@/components/features/AvatarLabelGroup";
+import { getMyProfile } from "@/app/actions/profiles";
+import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { useBreakpoint } from "@/hooks/use-breakpoint";
 import { cx } from "@/lib/utils";
@@ -46,10 +48,12 @@ const UserMenuDialog = ({
     const { signOut, user } = useAuth();
     const focusManager = useFocusManager();
     const dialogRef = useRef<HTMLDivElement>(null);
+    const [profileAvatarUrl, setProfileAvatarUrl] = useState("");
+    const [profileName, setProfileName] = useState("");
 
-    const userName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
+    const userName = profileName || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
     const userEmail = user?.email || "user@example.com";
-    const userAvatar = user?.user_metadata?.avatar_url || "";
+    const userAvatar = profileAvatarUrl || user?.user_metadata?.avatar_url || "";
 
     const onKeyDown = useCallback(
         (e: KeyboardEvent) => {
@@ -77,6 +81,33 @@ const UserMenuDialog = ({
             }
         };
     }, [onKeyDown]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        async function loadProfile() {
+            if (!user) {
+                setProfileAvatarUrl("");
+                setProfileName("");
+                return;
+            }
+
+            const response = await getMyProfile();
+
+            if (!isMounted) return;
+
+            if (response.success && response.data) {
+                setProfileAvatarUrl(response.data.avatar_url ?? "");
+                setProfileName(response.data.full_name ?? "");
+            }
+        }
+
+        loadProfile();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [user]);
 
     return (
         <AriaDialog
@@ -187,21 +218,52 @@ export interface UserMenuProps {
     email?: string;
     avatarUrl?: string;
     placement?: Placement;
+    compact?: boolean;
     accounts?: UserAccount[];
     selectedAccountId?: string;
 }
 
 export const UserMenu = ({
     placement,
+    compact = false,
 }: UserMenuProps) => {
     const triggerRef = useRef<HTMLDivElement>(null);
     const isDesktop = useBreakpoint();
     const { user } = useAuth();
+    const [profileAvatarUrl, setProfileAvatarUrl] = useState("");
+    const [profileName, setProfileName] = useState("");
+
+    useEffect(() => {
+        let isMounted = true;
+
+        async function loadProfile() {
+            if (!user) {
+                setProfileAvatarUrl("");
+                setProfileName("");
+                return;
+            }
+
+            const response = await getMyProfile();
+
+            if (!isMounted) return;
+
+            if (response.success && response.data) {
+                setProfileAvatarUrl(response.data.avatar_url ?? "");
+                setProfileName(response.data.full_name ?? "");
+            }
+        }
+
+        loadProfile();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [user]);
 
     // Prefer User Metadata name, then email, then display fallback
-    const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
+    const userName = profileName || user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
     const userEmail = user?.email || "user@example.com";
-    const userAvatar = user?.user_metadata?.avatar_url || "";
+    const userAvatar = profileAvatarUrl || user?.user_metadata?.avatar_url || "";
 
     const displayAccount = {
         name: userName,
@@ -212,38 +274,67 @@ export const UserMenu = ({
     };
 
     return (
-        <div ref={triggerRef} className="relative flex w-full items-center gap-3 rounded-xl p-2 ring-1 ring-secondary ring-inset hover:bg-gray-50/50 transition-colors">
-            <AvatarLabelGroup
-                size="md"
-                src={displayAccount.avatar}
-                title={displayAccount.name}
-                subtitle={displayAccount.email}
-                status={displayAccount.status as any}
-            />
+        <div
+            ref={triggerRef}
+            className={cx(
+                "relative flex items-center transition-colors",
+                compact
+                    ? "size-10 justify-center rounded-full"
+                    : "w-full gap-3 rounded-xl p-2 ring-1 ring-secondary ring-inset hover:bg-gray-50/50",
+            )}
+        >
+            <AriaDialogTrigger>
+                <AriaButton
+                    aria-label="Open user menu"
+                    className={cx(
+                        "cursor-pointer outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2",
+                        compact
+                            ? "group flex size-10 items-center justify-center rounded-full"
+                            : "w-full rounded-xl text-left",
+                    )}
+                >
+                    {compact ? (
+                        <Avatar
+                            size="md"
+                            src={displayAccount.avatar}
+                            alt={displayAccount.name}
+                            status={displayAccount.status as any}
+                            className="transition group-hover:ring-4 group-hover:ring-brand-100"
+                        />
+                    ) : (
+                        <AvatarLabelGroup
+                            size="md"
+                            src={displayAccount.avatar}
+                            title={displayAccount.name}
+                            subtitle={displayAccount.email}
+                            status={displayAccount.status as any}
+                        />
+                    )}
+                </AriaButton>
 
-            <div className="absolute top-1.5 right-1.5">
-                <AriaDialogTrigger>
-                    <AriaButton className="flex cursor-pointer items-center justify-center rounded-md p-1.5 text-fg-quaternary outline-focus-ring transition duration-100 ease-linear hover:bg-primary_hover hover:text-fg-quaternary_hover focus-visible:outline-2 focus-visible:outline-offset-2 pressed:bg-primary_hover pressed:text-fg-quaternary_hover">
+                {!compact && (
+                    <div className="pointer-events-none absolute top-1.5 right-1.5 flex items-center justify-center rounded-md p-1.5 text-fg-quaternary">
                         <ChevronSelectorVertical className="size-4 shrink-0" />
-                    </AriaButton>
-                    <AriaPopover
-                        placement={placement ?? (isDesktop ? "right bottom" : "top right")}
-                        triggerRef={triggerRef}
-                        offset={8}
-                        className={({ isEntering, isExiting }) =>
-                            cx(
-                                "origin-(--trigger-anchor-point) will-change-transform z-50",
-                                isEntering &&
-                                "duration-150 ease-out animate-in fade-in placement-right:slide-in-from-left-0.5 placement-top:slide-in-from-bottom-0.5 placement-bottom:slide-in-from-top-0.5",
-                                isExiting &&
-                                "duration-100 ease-in animate-out fade-out placement-right:slide-out-to-left-0.5 placement-top:slide-out-to-bottom-0.5 placement-bottom:slide-out-to-top-0.5",
-                            )
-                        }
-                    >
-                        <UserMenuDialog />
-                    </AriaPopover>
-                </AriaDialogTrigger>
-            </div>
+                    </div>
+                )}
+
+                <AriaPopover
+                    placement={placement ?? (isDesktop ? "bottom right" : "top right")}
+                    triggerRef={triggerRef}
+                    offset={8}
+                    className={({ isEntering, isExiting }) =>
+                        cx(
+                            "origin-(--trigger-anchor-point) will-change-transform z-50",
+                            isEntering &&
+                            "duration-150 ease-out animate-in fade-in placement-right:slide-in-from-left-0.5 placement-top:slide-in-from-bottom-0.5 placement-bottom:slide-in-from-top-0.5",
+                            isExiting &&
+                            "duration-100 ease-in animate-out fade-out placement-right:slide-out-to-left-0.5 placement-top:slide-out-to-bottom-0.5 placement-bottom:slide-out-to-top-0.5",
+                        )
+                    }
+                >
+                    <UserMenuDialog />
+                </AriaPopover>
+            </AriaDialogTrigger>
         </div>
     );
 };

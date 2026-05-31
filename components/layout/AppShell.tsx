@@ -1,25 +1,17 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { BarChart2, Users, Settings, Search, LayoutGrid, Inbox, LifeBuoy } from "lucide-react"
+import { ClipboardList, Settings, Search, LifeBuoy } from "lucide-react"
 import { NavList, NavAccountCard, MobileNavigationHeader } from "./navigation/SidebarNavigation"
 import type { NavItemType } from "./navigation/NavList"
-import { Badge } from "@/components/ui/Badge"
 import { UserMenu } from "./navigation/UserMenu"
-import { NotificationPopover } from "../features/notifications/NotificationPopover"
 import { CommandPalette } from "./CommandPalette"
-
-import { CreateProjectWizard } from "../features/projects/CreateProjectWizard"
-import { Modal, ModalOverlay, Dialog } from "@/components/ui/Modal"
 import { BrandLogo } from "@/components/ui/BrandLogo"
 import { RouterProvider } from "react-aria-components";
 
 const navigation: (NavItemType & { view: string })[] = [
-    { label: "Dashboard", href: "/dashboard", view: "dashboard", icon: LayoutGrid },
-    { label: "Projects", href: "/projects", view: "projects", icon: BarChart2 },
-    { label: "Users", href: "/users", view: "users", icon: Users },
-    { label: "Inbox", href: "/notifications", view: "notifications", icon: Inbox, badge: <Badge variant="brand" size="sm">3</Badge> },
-    { label: "Settings", href: "/settings", view: "settings", icon: Settings },
-    { label: "Support", href: "/support", view: "support", icon: LifeBuoy },
+    { label: "Planilha", href: "/roster-upload", view: "meal-plan", icon: ClipboardList },
+    { label: "Configurações", href: "/settings", view: "settings", icon: Settings },
+    { label: "Suporte", href: "/support", view: "support", icon: LifeBuoy },
 ]
 
 interface AppShellProps {
@@ -30,13 +22,6 @@ interface AppShellProps {
 
 export function AppShell({ children, currentView, onViewChange }: AppShellProps) {
     const router = useRouter();
-    const [isWizardOpen, setIsWizardOpen] = React.useState(false);
-
-    React.useEffect(() => {
-        const handleOpenWizard = () => setIsWizardOpen(true);
-        window.addEventListener("open-new-project-wizard", handleOpenWizard);
-        return () => window.removeEventListener("open-new-project-wizard", handleOpenWizard);
-    }, []);
 
     const handleNavClick = (item: any) => {
         if (onViewChange && item.view) {
@@ -46,7 +31,7 @@ export function AppShell({ children, currentView, onViewChange }: AppShellProps)
         }
     };
 
-    const activeUrl = navigation.find(n => n.view === currentView)?.href || "/dashboard";
+    const activeUrl = navigation.find(n => n.view === currentView)?.href || "/roster-upload";
 
     return (
         <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
@@ -99,10 +84,7 @@ export function AppShell({ children, currentView, onViewChange }: AppShellProps)
                         </div>
 
                         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-                            <NotificationPopover />
-                            <div className="h-8 w-8 rounded-full bg-gray-200 overflow-hidden border border-gray-100">
-                                <UserMenu />
-                            </div>
+                            <UserMenu compact placement="bottom right" />
                         </div>
                     </div>
                     <div className="p-4 lg:p-12 max-w-7xl mx-auto w-full">
@@ -119,21 +101,6 @@ export function AppShell({ children, currentView, onViewChange }: AppShellProps)
                         }
                     }
                 }} />
-
-                {/* Global Project Wizard */}
-                <ModalOverlay isOpen={isWizardOpen} onOpenChange={setIsWizardOpen} isDismissable>
-                    <Modal className="sm:max-w-4xl max-h-[90vh] bg-transparent shadow-none border-none p-0 overflow-visible">
-                        <Dialog className="outline-none h-full">
-                            <CreateProjectWizard
-                                onClose={() => setIsWizardOpen(false)}
-                                onComplete={(data) => {
-                                    console.log("New project data:", data);
-                                    setIsWizardOpen(false);
-                                }}
-                            />
-                        </Dialog>
-                    </Modal>
-                </ModalOverlay>
             </RouterProvider>
         </div>
     )
