@@ -10,12 +10,8 @@ export const LandingPage = () => {
             <section className="relative bg-white pt-20 pb-20 md:pt-32 md:pb-32 overflow-hidden">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="text-center">
-                        <div className="inline-flex items-center rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700 ring-1 ring-inset ring-brand-200 mb-6">
-                            New: Unlimited UI v2.0 is out!
-                        </div>
                         <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-6xl md:text-7xl">
-                            Beautiful components for <br />
-                            <span className="text-brand-600">modern web apps</span>
+                            Gerencie seus serviços de bordo e seus documentos de voo.
                         </h1>
                         <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-500 md:text-xl">
                             The ultimate React boilerplate with Untitled UI components, advanced data tables,
