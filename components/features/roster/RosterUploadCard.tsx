@@ -122,7 +122,7 @@ export function RosterUploadCard({ onUploaded, onFileSelected, deferUpload = fal
                 Clique para enviar
               </button>
               <p className="mt-1 text-sm text-gray-500">ou arraste e solte o PDF</p>
-              <p className="mt-2 text-xs text-gray-500">PDF de até 10MB</p>
+              <p className="mt-2 text-xs text-gray-500">PDF de até 50MB</p>
             </div>
           )}
         </div>

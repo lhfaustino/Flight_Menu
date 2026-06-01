@@ -1,17 +1,23 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { ClipboardList, Settings, Search, LifeBuoy } from "lucide-react"
+import { ClipboardList, Settings, Search, LifeBuoy, ShieldCheck } from "lucide-react"
 import { NavList, NavAccountCard, MobileNavigationHeader } from "./navigation/SidebarNavigation"
 import type { NavItemType } from "./navigation/NavList"
 import { UserMenu } from "./navigation/UserMenu"
 import { CommandPalette } from "./CommandPalette"
 import { BrandLogo } from "@/components/ui/BrandLogo"
+import { useAuth } from "@/components/features/auth/AuthProvider"
+import { isAdminEmail } from "@/lib/admin-access"
 import { RouterProvider } from "react-aria-components";
 
-const navigation: (NavItemType & { view: string })[] = [
+const baseNavigation: (NavItemType & { view: string })[] = [
     { label: "Planilha", href: "/roster-upload", view: "meal-plan", icon: ClipboardList },
     { label: "Configurações", href: "/settings", view: "settings", icon: Settings },
     { label: "Suporte", href: "/support", view: "support", icon: LifeBuoy },
+]
+
+const adminNavigation: (NavItemType & { view: string })[] = [
+    { label: "Admin", href: "/meal-plan-admin", view: "meal-plan-admin", icon: ShieldCheck },
 ]
 
 interface AppShellProps {
@@ -22,6 +28,11 @@ interface AppShellProps {
 
 export function AppShell({ children, currentView, onViewChange }: AppShellProps) {
     const router = useRouter();
+    const { user } = useAuth();
+    const navigation = React.useMemo(
+        () => isAdminEmail(user?.email) ? [...baseNavigation, ...adminNavigation] : baseNavigation,
+        [user?.email],
+    );
 
     const handleNavClick = (item: any) => {
         if (onViewChange && item.view) {

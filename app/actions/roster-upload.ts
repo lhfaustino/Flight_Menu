@@ -1,6 +1,8 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { ADMIN_EMAIL } from '@/lib/admin-access';
 import { extractPdfText, parseRosterText } from '@/lib/pdf-parsing';
 
 type CateringRuleRow = {
@@ -79,7 +81,7 @@ export async function uploadRoster(formData: FormData) {
     );
     const [existingKeys, cateringByKey] = await Promise.all([
       fetchExistingKeys(supabase, 'flight_leg_details', rosterKeys),
-      fetchCateringByKey(supabase, rosterKeys),
+      fetchCateringByKey(rosterKeys),
     ]);
 
     // 6. Insert parsed flight legs into database
@@ -116,6 +118,7 @@ export async function uploadRoster(formData: FormData) {
         rosterId: roster.id,
         flightsAdded: 0,
         flights: rosterEntries,
+        rows: await fetchFlightMenuRows(supabase, user.id),
         message: `No new flight legs imported. ${rosterEntries.length} duplicate records were discarded.${storageWarning}`,
       };
     }
@@ -130,6 +133,7 @@ export async function uploadRoster(formData: FormData) {
         rosterId: roster.id,
         flightsAdded: flightLegs.length,
         flights: rosterEntries,
+        rows: await fetchFlightMenuRows(supabase, user.id),
         message: `Parsed ${rosterEntries.length} flight legs, but could not save flight legs: ${insertError.message}.${storageWarning}`,
       };
     }
@@ -139,6 +143,7 @@ export async function uploadRoster(formData: FormData) {
       rosterId: roster.id,
       flightsAdded: flightLegs.length,
       flights: rosterEntries,
+      rows: await fetchFlightMenuRows(supabase, user.id),
       message: `Successfully imported ${flightLegs.length} flight legs. ${rosterEntries.length - flightLegs.length} duplicate records were discarded.${storageWarning}`,
     };
   } catch (error) {
@@ -181,14 +186,26 @@ async function fetchExistingKeys(supabase: Awaited<ReturnType<typeof createClien
   return existing;
 }
 
-async function fetchCateringByKey(supabase: Awaited<ReturnType<typeof createClient>>, keys: string[]) {
+async function fetchCateringByKey(keys: string[]) {
+  const supabase = createAdminClient();
   const cateringByKey = new Map<string, CateringRuleRow>();
+  const { data: adminProfile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('email', ADMIN_EMAIL)
+    .maybeSingle();
 
   for (const chunk of chunkArray([...new Set(keys)], 250)) {
-    const { data } = await supabase
+    let query = supabase
       .from('catering_rules')
       .select('unique_key, service_type, meal_type')
       .in('unique_key', chunk);
+
+    if (adminProfile?.id) {
+      query = query.eq('user_id', adminProfile.id);
+    }
+
+    const { data } = await query;
 
     data?.forEach((row: CateringRuleRow) => {
       if (row.unique_key) cateringByKey.set(row.unique_key, row);
@@ -196,6 +213,24 @@ async function fetchCateringByKey(supabase: Awaited<ReturnType<typeof createClie
   }
 
   return cateringByKey;
+}
+
+async function fetchFlightMenuRows(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+  const { data } = await supabase
+    .from('flight_leg_details')
+    .select('unique_key, flight_number, origin, destination, departure_time, service_type, meal_type')
+    .eq('user_id', userId)
+    .order('departure_time', { ascending: true });
+
+  return data?.map((flightLeg: any, index: number) => ({
+    id: flightLeg.unique_key ?? `${flightLeg.flight_number}-${flightLeg.departure_time}-${index}`,
+    date: flightLeg.departure_time ? String(flightLeg.departure_time).slice(0, 10) : '',
+    flightNumber: flightLeg.flight_number ?? '-',
+    origin: flightLeg.origin ?? '-',
+    destination: flightLeg.destination ?? '-',
+    crewService: flightLeg.service_type ?? '-',
+    paxService: flightLeg.meal_type ?? '-',
+  })) ?? [];
 }
 
 function chunkArray<T>(items: T[], size: number) {

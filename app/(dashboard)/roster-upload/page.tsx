@@ -31,7 +31,7 @@ export default async function RosterUploadPage() {
       <div className="mx-auto max-w-6xl px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Planilha de Serviços</h1>
-          <p className="mt-2 text-gray-600">Envie os arquivos (escala e planilha de alimentação)</p>
+          <p className="mt-2 text-gray-600">Envie sua escala para aplicar os serviços de bordo cadastrados.</p>
         </div>
         
         <FlightMenuUploadWorkspace initialRows={initialRows} />

@@ -49,7 +49,7 @@ export function CateringUploadCard({ onUploaded, onFileSelected, deferUpload = f
       const result = await uploadCateringPlan(formData);
 
       if (result.success) {
-        setMessage({ type: 'success', text: result.message ?? 'Planilha de alimentação enviada com sucesso' });
+        setMessage({ type: 'success', text: result.message ?? 'Meal plan fixo atualizado com sucesso' });
         onUploaded?.(result.rules ?? []);
         setFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -69,7 +69,7 @@ export function CateringUploadCard({ onUploaded, onFileSelected, deferUpload = f
   return (
     <div className="w-full max-w-md mx-auto p-4">
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900">Upload Planilha de Alimentação</h3>
+        <h3 className="mb-4 text-lg font-semibold text-gray-900">Upload Meal Plan Fixo</h3>
 
         <div
           className="mb-4 rounded-lg border-2 border-dashed border-gray-300 p-6 text-center transition-colors hover:border-blue-500 hover:bg-blue-50"
@@ -122,7 +122,7 @@ export function CateringUploadCard({ onUploaded, onFileSelected, deferUpload = f
                 Clique para enviar
               </button>
               <p className="mt-1 text-sm text-gray-500">ou arraste e solte o PDF</p>
-              <p className="mt-2 text-xs text-gray-500">PDF de até 10MB</p>
+              <p className="mt-2 text-xs text-gray-500">PDF de até 50MB</p>
             </div>
           )}
         </div>
@@ -147,7 +147,7 @@ export function CateringUploadCard({ onUploaded, onFileSelected, deferUpload = f
             className="w-full"
             size="lg"
           >
-            {loading ? 'Enviando...' : 'Enviar Planilha'}
+            {loading ? 'Enviando...' : 'Atualizar Meal Plan'}
           </Button>
         )}
       </div>

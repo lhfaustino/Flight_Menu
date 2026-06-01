@@ -1,6 +1,8 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { isAdminEmail } from '@/lib/admin-access';
 import { extractPdfText, parseCateringText } from '@/lib/pdf-parsing';
 
 export async function uploadCateringPlan(formData: FormData) {
@@ -10,6 +12,10 @@ export async function uploadCateringPlan(formData: FormData) {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
     throw new Error('Unauthorized');
+  }
+
+  if (!isAdminEmail(user.email)) {
+    throw new Error('Only the administrator can update the meal plan PDF.');
   }
   
   const file = formData.get('file') as File;
@@ -65,20 +71,46 @@ export async function uploadCateringPlan(formData: FormData) {
       priority: 1,
     }));
 
+    const adminClient = createAdminClient();
     const existingKeys = await fetchExistingKeys(
-      supabase,
+      adminClient,
       'catering_rules',
-      cateringRules.map((rule) => rule.unique_key)
+      cateringRules.map((rule) => rule.unique_key),
+      user.id
     );
     const newCateringRules = cateringRules.filter((rule) => !existingKeys.has(rule.unique_key));
-    
+    const existingCateringRules = cateringRules.filter((rule) => existingKeys.has(rule.unique_key));
+
     const { error: insertError } = newCateringRules.length > 0
-      ? await supabase
+      ? await adminClient
           .from('catering_rules')
           .insert(newCateringRules)
       : { error: null };
 
-    const flightLegsUpdated = await updateFlightLegMeals(supabase, cateringRules);
+    let updateErrorMessage: string | null = null;
+    for (const rule of existingCateringRules) {
+      const { error } = await adminClient
+        .from('catering_rules')
+        .update({
+          flight_number: rule.flight_number,
+          service_date: rule.service_date,
+          origin_iata: rule.origin_iata,
+          destination_iata: rule.destination_iata,
+          service_type: rule.service_type,
+          meal_type: rule.meal_type,
+          priority: rule.priority,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', user.id)
+        .eq('unique_key', rule.unique_key);
+
+      if (error) {
+        updateErrorMessage = error.message;
+        break;
+      }
+    }
+
+    const flightLegsUpdated = await updateFlightLegMeals(adminClient, cateringRules);
     
     if (insertError) {
       if (insertError.message.toLowerCase().includes('row-level security')) {
@@ -97,12 +129,21 @@ export async function uploadCateringPlan(formData: FormData) {
         message: `Parsed ${cateringRules.length} catering rules, but could not save them: ${insertError.message}. ${flightLegsUpdated} existing flight legs were enriched with meal information.${storageWarning}`,
       };
     }
+
+    if (updateErrorMessage) {
+      return {
+        success: true,
+        rulesAdded: newCateringRules.length,
+        rules: cateringEntries,
+        message: `Imported ${newCateringRules.length} new meal plan rules, but could not update some existing rules: ${updateErrorMessage}. ${flightLegsUpdated} existing flight legs were enriched with meal information.${storageWarning}`,
+      };
+    }
     
     return {
       success: true,
       rulesAdded: newCateringRules.length,
       rules: cateringEntries,
-      message: `Successfully imported ${newCateringRules.length} catering rules. ${cateringRules.length - newCateringRules.length} duplicate records were discarded. ${flightLegsUpdated} existing flight legs were enriched with meal information.${storageWarning}`,
+      message: `Successfully saved the fixed meal plan. ${newCateringRules.length} new rules added, ${existingCateringRules.length} existing rules updated. ${flightLegsUpdated} existing flight legs were enriched with meal information.${storageWarning}`,
     };
   } catch (error) {
     return {
@@ -128,14 +169,20 @@ function normalizeFlightNumber(value: string) {
   return digits.startsWith('3') && digits.length === 5 ? digits.slice(1) : digits;
 }
 
-async function fetchExistingKeys(supabase: Awaited<ReturnType<typeof createClient>>, table: string, keys: string[]) {
+async function fetchExistingKeys(supabase: any, table: string, keys: string[], userId?: string) {
   const existing = new Set<string>();
 
   for (const chunk of chunkArray([...new Set(keys)], 250)) {
-    const { data } = await supabase
+    let query = supabase
       .from(table)
       .select('unique_key')
       .in('unique_key', chunk);
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data } = await query;
 
     data?.forEach((row: { unique_key: string | null }) => {
       if (row.unique_key) existing.add(row.unique_key);
@@ -146,7 +193,7 @@ async function fetchExistingKeys(supabase: Awaited<ReturnType<typeof createClien
 }
 
 async function updateFlightLegMeals(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: any,
   cateringRules: Array<{
     unique_key: string;
     service_type: string;

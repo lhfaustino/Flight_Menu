@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { updateFlightMenu } from '@/app/actions/flight-menu-upload';
-import { CateringUploadCard } from '@/components/features/catering/CateringUploadCard';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { uploadRoster } from '@/app/actions/roster-upload';
 import { RosterUploadCard } from '@/components/features/roster/RosterUploadCard';
 import { Button } from '@/components/ui/Button';
 import { Dialog, Modal, ModalOverlay } from '@/components/ui/Modal';
@@ -30,8 +30,8 @@ interface FlightMenuUploadWorkspaceProps {
 }
 
 export function FlightMenuUploadWorkspace({ initialRows = [] }: FlightMenuUploadWorkspaceProps) {
+  const router = useRouter();
   const [rosterFile, setRosterFile] = useState<File | null>(null);
-  const [cateringFile, setCateringFile] = useState<File | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -39,9 +39,13 @@ export function FlightMenuUploadWorkspace({ initialRows = [] }: FlightMenuUpload
   const visibleRows = rows.filter((row) => isTodayOrFuture(row.date));
   const todayRowsCount = visibleRows.filter((row) => isToday(row.date)).length;
 
+  useEffect(() => {
+    setRows(initialRows);
+  }, [initialRows]);
+
   const handleUpdate = async () => {
-    if (!rosterFile || !cateringFile) {
-      setMessage({ type: 'error', text: 'Select both PDFs before clicking Atualizar.' });
+    if (!rosterFile) {
+      setMessage({ type: 'error', text: 'Selecione o PDF da escala antes de atualizar.' });
       return;
     }
 
@@ -50,22 +54,22 @@ export function FlightMenuUploadWorkspace({ initialRows = [] }: FlightMenuUpload
 
     try {
       const formData = new FormData();
-      formData.append('rosterFile', rosterFile);
-      formData.append('cateringFile', cateringFile);
+      formData.append('file', rosterFile);
 
-      const result = await updateFlightMenu(formData);
+      const result = await uploadRoster(formData);
 
       if (result.success) {
-        setRows(result.rows ?? []);
-        setMessage({ type: 'success', text: result.message ?? 'Flight menu updated.' });
+        setRows(result.rows ?? rows);
+        setMessage({ type: 'success', text: result.message ?? 'Escala atualizada.' });
         setIsUploadOpen(false);
+        router.refresh();
       } else {
-        setMessage({ type: 'error', text: result.error ?? 'Could not update flight menu.' });
+        setMessage({ type: 'error', text: result.error ?? 'Não foi possível atualizar a escala.' });
       }
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error instanceof Error ? error.message : 'Could not update flight menu.',
+        text: error instanceof Error ? error.message : 'Não foi possível atualizar a escala.',
       });
     } finally {
       setIsUpdating(false);
@@ -92,7 +96,7 @@ export function FlightMenuUploadWorkspace({ initialRows = [] }: FlightMenuUpload
           className="w-full sm:w-auto"
           size="lg"
         >
-          Enviar Arquivos
+          Enviar Escala
         </Button>
       </div>
 
@@ -100,16 +104,15 @@ export function FlightMenuUploadWorkspace({ initialRows = [] }: FlightMenuUpload
         <Modal className="sm:max-w-5xl">
           <Dialog className="outline-none">
             <div className="border-b border-gray-200 px-6 py-4">
-              <h2 className="text-lg font-semibold text-gray-900">Enviar Arquivos</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Enviar Escala</h2>
               <p className="mt-1 text-sm text-gray-500">
-                Envie os arquivos de escala e planilha de alimentação em PDF.
+                Envie seu arquivo de escala. A planilha de alimentação fixa será aplicada automaticamente.
               </p>
             </div>
 
             <div className="max-h-[75vh] overflow-y-auto px-4 py-5 sm:px-6">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6">
                 <RosterUploadCard deferUpload onFileSelected={setRosterFile} />
-                <CateringUploadCard deferUpload onFileSelected={setCateringFile} />
               </div>
 
               {message && (
@@ -134,7 +137,7 @@ export function FlightMenuUploadWorkspace({ initialRows = [] }: FlightMenuUpload
               </Button>
               <Button
                 onPress={handleUpdate}
-                isDisabled={!rosterFile || !cateringFile || isUpdating}
+                isDisabled={!rosterFile || isUpdating}
                 className="w-full sm:w-auto"
               >
                 {isUpdating ? 'Enviando...' : 'Atualizar'}
@@ -149,7 +152,7 @@ export function FlightMenuUploadWorkspace({ initialRows = [] }: FlightMenuUpload
           <h2 className="text-lg font-semibold text-gray-900">Serviços</h2>
           <p className="mt-1 text-sm text-gray-500">
             {visibleRows.length === 0
-              ? 'Upload both PDFs, then click Atualizar to parse and save the flight menu.'
+              ? 'Envie sua escala para carregar seus voos e aplicar os serviços de bordo disponíveis.'
               : `${visibleRows.length} ${visibleRows.length === 1 ? 'voo' : 'voos'}${todayRowsCount > 0 ? `, ${todayRowsCount} hoje.` : '.'}`}
           </p>
         </div>

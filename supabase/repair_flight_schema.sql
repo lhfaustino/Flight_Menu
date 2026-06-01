@@ -25,6 +25,21 @@ CREATE TABLE IF NOT EXISTS public.flight_leg_details (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS public.catering_rules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  unique_key TEXT,
+  flight_number TEXT,
+  service_date DATE,
+  origin_iata TEXT,
+  destination_iata TEXT,
+  service_type TEXT,
+  meal_type TEXT,
+  priority INTEGER DEFAULT 1,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 ALTER TABLE public.flight_rosters
   ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   ADD COLUMN IF NOT EXISTS name TEXT,
@@ -45,6 +60,19 @@ ALTER TABLE public.flight_leg_details
   ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 
+ALTER TABLE public.catering_rules
+  ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS unique_key TEXT,
+  ADD COLUMN IF NOT EXISTS flight_number TEXT,
+  ADD COLUMN IF NOT EXISTS service_date DATE,
+  ADD COLUMN IF NOT EXISTS origin_iata TEXT,
+  ADD COLUMN IF NOT EXISTS destination_iata TEXT,
+  ADD COLUMN IF NOT EXISTS service_type TEXT,
+  ADD COLUMN IF NOT EXISTS meal_type TEXT,
+  ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 1,
+  ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
 CREATE UNIQUE INDEX IF NOT EXISTS flight_leg_details_user_unique_key_idx
   ON public.flight_leg_details (user_id, unique_key)
   WHERE unique_key IS NOT NULL;
@@ -52,8 +80,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS flight_leg_details_user_unique_key_idx
 CREATE INDEX IF NOT EXISTS flight_leg_details_user_departure_time_idx
   ON public.flight_leg_details (user_id, departure_time);
 
+CREATE UNIQUE INDEX IF NOT EXISTS catering_rules_user_unique_key_idx
+  ON public.catering_rules (user_id, unique_key)
+  WHERE unique_key IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS catering_rules_user_service_date_idx
+  ON public.catering_rules (user_id, service_date);
+
 ALTER TABLE public.flight_rosters ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.flight_leg_details ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.catering_rules ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users can view own flight rosters" ON public.flight_rosters;
 CREATE POLICY "Users can view own flight rosters"
@@ -82,6 +118,25 @@ CREATE POLICY "Users can insert own flight legs"
 DROP POLICY IF EXISTS "Users can update own flight legs" ON public.flight_leg_details;
 CREATE POLICY "Users can update own flight legs"
   ON public.flight_leg_details FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can view own catering rules" ON public.catering_rules;
+CREATE POLICY "Users can view own catering rules"
+  ON public.catering_rules FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own catering rules" ON public.catering_rules;
+CREATE POLICY "Users can insert own catering rules"
+  ON public.catering_rules FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own catering rules" ON public.catering_rules;
+CREATE POLICY "Users can update own catering rules"
+  ON public.catering_rules FOR UPDATE
   TO authenticated
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
