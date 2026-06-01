@@ -29,7 +29,7 @@ Example:
 
 `2026-05-24-1145-FLN`
 
-This allows the app to upsert rows: insert a new row when it does not exist, update the existing row when it does.
+This allows the app to sync rows: insert a new row when it does not exist, update the existing row when it does, and delete old rows that no longer appear in the latest roster.
 
 ## Tables
 
@@ -80,6 +80,26 @@ Required by the app:
 - `name`
 - `file_url`
 
+### `profiles`
+
+User delivery settings for on-demand Telegram sends.
+
+Required for Telegram:
+
+- `telegram_chat_id`
+- `timezone`
+
+### `telegram_link_tokens`
+
+Short-lived one-time tokens used by the Telegram connect flow.
+
+Required by the app:
+
+- `user_id`
+- `token`
+- `expires_at`
+- `used_at`
+
 ## Upload Flow
 
 1. User selects roster PDF and catering PDF.
@@ -88,5 +108,17 @@ Required by the app:
 4. App parses the roster PDF.
 5. App builds `flight_leg_details` rows from catering data and enriches them with roster data when available.
 6. App upserts `catering_rules`.
-7. App upserts `flight_leg_details`.
+7. App syncs `flight_leg_details`: new roster rows are inserted, matching rows are updated, and rows missing from the latest roster are deleted.
 8. App reloads the visible flight menu from `flight_leg_details`.
+
+## Telegram Send Flow
+
+1. User clicks `Connect Telegram` in profile settings.
+2. App creates a one-time Telegram link token.
+3. User taps `Start` in Telegram.
+4. Telegram calls `/api/telegram/webhook` with `/start <token>`.
+5. App saves the Telegram `chat.id` to `profiles.telegram_chat_id`.
+6. User opens `/roster-upload`.
+7. User clicks `Send today information`.
+8. App reads current-day rows from `flight_leg_details` for that user.
+9. App sends one Telegram message with all current-day flights.

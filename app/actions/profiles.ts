@@ -12,6 +12,8 @@ export interface ProfileUpdateParams {
     avatar_url?: string | null;
     email?: string;
     bio?: string | null;
+    telegram_chat_id?: string | null;
+    timezone?: string | null;
 }
 
 const AVATAR_BUCKET = "avatars";
@@ -46,6 +48,8 @@ export async function getMyProfile() {
             full_name: user.user_metadata?.full_name ?? "",
             avatar_url: user.user_metadata?.avatar_url ?? "",
             bio: "",
+            telegram_chat_id: "",
+            timezone: "America/Sao_Paulo",
         };
     }, { action: "getMyProfile" });
 }
@@ -70,6 +74,8 @@ export async function updateMyProfile(updates: ProfileUpdateParams) {
         const email = updates.email?.trim().toLowerCase() ?? user.email ?? "";
         const bio = updates.bio?.trim() ?? "";
         const avatarUrl = updates.avatar_url === undefined ? undefined : updates.avatar_url?.trim() || null;
+        const telegramChatId = updates.telegram_chat_id?.trim() ?? "";
+        const timezone = updates.timezone?.trim() || "America/Sao_Paulo";
 
         if (fullName.length < 2) {
             throw new Error("Full name must be at least 2 characters.");
@@ -88,6 +94,8 @@ export async function updateMyProfile(updates: ProfileUpdateParams) {
             full_name: fullName,
             email,
             bio,
+            telegram_chat_id: telegramChatId || null,
+            timezone,
         };
 
         if (avatarUrl !== undefined) {

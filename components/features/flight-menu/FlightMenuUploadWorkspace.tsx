@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { uploadRoster } from '@/app/actions/roster-upload';
+import { sendTodayFlightInformation } from '@/app/actions/telegram';
 import { RosterUploadCard } from '@/components/features/roster/RosterUploadCard';
 import { Button } from '@/components/ui/Button';
 import { Dialog, Modal, ModalOverlay } from '@/components/ui/Modal';
+import { Send } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -34,14 +36,20 @@ export function FlightMenuUploadWorkspace({ initialRows = [] }: FlightMenuUpload
   const [rosterFile, setRosterFile] = useState<File | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [rows, setRows] = useState<FlightMenuRow[]>(initialRows);
-  const visibleRows = rows.filter((row) => isTodayOrFuture(row.date));
-  const todayRowsCount = visibleRows.filter((row) => isToday(row.date)).length;
+  const [todayIso, setTodayIso] = useState('');
+  const visibleRows = todayIso ? rows.filter((row) => isTodayOrFuture(row.date, todayIso)) : rows;
+  const todayRowsCount = todayIso ? visibleRows.filter((row) => isToday(row.date, todayIso)).length : 0;
 
   useEffect(() => {
     setRows(initialRows);
   }, [initialRows]);
+
+  useEffect(() => {
+    setTodayIso(getTodayIsoDate());
+  }, []);
 
   const handleUpdate = async () => {
     if (!rosterFile) {
@@ -76,6 +84,28 @@ export function FlightMenuUploadWorkspace({ initialRows = [] }: FlightMenuUpload
     }
   };
 
+  const handleSendTodayInformation = async () => {
+    setIsSendingTelegram(true);
+    setMessage(null);
+
+    try {
+      const result = await sendTodayFlightInformation();
+
+      if (result.success) {
+        setMessage({ type: 'success', text: result.message ?? 'Today information sent.' });
+      } else {
+        setMessage({ type: 'error', text: result.error ?? 'Could not send today information.' });
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Could not send today information.',
+      });
+    } finally {
+      setIsSendingTelegram(false);
+    }
+  };
+
   return (
     <div>
       <div className="mb-6 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
@@ -88,6 +118,16 @@ export function FlightMenuUploadWorkspace({ initialRows = [] }: FlightMenuUpload
             {message.text}
           </div>
         )}
+        <Button
+          variant="secondary"
+          onPress={handleSendTodayInformation}
+          isDisabled={isSendingTelegram || todayRowsCount === 0}
+          className="w-full sm:w-auto"
+          size="lg"
+          iconLeading={Send}
+        >
+          {isSendingTelegram ? 'Sending...' : 'Send today information'}
+        </Button>
         <Button
           onPress={() => {
             setMessage(null);
@@ -173,7 +213,7 @@ export function FlightMenuUploadWorkspace({ initialRows = [] }: FlightMenuUpload
               {visibleRows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className={isToday(row.date) ? 'bg-blue-50 hover:bg-blue-50' : undefined}
+                  className={todayIso && isToday(row.date, todayIso) ? 'bg-blue-50 hover:bg-blue-50' : undefined}
                 >
                   <TableCell className="font-medium text-gray-900">{formatDate(row.date)}</TableCell>
                   <TableCell>{row.flightNumber}</TableCell>
@@ -213,15 +253,14 @@ function formatDate(value: string) {
   return `${match[3]}/${match[2]}/${match[1]}`;
 }
 
-function isTodayOrFuture(value: string) {
+function isTodayOrFuture(value: string, today: string) {
   const rowDate = normalizeDate(value);
-  const today = getTodayIsoDate();
 
   return Boolean(rowDate) && rowDate >= today;
 }
 
-function isToday(value: string) {
-  return normalizeDate(value) === getTodayIsoDate();
+function isToday(value: string, today: string) {
+  return normalizeDate(value) === today;
 }
 
 function getTodayIsoDate() {
