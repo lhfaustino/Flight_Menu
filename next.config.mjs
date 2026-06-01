@@ -9,8 +9,9 @@ const nextConfig = {
         root: __dirname,
     },
     experimental: {
+        proxyClientMaxBodySize: '50mb',
         serverActions: {
-            bodySizeLimit: '10mb',
+            bodySizeLimit: '50mb',
         },
     },
 };
