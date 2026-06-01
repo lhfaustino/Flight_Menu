@@ -1,6 +1,7 @@
 "use client";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 /**
@@ -13,9 +14,18 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const pathname = usePathname();
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Extract view name from pathname for AppShell's active state
     const currentView = pathname.split("/").pop() || "dashboard";
+
+    if (!isMounted) {
+        return <div className="min-h-screen bg-gray-50" />;
+    }
 
     return (
         <AppShell currentView={currentView}>
