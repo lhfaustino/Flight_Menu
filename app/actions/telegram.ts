@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
 type TodayFlight = {
+  unique_key: string | null;
   flight_number: string | null;
   origin: string | null;
   destination: string | null;
@@ -160,7 +161,7 @@ export async function sendTodayFlightInformation() {
 
   const { data: flights, error: flightsError } = await supabase
     .from('flight_leg_details')
-    .select('flight_number, origin, destination, departure_time, arrival_time, service_type, meal_type')
+    .select('unique_key, flight_number, origin, destination, departure_time, arrival_time, service_type, meal_type')
     .eq('user_id', user.id)
     .gte('departure_time', queryStart)
     .lt('departure_time', queryEnd)
@@ -170,9 +171,7 @@ export async function sendTodayFlightInformation() {
     return { success: false, error: flightsError.message };
   }
 
-  const todayFlights = (flights ?? []).filter((flight: TodayFlight) =>
-    flight.departure_time && formatDateInTimeZone(new Date(flight.departure_time), timezone) === today
-  );
+  const todayFlights = (flights ?? []).filter((flight: TodayFlight) => getFlightRosterDate(flight) === today);
 
   if (todayFlights.length === 0) {
     return { success: false, error: 'No flights found for today.' };
@@ -245,15 +244,20 @@ function formatDateInTimeZone(date: Date, timezone: string) {
   return `${year}-${month}-${day}`;
 }
 
-function formatTime(value: string | null, timezone: string) {
+function formatTime(value: string | null, _timezone: string) {
   if (!value) return '--:--';
 
-  return new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(new Date(value));
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '--:--';
+
+  return `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}`;
+}
+
+function getFlightRosterDate(flight: Pick<TodayFlight, 'unique_key' | 'departure_time'>) {
+  const keyDate = flight.unique_key?.match(/^(\d{4}-\d{2}-\d{2})-/)?.[1];
+  if (keyDate) return keyDate;
+
+  return flight.departure_time ? String(flight.departure_time).slice(0, 10) : '';
 }
 
 function formatDisplayDate(value: string) {
