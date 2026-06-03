@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArrowRight, ClipboardList, HelpCircle, Search, Settings } from "lucide-react";
+import { ArrowRight, ClipboardList, HelpCircle, Link2, Search, Settings } from "lucide-react";
 import { Dialog, Modal, ModalOverlay } from "@/components/ui/Modal";
 
 interface CommandItem {
@@ -58,6 +58,14 @@ export const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
             icon: Settings,
             category: "Pages",
             onClick: () => onNavigate?.("settings"),
+        },
+        {
+            id: "links-uteis",
+            title: "Links Úteis",
+            description: "Acessos rapidos",
+            icon: Link2,
+            category: "Pages",
+            onClick: () => onNavigate?.("links-uteis"),
         },
         {
             id: "support",

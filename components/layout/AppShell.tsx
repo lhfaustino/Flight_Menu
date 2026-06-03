@@ -1,6 +1,6 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { ClipboardList, Settings, Search, LifeBuoy, ShieldCheck } from "lucide-react"
+import { ClipboardList, Link2, Settings, Search, LifeBuoy, ShieldCheck } from "lucide-react"
 import { NavList, NavAccountCard, MobileNavigationHeader } from "./navigation/SidebarNavigation"
 import type { NavItemType } from "./navigation/NavList"
 import { UserMenu } from "./navigation/UserMenu"
@@ -12,12 +12,14 @@ import { RouterProvider } from "react-aria-components";
 
 const baseNavigation: (NavItemType & { view: string })[] = [
     { label: "Planilha", href: "/roster-upload", view: "meal-plan", icon: ClipboardList },
+    { label: "Links Úteis", href: "/links-uteis", view: "links-uteis", icon: Link2 },
     { label: "Configurações", href: "/settings", view: "settings", icon: Settings },
     { label: "Suporte", href: "/support", view: "support", icon: LifeBuoy },
 ]
 
 const adminNavigation: (NavItemType & { view: string })[] = [
     { label: "Admin", href: "/meal-plan-admin", view: "meal-plan-admin", icon: ShieldCheck },
+    { label: "Admin Links", href: "/links-uteis-admin", view: "links-uteis-admin", icon: Link2 },
 ]
 
 interface AppShellProps {
