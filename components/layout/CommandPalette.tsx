@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArrowRight, ClipboardList, HelpCircle, Link2, Search, Settings } from "lucide-react";
+import { ArrowRight, ClipboardList, HelpCircle, Link2, Megaphone, Search, Settings } from "lucide-react";
 import { Dialog, Modal, ModalOverlay } from "@/components/ui/Modal";
 
 interface CommandItem {
@@ -58,6 +58,14 @@ export const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
             icon: Settings,
             category: "Pages",
             onClick: () => onNavigate?.("settings"),
+        },
+        {
+            id: "alocucoes",
+            title: "Alocuções",
+            description: "Biblioteca de alocuções trilíngues",
+            icon: Megaphone,
+            category: "Pages",
+            onClick: () => onNavigate?.("alocucoes"),
         },
         {
             id: "links-uteis",
