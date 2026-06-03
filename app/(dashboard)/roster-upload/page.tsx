@@ -1,4 +1,7 @@
 import { FlightMenuUploadWorkspace } from '@/components/features/flight-menu/FlightMenuUploadWorkspace';
+import { ADMIN_EMAIL } from '@/lib/admin-access';
+import { refreshUserFlightLegMealsIfMealPlanChanged } from '@/lib/flight-menu-processing';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function RosterUploadPage() {
@@ -6,6 +9,19 @@ export default async function RosterUploadPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (user) {
+    const adminClient = createAdminClient();
+    const { data: adminProfile } = await adminClient
+      .from('profiles')
+      .select('id')
+      .eq('email', ADMIN_EMAIL)
+      .maybeSingle();
+
+    if (adminProfile?.id) {
+      await refreshUserFlightLegMealsIfMealPlanChanged(adminClient, user.id, adminProfile.id);
+    }
+  }
 
   const { data: flightLegs } = user
     ? await supabase

@@ -14,8 +14,8 @@ export const LandingPage = () => {
                             Gerencie seus serviços de bordo e seus documentos de voo.
                         </h1>
                         <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-500 md:text-xl">
-                            The ultimate React boilerplate with Untitled UI components, advanced data tables,
-                            charts, and authentication pages already out of the box.
+                            Flight Menu keeps roster PDFs and meal-plan updates aligned, so flight service
+                            information stays current for each user.
                         </p>
                         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
                             <Button size="xl" className="h-14 px-8 text-lg">
@@ -107,31 +107,31 @@ export const LandingPage = () => {
                     <div className="flex flex-col lg:flex-row items-center gap-16">
                         <div className="lg:w-1/2">
                             <h2 className="text-3xl font-bold sm:text-4xl mb-6">
-                                Analytics at your <br />
+                                Meal planning at your <br />
                                 <span className="text-brand-400">fingertips.</span>
                             </h2>
                             <p className="text-lg text-gray-400 mb-8">
-                                Get insights from your data faster with our integrated dashboard tools.
-                                We've done the heavy lifting so you can focus on building your business.
+                                Keep uploaded rosters synchronized with the latest master meal plan,
+                                including clear not-found states when a flight has no meal-plan match.
                             </p>
                             <ul className="space-y-4">
                                 <li className="flex items-center gap-3">
                                     <div className="rounded-full bg-brand-500/10 p-1">
                                         <CheckCircle2 className="h-5 w-5 text-brand-400" />
                                     </div>
-                                    <span className="text-gray-300 font-medium">Real-time data synchronization</span>
+                                    <span className="text-gray-300 font-medium">Meal-plan driven roster refresh</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <div className="rounded-full bg-brand-500/10 p-1">
                                         <CheckCircle2 className="h-5 w-5 text-brand-400" />
                                     </div>
-                                    <span className="text-gray-300 font-medium">Customizable report builder</span>
+                                    <span className="text-gray-300 font-medium">PDF roster and meal-plan parsing</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <div className="rounded-full bg-brand-500/10 p-1">
                                         <CheckCircle2 className="h-5 w-5 text-brand-400" />
                                     </div>
-                                    <span className="text-gray-300 font-medium">Automated email alerts</span>
+                                    <span className="text-gray-300 font-medium">Explicit not-found flight status</span>
                                 </li>
                             </ul>
                         </div>

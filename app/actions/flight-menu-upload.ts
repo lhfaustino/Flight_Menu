@@ -4,9 +4,9 @@ import { createClient } from '@/lib/supabase/server';
 import { extractPdfText, parseRosterText } from '@/lib/pdf-parsing';
 import type { RosterEntry } from '@/lib/pdf-parsing';
 import {
-  buildFlightDateKey,
   buildUniqueKey,
   fetchFlightMenuRows,
+  MEAL_PLAN_NOT_FOUND,
   processCateringPdfBuffer,
   toIsoDate,
   uploadPdfBestEffort,
@@ -78,8 +78,8 @@ export async function updateFlightMenu(formData: FormData) {
       return { success: false, error: 'No flight data found in roster PDF. Check the format.' };
     }
 
-    const cateringByFlightDate = new Map(
-      cateringResult.rules.map((rule) => [buildFlightDateKey(rule.service_date, rule.flight_number), rule])
+    const cateringByKey = new Map(
+      cateringResult.rules.map((rule) => [rule.unique_key, rule])
     );
     const rosterStoragePath = await uploadPdfBestEffort(
       supabase,
@@ -109,7 +109,7 @@ export async function updateFlightMenu(formData: FormData) {
       userId: user.id,
       rosterId: roster.id,
       rosterEntries,
-      cateringByFlightDate,
+      cateringByKey,
     });
 
     const {
@@ -153,12 +153,12 @@ function buildFlightLegRows({
   userId,
   rosterId,
   rosterEntries,
-  cateringByFlightDate,
+  cateringByKey,
 }: {
   userId: string;
   rosterId: string;
   rosterEntries: RosterEntry[];
-  cateringByFlightDate: Map<string, { service_type: string; meal_type: string }>;
+  cateringByKey: Map<string, { service_type: string; meal_type: string }>;
 }) {
   const rowsByUniqueKey = new Map<string, FlightLegUpsertRow>();
 
@@ -167,7 +167,7 @@ function buildFlightLegRows({
     const uniqueKey = buildUniqueKey(flightDate, entry.flightNumber, entry.origin);
     const departureTime = new Date(`${flightDate}T${entry.departureTime}:00Z`);
     const arrivalTime = new Date(`${flightDate}T${entry.arrivalTime}:00Z`);
-    const catering = cateringByFlightDate.get(buildFlightDateKey(flightDate, entry.flightNumber));
+    const catering = cateringByKey.get(uniqueKey);
 
     if (arrivalTime < departureTime) {
       arrivalTime.setDate(arrivalTime.getDate() + 1);
@@ -182,8 +182,8 @@ function buildFlightLegRows({
       destination: entry.destination,
       departure_time: departureTime.toISOString(),
       arrival_time: arrivalTime.toISOString(),
-      service_type: catering?.service_type || null,
-      meal_type: catering?.meal_type || null,
+      service_type: catering?.service_type || MEAL_PLAN_NOT_FOUND,
+      meal_type: catering?.meal_type || MEAL_PLAN_NOT_FOUND,
     });
   }
 

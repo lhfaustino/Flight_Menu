@@ -1,6 +1,6 @@
 # Development Rules & Patterns
 
-> **Purpose**: This document defines the coding standards, patterns, and conventions for this Next.js + Supabase boilerplate. All new features and components MUST follow these rules to maintain consistency, security, and quality.
+> **Purpose**: This document defines the coding standards, patterns, and conventions for Flight Menu. All new features and components MUST follow these rules to maintain consistency, security, and quality.
 
 -----
 
@@ -943,4 +943,4 @@ Before considering any code complete, verify:
 
 **Last Updated**: January 2026
 **Version**: 2.0 (Enhanced with Security & Architecture Rules)
-**Based on**: Next.js + Supabase + Untitled UI boilerplate
+**Based on**: Next.js + Supabase + Untitled UI

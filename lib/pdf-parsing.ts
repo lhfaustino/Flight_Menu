@@ -88,27 +88,80 @@ export function parseRosterText(text: string): RosterEntry[] {
  * Portuguese columns: voo | data | de | para | serviço crew | base | padrao embarque serviço pax
  */
 export function parseCateringText(text: string): CateringEntry[] {
-  const entries: CateringEntry[] = [];
+  const entriesByKey = new Map<string, CateringEntry>();
 
   for (const rawLine of text.split('\n')) {
     const line = rawLine.trim();
-    if (!line || !/^\d+\s+\d{2}-\d{2}-\d{4}\s+/.test(line)) continue;
+    const entry = parseCateringRow(line);
+    if (entry) entriesByKey.set(buildCateringEntryKey(entry), entry);
+  }
 
-    const match = line.match(/^(\d+)\s+(\d{2}-\d{2}-\d{4})\s+([A-Z]{3})\s+([A-Z]{3})\s+(.+?)\s+([A-Z]{3})\s+(.+)$/u);
-    if (!match) continue;
+  if (entriesByKey.size === 0) {
+    for (const entry of parseCateringRowsFromTextBlock(text)) {
+      entriesByKey.set(buildCateringEntryKey(entry), entry);
+    }
+  }
+
+  return [...entriesByKey.values()];
+}
+
+function parseCateringRow(line: string): CateringEntry | null {
+  if (!line) return null;
+
+  const match = line.match(
+    /^(?:G3\s*)?(\d+)\s+(\d{2}[-/]\d{2}[-/]\d{4})\s+([A-Z]{3})\s+([A-Z]{3})\s+(.+?)\s+([A-Z]{3})\s+(.+)$/iu
+  );
+  if (!match) return null;
+
+  return {
+    flightNumber: `G3${match[1]}`,
+    date: normalizeCateringDate(match[2]),
+    origin: match[3].toUpperCase(),
+    destination: match[4].toUpperCase(),
+    crewService: match[5].trim(),
+    base: match[6].toUpperCase(),
+    paxService: match[7].trim(),
+  };
+}
+
+function parseCateringRowsFromTextBlock(text: string): CateringEntry[] {
+  const normalizedText = text.replace(/\s+/g, ' ').trim();
+  const rowPattern =
+    /(?:^|\s)(?:G3\s*)?(\d+)\s+(\d{2}[-/]\d{2}[-/]\d{4})\s+([A-Z]{3})\s+([A-Z]{3})\s+(.+?)(?=\s+(?:G3\s*)?\d+\s+\d{2}[-/]\d{2}[-/]\d{4}\s+[A-Z]{3}\s+[A-Z]{3}\s+|$)/giu;
+  const entries: CateringEntry[] = [];
+
+  for (const match of normalizedText.matchAll(rowPattern)) {
+    const serviceMatch = match[5].trim().match(/^(.+?)\s+([A-Z]{3})\s+(.+)$/u);
+    if (!serviceMatch) continue;
 
     entries.push({
       flightNumber: `G3${match[1]}`,
-      date: match[2],
-      origin: match[3],
-      destination: match[4],
-      crewService: match[5],
-      base: match[6],
-      paxService: match[7].trim(),
+      date: normalizeCateringDate(match[2]),
+      origin: match[3].toUpperCase(),
+      destination: match[4].toUpperCase(),
+      crewService: serviceMatch[1].trim(),
+      base: serviceMatch[2].toUpperCase(),
+      paxService: serviceMatch[3].trim(),
     });
   }
 
   return entries;
+}
+
+function normalizeCateringDate(value: string) {
+  return value.replace(/\//g, '-');
+}
+
+function buildCateringEntryKey(entry: CateringEntry) {
+  return [
+    entry.flightNumber,
+    entry.date,
+    entry.origin,
+    entry.destination,
+    entry.crewService,
+    entry.base,
+    entry.paxService,
+  ].join('|');
 }
 
 function normalizeTime(value: string): string {

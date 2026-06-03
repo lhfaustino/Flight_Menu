@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ADMIN_EMAIL } from '@/lib/admin-access';
 import { extractPdfText, parseRosterText } from '@/lib/pdf-parsing';
+import { MEAL_PLAN_NOT_FOUND } from '@/lib/flight-menu-processing';
 
 type CateringRuleRow = {
   unique_key: string;
@@ -123,8 +124,8 @@ export async function uploadRoster(formData: FormData) {
         destination: entry.destination,
         departure_time: departureTime.toISOString(),
         arrival_time: arrivalTime.toISOString(),
-        service_type: catering?.service_type || null,
-        meal_type: catering?.meal_type || null,
+        service_type: catering?.service_type || MEAL_PLAN_NOT_FOUND,
+        meal_type: catering?.meal_type || MEAL_PLAN_NOT_FOUND,
       });
     });
 

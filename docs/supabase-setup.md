@@ -1,6 +1,6 @@
 # Supabase Setup and Best Practices
 
-This guide covers how to manage and extend the Supabase backend for this boilerplate.
+This guide covers how to manage and extend the Supabase backend for Flight Menu.
 
 ## Local Development Setup
 

@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isAdminEmail } from '@/lib/admin-access';
-import { extractPdfText, parseCateringText } from '@/lib/pdf-parsing';
+import { processCateringPdfBuffer } from '@/lib/flight-menu-processing';
 
 export async function uploadCateringPlan(formData: FormData) {
   const supabase = await createClient();
@@ -32,17 +32,7 @@ export async function uploadCateringPlan(formData: FormData) {
     const arrayBuffer = await file.arrayBuffer();
     const pdfBuffer = Buffer.from(arrayBuffer);
     
-    // 2. Extract text from PDF
-    const pdfText = await extractPdfText(pdfBuffer);
-    
-    // 3. Parse catering entries
-    const cateringEntries = parseCateringText(pdfText);
-    
-    if (cateringEntries.length === 0) {
-      throw new Error('No catering data found in PDF. Check the format.');
-    }
-    
-    // 4. Upload PDF to Supabase Storage
+    // 2. Upload PDF to Supabase Storage
     const fileName = `${user.id}/${Date.now()}-${file.name}`;
     const { error: uploadError } = await supabase.storage
       .from('catering-plans')
@@ -58,92 +48,23 @@ export async function uploadCateringPlan(formData: FormData) {
       ? ` PDF file was parsed, but not saved to Storage: ${uploadError.message}`
       : '';
     
-    // 5. Create catering rules from entries
-    const cateringRules = cateringEntries.map(entry => ({
-      unique_key: buildUniqueKey(entry.date, entry.flightNumber, entry.origin),
-      user_id: user.id,
-      flight_number: entry.flightNumber,
-      service_date: toIsoDate(entry.date),
-      origin_iata: entry.origin || null,
-      destination_iata: entry.destination || null,
-      service_type: entry.crewService || 'Standard',
-      meal_type: entry.paxService || 'Meal',
-      priority: 1,
-    }));
-
     const adminClient = createAdminClient();
-    const existingKeys = await fetchExistingKeys(
-      adminClient,
-      'catering_rules',
-      cateringRules.map((rule) => rule.unique_key),
-      user.id
-    );
-    const newCateringRules = cateringRules.filter((rule) => !existingKeys.has(rule.unique_key));
-    const existingCateringRules = cateringRules.filter((rule) => existingKeys.has(rule.unique_key));
-
-    const { error: insertError } = newCateringRules.length > 0
-      ? await adminClient
-          .from('catering_rules')
-          .insert(newCateringRules)
-      : { error: null };
-
-    let updateErrorMessage: string | null = null;
-    for (const rule of existingCateringRules) {
-      const { error } = await adminClient
-        .from('catering_rules')
-        .update({
-          flight_number: rule.flight_number,
-          service_date: rule.service_date,
-          origin_iata: rule.origin_iata,
-          destination_iata: rule.destination_iata,
-          service_type: rule.service_type,
-          meal_type: rule.meal_type,
-          priority: rule.priority,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', user.id)
-        .eq('unique_key', rule.unique_key);
-
-      if (error) {
-        updateErrorMessage = error.message;
-        break;
-      }
-    }
-
-    const flightLegsUpdated = await updateFlightLegMeals(adminClient, cateringRules);
-    
-    if (insertError) {
-      if (insertError.message.toLowerCase().includes('row-level security')) {
-        return {
-          success: true,
-          rulesAdded: 0,
-          rules: cateringEntries,
-          message: `Parsed ${cateringRules.length} catering rules, but Supabase blocked saving them with row-level security. ${flightLegsUpdated} existing flight legs were enriched with meal information.${storageWarning}`,
-        };
-      }
-
-      return {
-        success: true,
-        rulesAdded: 0,
-        rules: cateringEntries,
-        message: `Parsed ${cateringRules.length} catering rules, but could not save them: ${insertError.message}. ${flightLegsUpdated} existing flight legs were enriched with meal information.${storageWarning}`,
-      };
-    }
-
-    if (updateErrorMessage) {
-      return {
-        success: true,
-        rulesAdded: newCateringRules.length,
-        rules: cateringEntries,
-        message: `Imported ${newCateringRules.length} new meal plan rules, but could not update some existing rules: ${updateErrorMessage}. ${flightLegsUpdated} existing flight legs were enriched with meal information.${storageWarning}`,
-      };
-    }
+    const result = await processCateringPdfBuffer({
+      supabase: adminClient,
+      userId: user.id,
+      pdfBuffer,
+      sourceName: file.name,
+      refreshAllFlightLegs: true,
+    });
     
     return {
       success: true,
-      rulesAdded: newCateringRules.length,
-      rules: cateringEntries,
-      message: `Successfully saved the fixed meal plan. ${newCateringRules.length} new rules added, ${existingCateringRules.length} existing rules updated. ${flightLegsUpdated} existing flight legs were enriched with meal information.${storageWarning}`,
+      rulesAdded: result.rulesInserted,
+      rules: result.entries,
+      message:
+        `Meal plan replaced successfully. ${result.rulesDeleted} old rules deleted, ` +
+        `${result.rulesInserted} new rules inserted, ${result.flightLegsCleared} old flight leg meals cleared, ` +
+        `${result.flightLegsUpdated} flight legs updated from the new PDF.${storageWarning}`,
     };
   } catch (error) {
     return {
@@ -151,81 +72,4 @@ export async function uploadCateringPlan(formData: FormData) {
       error: error instanceof Error ? error.message : 'Unknown error during upload',
     };
   }
-}
-
-function toIsoDate(value: string) {
-  const match = value.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-  if (!match) return value;
-
-  return `${match[3]}-${match[2]}-${match[1]}`;
-}
-
-function buildUniqueKey(date: string, flightNumber: string, origin: string) {
-  return `${toIsoDate(date)}-${normalizeFlightNumber(flightNumber)}-${origin.toUpperCase()}`;
-}
-
-function normalizeFlightNumber(value: string) {
-  const digits = value.replace(/\D/g, '');
-  return digits.startsWith('3') && digits.length === 5 ? digits.slice(1) : digits;
-}
-
-async function fetchExistingKeys(supabase: any, table: string, keys: string[], userId?: string) {
-  const existing = new Set<string>();
-
-  for (const chunk of chunkArray([...new Set(keys)], 250)) {
-    let query = supabase
-      .from(table)
-      .select('unique_key')
-      .in('unique_key', chunk);
-
-    if (userId) {
-      query = query.eq('user_id', userId);
-    }
-
-    const { data } = await query;
-
-    data?.forEach((row: { unique_key: string | null }) => {
-      if (row.unique_key) existing.add(row.unique_key);
-    });
-  }
-
-  return existing;
-}
-
-async function updateFlightLegMeals(
-  supabase: any,
-  cateringRules: Array<{
-    unique_key: string;
-    service_type: string;
-    meal_type: string;
-  }>
-) {
-  const existingFlightLegKeys = await fetchExistingKeys(
-    supabase,
-    'flight_leg_details',
-    cateringRules.map((rule) => rule.unique_key)
-  );
-  let updated = 0;
-
-  for (const rule of cateringRules.filter((rule) => existingFlightLegKeys.has(rule.unique_key))) {
-    const { error } = await supabase
-      .from('flight_leg_details')
-      .update({
-        service_type: rule.service_type,
-        meal_type: rule.meal_type,
-      })
-      .eq('unique_key', rule.unique_key);
-
-    if (!error) updated += 1;
-  }
-
-  return updated;
-}
-
-function chunkArray<T>(items: T[], size: number) {
-  const chunks: T[][] = [];
-  for (let index = 0; index < items.length; index += size) {
-    chunks.push(items.slice(index, index + size));
-  }
-  return chunks;
 }

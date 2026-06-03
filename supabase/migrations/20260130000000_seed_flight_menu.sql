@@ -1,18 +1,18 @@
--- Migration: Seed Befree Academy and Auto-Join
+-- Migration: Seed Flight Menu and Auto-Join
 -- Date: 2026-01-30
 
--- 1. Ensure "Befree Academy" organization exists
+-- 1. Ensure "Flight Menu" organization exists
 DO $$
 DECLARE
   org_id UUID;
 BEGIN
   -- Create the organization if it doesn't exist
   INSERT INTO public.organizations (name, slug)
-  VALUES ('Befree Academy', 'befree-academy')
+  VALUES ('Flight Menu', 'flight-menu')
   ON CONFLICT (slug) DO NOTHING;
 
   -- Get the ID (whether newly created or existing)
-  SELECT id INTO org_id FROM public.organizations WHERE slug = 'befree-academy';
+  SELECT id INTO org_id FROM public.organizations WHERE slug = 'flight-menu';
 
   -- 2. Add ALL existing users to this organization as 'member'
   -- We select from auth.users (Supabase managed table)
@@ -23,7 +23,7 @@ BEGIN
 END $$;
 
 -- 3. Update the handle_new_user function trigger
--- This ensures ANY future user is automatically added to Befree Academy
+-- This ensures ANY future user is automatically added to Flight Menu
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS TRIGGER AS $$
 DECLARE
@@ -33,8 +33,8 @@ BEGIN
   INSERT INTO public.profiles (id, email, full_name, avatar_url)
   VALUES (new.id, new.email, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'avatar_url');
 
-  -- 2. Get Befree Academy ID
-  SELECT id INTO org_id FROM public.organizations WHERE slug = 'befree-academy';
+  -- 2. Get Flight Menu ID
+  SELECT id INTO org_id FROM public.organizations WHERE slug = 'flight-menu';
 
   -- 3. Add to Organization
   -- We check for NULL just in case the org was deleted or doesn't exist (though it should)

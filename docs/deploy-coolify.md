@@ -62,7 +62,7 @@ Keep the service role key private. It is server-side only.
 From the project folder:
 
 ```bash
-cd c:\Users\lyhen\OneDrive\Documentos\flight_menu\befree-nextjs-boilerplate
+cd "C:\Users\lyhen\OneDrive\Documentos\flight_menu\Flight menu"
 ```
 
 Check what will be committed:

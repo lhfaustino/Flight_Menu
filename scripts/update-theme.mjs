@@ -93,7 +93,7 @@ if (!colorMatch) {
 }
 
 const primaryColor = colorMatch[1];
-const appName = nameMatch ? nameMatch[1] : 'Befree App';
+const appName = nameMatch ? nameMatch[1] : 'Flight Menu';
 
 console.log(`🎨 Generating palette for ${appName} (${primaryColor})...`);
 
