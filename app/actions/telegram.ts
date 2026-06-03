@@ -126,12 +126,17 @@ export async function disconnectTelegram() {
   };
 }
 
-export async function sendTodayFlightInformation() {
+export async function sendTodayFlightInformation(selectedFlightKeys: string[] = []) {
   const supabase = await createClient();
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
     return { success: false, error: 'Unauthorized' };
+  }
+
+  const uniqueSelectedKeys = [...new Set(selectedFlightKeys.map((key) => key.trim()).filter(Boolean))];
+  if (uniqueSelectedKeys.length === 0) {
+    return { success: false, error: 'Selecione ao menos um voo para enviar.' };
   }
 
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -155,29 +160,22 @@ export async function sendTodayFlightInformation() {
   }
 
   const timezone = String(profile?.timezone ?? 'America/Sao_Paulo');
-  const today = formatDateInTimeZone(new Date(), timezone);
-  const queryStart = shiftUtcDate(today, -1).toISOString();
-  const queryEnd = shiftUtcDate(today, 2).toISOString();
-
   const { data: flights, error: flightsError } = await supabase
     .from('flight_leg_details')
     .select('unique_key, flight_number, origin, destination, departure_time, arrival_time, service_type, meal_type')
     .eq('user_id', user.id)
-    .gte('departure_time', queryStart)
-    .lt('departure_time', queryEnd)
+    .in('unique_key', uniqueSelectedKeys)
     .order('departure_time', { ascending: true });
 
   if (flightsError) {
     return { success: false, error: flightsError.message };
   }
 
-  const todayFlights = (flights ?? []).filter((flight: TodayFlight) => getFlightRosterDate(flight) === today);
-
-  if (todayFlights.length === 0) {
-    return { success: false, error: 'No flights found for today.' };
+  if (!flights?.length) {
+    return { success: false, error: 'Nenhum voo selecionado foi encontrado.' };
   }
 
-  const message = buildTodayFlightMessage(todayFlights, today, timezone);
+  const message = buildSelectedFlightMessage(flights, timezone);
   const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -198,7 +196,7 @@ export async function sendTodayFlightInformation() {
 
   return {
     success: true,
-    message: `Today information sent to Telegram with ${todayFlights.length} ${todayFlights.length === 1 ? 'flight' : 'flights'}.`,
+    message: `${flights.length} ${flights.length === 1 ? 'voo enviado' : 'voos enviados'} pelo Telegram.`,
   };
 }
 
@@ -214,13 +212,12 @@ async function getTelegramBotUsername(botToken: string) {
   return payload.result?.username ?? null;
 }
 
-function buildTodayFlightMessage(flights: TodayFlight[], today: string, timezone: string) {
-  const titleDate = formatDisplayDate(today);
+function buildSelectedFlightMessage(flights: TodayFlight[], timezone: string) {
   const lines = [
-    `Flights today - ${titleDate}`,
+    'Voos selecionados',
     '',
     ...flights.flatMap((flight, index) => [
-      `${index + 1}. ${formatTime(flight.departure_time, timezone)} ${flight.flight_number ?? '-'} ${flight.origin ?? '-'} -> ${flight.destination ?? '-'}`,
+      `${index + 1}. ${formatDisplayDate(getFlightRosterDate(flight))} ${formatTime(flight.departure_time, timezone)} ${flight.flight_number ?? '-'} ${flight.origin ?? '-'} -> ${flight.destination ?? '-'}`,
       `Crew service: ${flight.service_type ?? '-'}`,
       `Passenger service: ${flight.meal_type ?? '-'}`,
       '',
@@ -228,20 +225,6 @@ function buildTodayFlightMessage(flights: TodayFlight[], today: string, timezone
   ];
 
   return lines.join('\n').trim();
-}
-
-function formatDateInTimeZone(date: Date, timezone: string) {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: timezone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(date);
-
-  const year = parts.find((part) => part.type === 'year')?.value ?? '0000';
-  const month = parts.find((part) => part.type === 'month')?.value ?? '00';
-  const day = parts.find((part) => part.type === 'day')?.value ?? '00';
-  return `${year}-${month}-${day}`;
 }
 
 function formatTime(value: string | null, _timezone: string) {
@@ -265,10 +248,4 @@ function formatDisplayDate(value: string) {
   if (!match) return value;
 
   return `${match[3]}/${match[2]}/${match[1]}`;
-}
-
-function shiftUtcDate(isoDate: string, days: number) {
-  const date = new Date(`${isoDate}T00:00:00.000Z`);
-  date.setUTCDate(date.getUTCDate() + days);
-  return date;
 }

@@ -6,6 +6,7 @@ import { getCurrentMealPlanVersion, refreshCurrentUserMealPlan, uploadRoster } f
 import { sendTodayFlightInformation } from '@/app/actions/telegram';
 import { RosterUploadCard } from '@/components/features/roster/RosterUploadCard';
 import { Button } from '@/components/ui/Button';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { Dialog, Modal, ModalOverlay } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { RefreshCw, Send } from 'lucide-react';
@@ -50,14 +51,19 @@ export function FlightMenuUploadWorkspace({
   const [notifiedMealPlanUpdatedAt, setNotifiedMealPlanUpdatedAt] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [rows, setRows] = useState<FlightMenuRow[]>(initialRows);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
   const [todayIso, setTodayIso] = useState('');
   const visibleRows = todayIso ? rows.filter((row) => isTodayOrFuture(row.date, todayIso)) : rows;
-  const todayRowsCount = todayIso ? visibleRows.filter((row) => isToday(row.date, todayIso)).length : 0;
   const mealPlanStorageKey = currentUserId ? `flight-menu:meal-plan-refresh:${currentUserId}` : null;
 
   useEffect(() => {
     setRows(initialRows);
   }, [initialRows]);
+
+  useEffect(() => {
+    const rowIds = new Set(rows.map((row) => row.id));
+    setSelectedRowIds((currentIds) => currentIds.filter((id) => rowIds.has(id)));
+  }, [rows]);
 
   useEffect(() => {
     setLatestMealPlanUpdatedAt(currentMealPlanUpdatedAt);
@@ -136,25 +142,40 @@ export function FlightMenuUploadWorkspace({
   };
 
   const handleSendTodayInformation = async () => {
+    if (selectedRowIds.length === 0) {
+      setMessage({ type: 'error', text: 'Selecione ao menos um voo para enviar.' });
+      return;
+    }
+
     setIsSendingTelegram(true);
     setMessage(null);
 
     try {
-      const result = await sendTodayFlightInformation();
+      const result = await sendTodayFlightInformation(selectedRowIds);
 
       if (result.success) {
-        setMessage({ type: 'success', text: result.message ?? 'Today information sent.' });
+        setMessage({ type: 'success', text: result.message ?? 'Voos enviados pelo Telegram.' });
       } else {
-        setMessage({ type: 'error', text: result.error ?? 'Could not send today information.' });
+        setMessage({ type: 'error', text: result.error ?? 'Nao foi possivel enviar pelo Telegram.' });
       }
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error instanceof Error ? error.message : 'Could not send today information.',
+        text: error instanceof Error ? error.message : 'Nao foi possivel enviar pelo Telegram.',
       });
     } finally {
       setIsSendingTelegram(false);
     }
+  };
+
+  const toggleRowSelection = (rowId: string, isSelected: boolean) => {
+    setSelectedRowIds((currentIds) => {
+      if (isSelected) {
+        return currentIds.includes(rowId) ? currentIds : [...currentIds, rowId];
+      }
+
+      return currentIds.filter((id) => id !== rowId);
+    });
   };
 
   const handleRefreshMealPlan = async () => {
@@ -211,12 +232,12 @@ export function FlightMenuUploadWorkspace({
         <Button
           variant="secondary"
           onPress={handleSendTodayInformation}
-          isDisabled={isSendingTelegram || todayRowsCount === 0}
+          isDisabled={isSendingTelegram || selectedRowIds.length === 0}
           className="w-full sm:w-auto"
           size="lg"
           iconLeading={Send}
         >
-          {isSendingTelegram ? 'Sending...' : 'Send today information'}
+          {isSendingTelegram ? 'Enviando...' : 'Enviar'}
         </Button>
         <Button
           onPress={() => {
@@ -283,7 +304,7 @@ export function FlightMenuUploadWorkspace({
           <p className="mt-1 text-sm text-gray-500">
             {visibleRows.length === 0
               ? 'Envie sua escala para carregar seus voos e aplicar os serviços de bordo disponíveis.'
-              : `${visibleRows.length} ${visibleRows.length === 1 ? 'voo' : 'voos'}${todayRowsCount > 0 ? `, ${todayRowsCount} hoje.` : '.'}`}
+              : `${visibleRows.length} ${visibleRows.length === 1 ? 'voo' : 'voos'}${selectedRowIds.length > 0 ? `, ${selectedRowIds.length} selecionado${selectedRowIds.length === 1 ? '' : 's'}.` : '.'}`}
           </p>
         </div>
 
@@ -291,6 +312,9 @@ export function FlightMenuUploadWorkspace({
           <Table>
             <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12 px-4">
+                    <span className="sr-only">Selecionar</span>
+                  </TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Flight</TableHead>
                   <TableHead>Origin</TableHead>
@@ -305,6 +329,13 @@ export function FlightMenuUploadWorkspace({
                   key={row.id}
                   className={todayIso && isToday(row.date, todayIso) ? 'bg-blue-50 hover:bg-blue-50' : undefined}
                 >
+                  <TableCell className="px-4">
+                    <Checkbox
+                      aria-label={`Selecionar voo ${row.flightNumber}`}
+                      isSelected={selectedRowIds.includes(row.id)}
+                      onChange={(isSelected) => toggleRowSelection(row.id, isSelected)}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium text-gray-900">{formatDate(row.date)}</TableCell>
                   <TableCell>{row.flightNumber}</TableCell>
                   <TableCell>{row.origin}</TableCell>
