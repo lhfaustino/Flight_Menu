@@ -54,6 +54,10 @@ export function FlightMenuUploadWorkspace({
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
   const [todayIso, setTodayIso] = useState('');
   const visibleRows = todayIso ? rows.filter((row) => isTodayOrFuture(row.date, todayIso)) : rows;
+  const visibleRowIds = visibleRows.map((row) => row.id);
+  const selectedVisibleRowCount = visibleRowIds.filter((id) => selectedRowIds.includes(id)).length;
+  const areAllVisibleRowsSelected = visibleRows.length > 0 && selectedVisibleRowCount === visibleRows.length;
+  const areSomeVisibleRowsSelected = selectedVisibleRowCount > 0 && selectedVisibleRowCount < visibleRows.length;
   const mealPlanStorageKey = currentUserId ? `flight-menu:meal-plan-refresh:${currentUserId}` : null;
 
   useEffect(() => {
@@ -175,6 +179,18 @@ export function FlightMenuUploadWorkspace({
       }
 
       return currentIds.filter((id) => id !== rowId);
+    });
+  };
+
+  const toggleAllVisibleRows = (isSelected: boolean) => {
+    setSelectedRowIds((currentIds) => {
+      const visibleIds = new Set(visibleRowIds);
+
+      if (!isSelected) {
+        return currentIds.filter((id) => !visibleIds.has(id));
+      }
+
+      return [...new Set([...currentIds, ...visibleRowIds])];
     });
   };
 
@@ -312,15 +328,21 @@ export function FlightMenuUploadWorkspace({
           <Table>
             <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12 px-4">
-                    <span className="sr-only">Selecionar</span>
+                  <TableHead className="h-9 w-10 px-3">
+                    <Checkbox
+                      aria-label="Selecionar todos os voos visiveis"
+                      isDisabled={visibleRows.length === 0}
+                      isIndeterminate={areSomeVisibleRowsSelected}
+                      isSelected={areAllVisibleRowsSelected}
+                      onChange={toggleAllVisibleRows}
+                    />
                   </TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Flight</TableHead>
-                  <TableHead>Origin</TableHead>
-                  <TableHead>Destiny</TableHead>
-                  <TableHead>Service crew</TableHead>
-                  <TableHead>Service pax</TableHead>
+                  <TableHead className="h-9 px-3">Date</TableHead>
+                  <TableHead className="h-9 px-3">Flight</TableHead>
+                  <TableHead className="h-9 px-3">Origin</TableHead>
+                  <TableHead className="h-9 px-3">Destiny</TableHead>
+                  <TableHead className="h-9 px-3">Service crew</TableHead>
+                  <TableHead className="h-9 px-3">Service pax</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -329,19 +351,19 @@ export function FlightMenuUploadWorkspace({
                   key={row.id}
                   className={todayIso && isToday(row.date, todayIso) ? 'bg-blue-50 hover:bg-blue-50' : undefined}
                 >
-                  <TableCell className="px-4">
+                  <TableCell className="px-3 py-2">
                     <Checkbox
                       aria-label={`Selecionar voo ${row.flightNumber}`}
                       isSelected={selectedRowIds.includes(row.id)}
                       onChange={(isSelected) => toggleRowSelection(row.id, isSelected)}
                     />
                   </TableCell>
-                  <TableCell className="font-medium text-gray-900">{formatDate(row.date)}</TableCell>
-                  <TableCell>{row.flightNumber}</TableCell>
-                  <TableCell>{row.origin}</TableCell>
-                  <TableCell>{row.destination}</TableCell>
-                  <TableCell>{row.crewService}</TableCell>
-                  <TableCell>{row.paxService}</TableCell>
+                  <TableCell className="px-3 py-2 font-medium text-gray-900">{formatDate(row.date)}</TableCell>
+                  <TableCell className="px-3 py-2">{row.flightNumber}</TableCell>
+                  <TableCell className="px-3 py-2">{row.origin}</TableCell>
+                  <TableCell className="px-3 py-2">{row.destination}</TableCell>
+                  <TableCell className="px-3 py-2">{row.crewService}</TableCell>
+                  <TableCell className="px-3 py-2">{row.paxService}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
