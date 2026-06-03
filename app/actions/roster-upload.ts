@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ADMIN_EMAIL } from '@/lib/admin-access';
 import { extractPdfText, parseRosterText } from '@/lib/pdf-parsing';
-import { MEAL_PLAN_NOT_FOUND } from '@/lib/flight-menu-processing';
+import { MEAL_PLAN_NOT_FOUND, refreshUserFlightLegMealsFromCurrentMealPlan } from '@/lib/flight-menu-processing';
 
 type CateringRuleRow = {
   unique_key: string;
@@ -232,6 +232,96 @@ export async function uploadRoster(formData: FormData) {
   }
 }
 
+export async function refreshCurrentUserMealPlan() {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error('Unauthorized');
+  }
+
+  try {
+    const adminClient = createAdminClient();
+    const { data: adminProfile, error: adminProfileError } = await adminClient
+      .from('profiles')
+      .select('id')
+      .eq('email', ADMIN_EMAIL)
+      .maybeSingle();
+
+    if (adminProfileError) {
+      return {
+        success: false,
+        rows: await fetchFlightMenuRows(supabase, user.id),
+        error: `Could not load the admin meal plan owner: ${adminProfileError.message}`,
+      };
+    }
+
+    if (!adminProfile?.id) {
+      return {
+        success: false,
+        rows: await fetchFlightMenuRows(supabase, user.id),
+        error: 'No admin meal plan was found yet.',
+      };
+    }
+
+    const result = await refreshUserFlightLegMealsFromCurrentMealPlan(adminClient, user.id, adminProfile.id);
+    const rows = await fetchFlightMenuRows(supabase, user.id);
+    const mealPlanUpdatedAt = await fetchCurrentMealPlanUpdatedAt(adminClient, adminProfile.id);
+
+    return {
+      success: true,
+      rows,
+      mealPlanUpdatedAt,
+      message:
+        `Servicos atualizados. ${result.matched} voos encontrados no meal plan, ` +
+        `${result.notFound} marcados como not found.`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      rows: await fetchFlightMenuRows(supabase, user.id),
+      error: error instanceof Error ? error.message : 'Unknown error while refreshing services.',
+    };
+  }
+}
+
+export async function getCurrentMealPlanVersion() {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, mealPlanUpdatedAt: null, error: 'Unauthorized' };
+  }
+
+  try {
+    const adminClient = createAdminClient();
+    const { data: adminProfile, error: adminProfileError } = await adminClient
+      .from('profiles')
+      .select('id')
+      .eq('email', ADMIN_EMAIL)
+      .maybeSingle();
+
+    if (adminProfileError) {
+      return { success: false, mealPlanUpdatedAt: null, error: adminProfileError.message };
+    }
+
+    if (!adminProfile?.id) {
+      return { success: true, mealPlanUpdatedAt: null };
+    }
+
+    return {
+      success: true,
+      mealPlanUpdatedAt: await fetchCurrentMealPlanUpdatedAt(adminClient, adminProfile.id),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      mealPlanUpdatedAt: null,
+      error: error instanceof Error ? error.message : 'Unknown error while checking meal plan version.',
+    };
+  }
+}
+
 function buildUniqueKey(date: string, flightNumber: string, origin: string) {
   return `${normalizeDate(date)}-${normalizeFlightNumber(flightNumber)}-${origin.toUpperCase()}`;
 }
@@ -327,6 +417,18 @@ async function fetchCateringByKey(keys: string[]) {
   }
 
   return cateringByKey;
+}
+
+async function fetchCurrentMealPlanUpdatedAt(supabase: any, adminUserId: string) {
+  const { data } = await supabase
+    .from('catering_rules')
+    .select('updated_at, created_at')
+    .eq('user_id', adminUserId)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return data?.updated_at ?? data?.created_at ?? null;
 }
 
 async function fetchFlightMenuRows(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {

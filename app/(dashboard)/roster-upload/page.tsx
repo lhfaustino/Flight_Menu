@@ -1,6 +1,6 @@
 import { FlightMenuUploadWorkspace } from '@/components/features/flight-menu/FlightMenuUploadWorkspace';
 import { ADMIN_EMAIL } from '@/lib/admin-access';
-import { refreshUserFlightLegMealsIfMealPlanChanged } from '@/lib/flight-menu-processing';
+import { fetchFlightMenuRows } from '@/lib/flight-menu-processing';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
@@ -9,6 +9,7 @@ export default async function RosterUploadPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  let currentMealPlanUpdatedAt: string | null = null;
 
   if (user) {
     const adminClient = createAdminClient();
@@ -19,28 +20,19 @@ export default async function RosterUploadPage() {
       .maybeSingle();
 
     if (adminProfile?.id) {
-      await refreshUserFlightLegMealsIfMealPlanChanged(adminClient, user.id, adminProfile.id);
+      const { data: latestRule } = await adminClient
+        .from('catering_rules')
+        .select('updated_at, created_at')
+        .eq('user_id', adminProfile.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      currentMealPlanUpdatedAt = latestRule?.updated_at ?? latestRule?.created_at ?? null;
     }
   }
 
-  const { data: flightLegs } = user
-    ? await supabase
-        .from('flight_leg_details')
-        .select('unique_key, flight_number, origin, destination, departure_time, service_type, meal_type')
-        .eq('user_id', user.id)
-        .order('departure_time', { ascending: true })
-    : { data: [] };
-
-  const initialRows =
-    flightLegs?.map((flightLeg, index) => ({
-      id: flightLeg.unique_key ?? `${flightLeg.flight_number}-${flightLeg.departure_time}-${index}`,
-      date: getIsoDate(flightLeg.departure_time),
-      flightNumber: flightLeg.flight_number ?? '-',
-      origin: flightLeg.origin ?? '-',
-      destination: flightLeg.destination ?? '-',
-      crewService: flightLeg.service_type ?? '-',
-      paxService: flightLeg.meal_type ?? '-',
-    })) ?? [];
+  const initialRows = user ? await fetchFlightMenuRows(supabase, user.id) : [];
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -50,13 +42,12 @@ export default async function RosterUploadPage() {
           <p className="mt-2 text-gray-600">Envie sua escala para aplicar os serviços de bordo cadastrados.</p>
         </div>
         
-        <FlightMenuUploadWorkspace initialRows={initialRows} />
+        <FlightMenuUploadWorkspace
+          currentMealPlanUpdatedAt={currentMealPlanUpdatedAt}
+          currentUserId={user?.id ?? null}
+          initialRows={initialRows}
+        />
       </div>
     </div>
   );
-}
-
-function getIsoDate(value: string | null) {
-  if (!value) return '';
-  return value.slice(0, 10);
 }
