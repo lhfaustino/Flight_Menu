@@ -44,7 +44,7 @@ export async function updateFlightMenu(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    throw new Error('N„o autorizado');
+    throw new Error('N√£o autorizado');
   }
 
   const rosterFile = formData.get('rosterFile') as File | null;
@@ -55,7 +55,7 @@ export async function updateFlightMenu(formData: FormData) {
   }
 
   if (rosterFile.type !== 'application/pdf' || cateringFile.type !== 'application/pdf') {
-    return { success: false, error: 'Somente arquivos PDF s„o permitidos.' };
+    return { success: false, error: 'Somente arquivos PDF s√£o permitidos.' };
   }
 
   try {
