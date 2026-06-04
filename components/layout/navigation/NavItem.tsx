@@ -36,7 +36,7 @@ interface NavItemBaseProps {
 }
 
 export const NavItemBase = ({ current, type, badge, href, icon: Icon, children, truncate = true, onClick }: NavItemBaseProps) => {
-    const iconElement = Icon && <Icon aria-hidden="true" className="mr-2 size-5 shrink-0 text-fg-quaternary transition-inherit-all" />;
+    const iconElement = Icon && <Icon aria-hidden="true" className="mr-2 size-4 shrink-0 text-fg-quaternary transition-inherit-all" />;
 
     const badgeElement =
         badge && (typeof badge === "string" || typeof badge === "number") ? (

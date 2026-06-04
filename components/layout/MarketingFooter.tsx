@@ -9,39 +9,39 @@ export const MarketingFooter = () => {
             <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">Product</h3>
+                        <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">Produto</h3>
                         <ul className="mt-4 space-y-4">
-                            <li><NavLink href="#">Overview</NavLink></li>
-                            <li><NavLink href="#">Features</NavLink></li>
-                            <li><NavLink href="/pricing">Pricing</NavLink></li>
-                            <li><NavLink href="#">Releases</NavLink></li>
+                            <li><NavLink href="#">Visão geral</NavLink></li>
+                            <li><NavLink href="#">Recursos</NavLink></li>
+                            <li><NavLink href="/pricing">Preços</NavLink></li>
+                            <li><NavLink href="#">Novidades</NavLink></li>
                         </ul>
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">Company</h3>
+                        <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">Empresa</h3>
                         <ul className="mt-4 space-y-4">
-                            <li><NavLink href="#">About</NavLink></li>
-                            <li><NavLink href="#">Careers</NavLink></li>
+                            <li><NavLink href="#">Sobre</NavLink></li>
+                            <li><NavLink href="#">Carreiras</NavLink></li>
                             <li><NavLink href="#">Blog</NavLink></li>
-                            <li><NavLink href="/contact">Contact</NavLink></li>
+                            <li><NavLink href="/contact">Contato</NavLink></li>
                         </ul>
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">Resources</h3>
+                        <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">Recursos</h3>
                         <ul className="mt-4 space-y-4">
-                            <li><NavLink href="#">Documentation</NavLink></li>
-                            <li><NavLink href="/support">Help Center</NavLink></li>
-                            <li><NavLink href="#">Guides</NavLink></li>
-                            <li><NavLink href="#">API Status</NavLink></li>
+                            <li><NavLink href="#">Documentação</NavLink></li>
+                            <li><NavLink href="/support">Central de ajuda</NavLink></li>
+                            <li><NavLink href="#">Guias</NavLink></li>
+                            <li><NavLink href="#">Status da API</NavLink></li>
                         </ul>
                     </div>
                     <div>
                         <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">Legal</h3>
                         <ul className="mt-4 space-y-4">
-                            <li><NavLink href="#">Privacy</NavLink></li>
-                            <li><NavLink href="#">Terms</NavLink></li>
+                            <li><NavLink href="#">Privacidade</NavLink></li>
+                            <li><NavLink href="#">Termos</NavLink></li>
                             <li><NavLink href="#">Cookies</NavLink></li>
-                            <li><NavLink href="#">Licenses</NavLink></li>
+                            <li><NavLink href="#">Licenças</NavLink></li>
                         </ul>
                     </div>
                 </div>
@@ -50,7 +50,7 @@ export const MarketingFooter = () => {
                         <UntitledUiLogo className="h-8 w-auto text-gray-900" />
                     </div>
                     <p className="text-sm text-gray-500">
-                        &copy; {new Date().getFullYear()} Untitled UI. All rights reserved.
+                        &copy; {new Date().getFullYear()} Flight Menu. Todos os direitos reservados.
                     </p>
                 </div>
             </div>

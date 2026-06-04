@@ -40,7 +40,7 @@ export function AlocucoesAdminPage({ initialSpeeches }: { initialSpeeches: Alocu
                 : await createAlocucao(form);
 
             if (!result.success || !result.speech) {
-                setMessage({ type: "error", text: result.error ?? "Nao foi possivel salvar a alocucao." });
+                setMessage({ type: "error", text: result.error ?? "Não foi possível salvar a alocução." });
                 return;
             }
 
@@ -52,11 +52,11 @@ export function AlocucoesAdminPage({ initialSpeeches }: { initialSpeeches: Alocu
 
             setForm(emptyForm);
             setEditingId(null);
-            setMessage({ type: "success", text: editingId ? "Alocucao atualizada." : "Alocucao criada." });
+            setMessage({ type: "success", text: editingId ? "Alocução atualizada." : "Alocução criada." });
         } catch (error) {
             setMessage({
                 type: "error",
-                text: error instanceof Error ? error.message : "Nao foi possivel salvar a alocucao.",
+                text: error instanceof Error ? error.message : "Não foi possível salvar a alocução.",
             });
         } finally {
             setIsSaving(false);
@@ -87,12 +87,12 @@ export function AlocucoesAdminPage({ initialSpeeches }: { initialSpeeches: Alocu
         });
 
         if (!result.success || !result.speech) {
-            setMessage({ type: "error", text: result.error ?? "Nao foi possivel alterar a alocucao." });
+            setMessage({ type: "error", text: result.error ?? "Não foi possível alterar a alocução." });
             return;
         }
 
         setSpeeches((current) => current.map((item) => item.id === speech.id ? result.speech : item));
-        setMessage({ type: "success", text: result.speech.is_active ? "Alocucao ativada." : "Alocucao desativada." });
+        setMessage({ type: "success", text: result.speech.is_active ? "Alocução ativada." : "Alocução desativada." });
     };
 
     const handleDelete = async (speech: AlocucaoRecord) => {
@@ -100,19 +100,19 @@ export function AlocucoesAdminPage({ initialSpeeches }: { initialSpeeches: Alocu
 
         const result = await deleteAlocucao(speech.id);
         if (!result.success) {
-            setMessage({ type: "error", text: result.error ?? "Nao foi possivel remover a alocucao." });
+            setMessage({ type: "error", text: result.error ?? "Não foi possível remover a alocução." });
             return;
         }
 
         setSpeeches((current) => current.filter((item) => item.id !== speech.id));
-        setMessage({ type: "success", text: "Alocucao removida." });
+        setMessage({ type: "success", text: "Alocução removida." });
     };
 
     return (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,520px)]">
             <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
                 <div className="border-b border-gray-200 px-5 py-4">
-                    <h2 className="text-lg font-semibold text-gray-900">Alocucoes cadastradas</h2>
+                    <h2 className="text-lg font-semibold text-gray-900">Alocuções cadastradas</h2>
                     <p className="mt-1 text-sm text-gray-500">{speeches.length} itens no total.</p>
                 </div>
 
@@ -152,15 +152,15 @@ export function AlocucoesAdminPage({ initialSpeeches }: { initialSpeeches: Alocu
 
             <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
                 <div className="mb-5">
-                    <h2 className="text-lg font-semibold text-gray-900">{editingId ? "Editar alocucao" : "Nova alocucao"}</h2>
+                    <h2 className="text-lg font-semibold text-gray-900">{editingId ? "Editar alocução" : "Nova alocução"}</h2>
                 </div>
 
                 <div className="space-y-4">
-                    <TextInput label="Titulo" value={form.title} onChange={(value) => setForm({ ...form, title: value })} />
+                    <TextInput label="Título" value={form.title} onChange={(value) => setForm({ ...form, title: value })} />
                     <TextInput label="Ordem" type="number" value={String(form.sort_order)} onChange={(value) => setForm({ ...form, sort_order: Number(value) })} />
-                    <TextArea label="Portugues" value={form.pt} onChange={(value) => setForm({ ...form, pt: value })} />
-                    <TextArea label="English" value={form.en} onChange={(value) => setForm({ ...form, en: value })} />
-                    <TextArea label="Espanol" value={form.es} onChange={(value) => setForm({ ...form, es: value })} />
+                    <TextArea label="Português" value={form.pt} onChange={(value) => setForm({ ...form, pt: value })} />
+                    <TextArea label="Inglês" value={form.en} onChange={(value) => setForm({ ...form, en: value })} />
+                    <TextArea label="Espanhol" value={form.es} onChange={(value) => setForm({ ...form, es: value })} />
 
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                         <input

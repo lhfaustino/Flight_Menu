@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   if (expectedSecret) {
     const providedSecret = request.headers.get('x-telegram-bot-api-secret-token');
     if (providedSecret !== expectedSecret) {
-      return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ ok: false, error: 'Não autorizado' }, { status: 401 });
     }
   }
 
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
   const token = extractStartToken(text);
   if (!token) {
-    await sendTelegramMessage(String(chatId), 'Open Telegram from Flight Menu settings to connect your account.');
+    await sendTelegramMessage(String(chatId), 'Abra o Telegram pelas configurações do Flight Menu para conectar sua conta.');
     return NextResponse.json({ ok: true });
   }
 
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   if (tokenError || !linkToken || linkToken.used_at || new Date(linkToken.expires_at).getTime() < Date.now()) {
-    await sendTelegramMessage(String(chatId), 'This Flight Menu connection link expired. Please create a new one in settings.');
+    await sendTelegramMessage(String(chatId), 'Este link de conexão do Flight Menu expirou. Crie um novo nas configurações.');
     return NextResponse.json({ ok: true });
   }
 
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     .eq('id', linkToken.user_id);
 
   if (profileError) {
-    await sendTelegramMessage(String(chatId), 'Flight Menu could not connect Telegram. Please try again.');
+    await sendTelegramMessage(String(chatId), 'O Flight Menu não conseguiu conectar o Telegram. Tente novamente.');
     return NextResponse.json({ ok: false, error: profileError.message }, { status: 500 });
   }
 
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     .update({ used_at: now })
     .eq('id', linkToken.id);
 
-  await sendTelegramMessage(String(chatId), 'Telegram connected to Flight Menu.');
+  await sendTelegramMessage(String(chatId), 'Telegram conectado ao Flight Menu.');
 
   return NextResponse.json({ ok: true });
 }

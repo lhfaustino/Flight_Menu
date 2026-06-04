@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, Modal, ModalOverlay } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { GripVertical, Languages, Megaphone, X } from "lucide-react";
@@ -17,13 +17,14 @@ type LanguageCode = "pt" | "en" | "es";
 
 const languages: { code: LanguageCode; label: string; flag: string }[] = [
     { code: "pt", label: "Português", flag: "🇧🇷" },
-    { code: "en", label: "English", flag: "🇺🇸" },
-    { code: "es", label: "Español", flag: "🇪🇸" },
+    { code: "en", label: "Inglês", flag: "🇺🇸" },
+    { code: "es", label: "Espanhol", flag: "🇪🇸" },
 ];
 
 const storageKey = "flight-menu:alocucoes-order";
 
 export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
+    const activeDragIdRef = useRef<string | null>(null);
     const [orderedIds, setOrderedIds] = useState<string[]>(() => speeches.map((speech) => speech.id));
     const [draggedId, setDraggedId] = useState<string | null>(null);
     const [selectedSpeech, setSelectedSpeech] = useState<Alocucao | null>(null);
@@ -55,23 +56,48 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
         return orderedIds.map((id) => speechesById.get(id)).filter(Boolean) as Alocucao[];
     }, [orderedIds, speeches]);
 
-    const handleDrop = (targetId: string) => {
-        if (!draggedId || draggedId === targetId) {
-            setDraggedId(null);
-            return;
-        }
+    const moveBefore = (sourceId: string, targetId: string) => {
+        if (sourceId === targetId) return;
 
         setOrderedIds((currentIds) => {
-            const nextIds = currentIds.filter((id) => id !== draggedId);
+            const nextIds = currentIds.filter((id) => id !== sourceId);
             const targetIndex = nextIds.indexOf(targetId);
-            nextIds.splice(targetIndex, 0, draggedId);
+            if (targetIndex === -1) return currentIds;
+            nextIds.splice(targetIndex, 0, sourceId);
             return nextIds;
         });
-        setDraggedId(null);
     };
 
     const moveToTop = (speechId: string) => {
         setOrderedIds((currentIds) => [speechId, ...currentIds.filter((id) => id !== speechId)]);
+    };
+
+    const handlePointerDown = (event: React.PointerEvent<HTMLButtonElement>, speechId: string) => {
+        event.preventDefault();
+        activeDragIdRef.current = speechId;
+        setDraggedId(speechId);
+        event.currentTarget.setPointerCapture(event.pointerId);
+    };
+
+    const handlePointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+        const sourceId = activeDragIdRef.current;
+        if (!sourceId) return;
+
+        event.preventDefault();
+        const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-speech-id]");
+        const targetId = target?.dataset.speechId;
+
+        if (targetId && targetId !== sourceId) {
+            moveBefore(sourceId, targetId);
+        }
+    };
+
+    const handlePointerEnd = (event: React.PointerEvent<HTMLButtonElement>) => {
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+        }
+        activeDragIdRef.current = null;
+        setDraggedId(null);
     };
 
     const selectedBody = selectedSpeech ? selectedSpeech[language] : "";
@@ -83,7 +109,7 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
                     <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">Biblioteca</p>
                     <h1 className="mt-2 text-3xl font-bold text-gray-900">Alocuções</h1>
                     <p className="mt-2 text-gray-600">
-                        Arraste as alocuções mais usadas para o topo e toque em uma delas para abrir a leitura em tela cheia.
+                        Segure o ícone de arrastar para reorganizar as alocuções mais usadas e toque em uma delas para abrir a leitura em tela cheia.
                     </p>
                 </div>
 
@@ -91,19 +117,19 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
                     {orderedSpeeches.map((speech) => (
                         <div
                             key={speech.id}
-                            draggable
-                            onDragStart={() => setDraggedId(speech.id)}
-                            onDragOver={(event) => event.preventDefault()}
-                            onDrop={() => handleDrop(speech.id)}
-                            onDragEnd={() => setDraggedId(null)}
+                            data-speech-id={speech.id}
                             className={`group flex items-center gap-3 rounded-lg border bg-white px-3 py-3 shadow-sm transition-colors ${
                                 draggedId === speech.id ? "border-brand-300 bg-brand-50" : "border-gray-200 hover:border-brand-200 hover:bg-brand-50/40"
                             }`}
                         >
                             <button
                                 type="button"
-                                className="flex size-9 shrink-0 cursor-grab items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700"
+                                className="flex size-9 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 active:cursor-grabbing active:bg-brand-50 active:text-brand-700"
                                 aria-label={`Mover ${speech.title}`}
+                                onPointerDown={(event) => handlePointerDown(event, speech.id)}
+                                onPointerMove={handlePointerMove}
+                                onPointerUp={handlePointerEnd}
+                                onPointerCancel={handlePointerEnd}
                             >
                                 <GripVertical className="size-5" />
                             </button>

@@ -1,18 +1,14 @@
 import { redirect } from "next/navigation";
+import { getCurrentAdminAccess } from "@/app/actions/admin-users";
 import { getAdminAlocucoes } from "@/app/actions/alocucoes";
 import { AlocucoesAdminPage } from "@/components/features/admin/AlocucoesAdminPage";
-import { isAdminEmail } from "@/lib/admin-access";
-import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-    const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const access = await getCurrentAdminAccess();
 
-    if (!user || !isAdminEmail(user.email)) {
+    if (!access.isAdmin) {
         redirect("/roster-upload");
     }
 

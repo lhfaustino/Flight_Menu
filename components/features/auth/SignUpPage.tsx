@@ -54,24 +54,24 @@ export const SignUpPage = () => {
             if (authData.user) {
                 // 2. Create a default organization for the new user
                 // We do this via server action to ensure membership is created correctly
-                const orgName = `${formData.fullName}'s Team`;
+                const orgName = `Equipe de ${formData.fullName}`;
                 const orgSlug = formData.fullName.toLowerCase().replace(/\s+/g, '-') + '-' + Math.random().toString(36).substring(2, 7);
 
                 await createOrganization(orgName, orgSlug);
 
                 addToast({
-                    title: "Account created!",
-                    description: "Your account and workspace are ready.",
+                    title: "Conta criada!",
+                    description: "Sua conta está pronta.",
                     type: "success",
                 });
 
                 router.push(AUTH_CONFIG.afterLoginPath);
             }
         } catch (err: any) {
-            const errorMessage = err.message || "Something went wrong. Please try again.";
+            const errorMessage = err.message || "Algo deu errado. Tente novamente.";
             setError(errorMessage);
             addToast({
-                title: "Sign up failed",
+                title: "Falha no cadastro",
                 description: errorMessage,
                 type: "error",
             });
@@ -97,11 +97,11 @@ export const SignUpPage = () => {
                 <div className="mx-auto w-full max-w-sm lg:w-96">
                     <div>
                         <UntitledUiLogo className="h-8 w-auto text-brand-600" />
-                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">Create an account</h2>
+                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">Criar conta</h2>
                         <p className="mt-2 text-sm text-gray-600">
-                            Already have an account?{" "}
+                            Já tem uma conta?{" "}
                             <a href="/login" className="font-medium text-brand-600 hover:text-brand-500">
-                                Log in
+                                Entrar
                             </a>
                         </p>
                     </div>
@@ -116,31 +116,31 @@ export const SignUpPage = () => {
 
                             <form onSubmit={handleSubmit} method="POST" className="space-y-6">
                                 <Input
-                                    label="Full name"
+                                    label="Nome completo"
                                     name="fullName"
                                     type="text"
-                                    placeholder="Enter your name"
+                                    placeholder="Digite seu nome"
                                     value={formData.fullName}
                                     onChange={handleChange}
                                     required
                                 />
 
                                 <Input
-                                    label="Email address"
+                                    label="E-mail"
                                     name="email"
                                     type="email"
-                                    placeholder="Enter your email"
+                                    placeholder="Digite seu e-mail"
                                     value={formData.email}
                                     onChange={handleChange}
                                     required
                                 />
 
                                 <Input
-                                    label="Password"
+                                    label="Senha"
                                     name="password"
                                     type="password"
-                                    placeholder="Create a password"
-                                    helperText="Must be at least 8 characters."
+                                    placeholder="Crie uma senha"
+                                    helperText="Deve ter pelo menos 8 caracteres."
                                     value={formData.password}
                                     onChange={handleChange}
                                     required
@@ -152,7 +152,7 @@ export const SignUpPage = () => {
                                         className="w-full justify-center"
                                         isDisabled={isLoading}
                                     >
-                                        {isLoading ? "Creating account..." : "Get started"}
+                                        {isLoading ? "Criando conta..." : "Começar"}
                                     </Button>
                                 </div>
                             </form>
@@ -164,7 +164,7 @@ export const SignUpPage = () => {
                                     <div className="w-full border-t border-gray-200" />
                                 </div>
                                 <div className="relative flex justify-center text-sm">
-                                    <span className="bg-white px-2 text-gray-500">Or sign up with</span>
+                                    <span className="bg-white px-2 text-gray-500">Ou cadastre-se com</span>
                                 </div>
                             </div>
 
@@ -172,19 +172,19 @@ export const SignUpPage = () => {
                                 <div>
                                     <Button variant="secondary" className="w-full justify-center" onClick={() => handleSocialLogin('google')}>
                                         <SocialIcon type="google" className="h-5 w-5" />
-                                        <span className="sr-only">Sign up with Google</span>
+                                        <span className="sr-only">Cadastrar com Google</span>
                                     </Button>
                                 </div>
                                 <div>
                                     <Button variant="secondary" className="w-full justify-center" onClick={() => handleSocialLogin('facebook')}>
                                         <SocialIcon type="facebook" className="h-5 w-5" />
-                                        <span className="sr-only">Sign up with Facebook</span>
+                                        <span className="sr-only">Cadastrar com Facebook</span>
                                     </Button>
                                 </div>
                                 <div>
                                     <Button variant="secondary" className="w-full justify-center" onClick={() => handleSocialLogin('twitter')}>
                                         <SocialIcon type="twitter" className="h-5 w-5" />
-                                        <span className="sr-only">Sign up with Twitter</span>
+                                        <span className="sr-only">Cadastrar com Twitter</span>
                                     </Button>
                                 </div>
                             </div>
@@ -198,7 +198,7 @@ export const SignUpPage = () => {
                 <img
                     className="absolute inset-0 h-full w-full object-cover"
                     src="https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1567&q=80"
-                    alt="Team background"
+                    alt="Imagem de fundo"
                 />
                 <div className="absolute inset-0 bg-gray-900/10 mix-blend-multiply" />
             </div>

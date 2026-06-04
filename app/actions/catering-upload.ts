@@ -1,75 +1,81 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
-import { isAdminEmail } from '@/lib/admin-access';
+import { assertCurrentAdmin } from '@/app/actions/admin-users';
+import { ADMIN_EMAIL } from '@/lib/admin-access';
 import { processCateringPdfBuffer } from '@/lib/flight-menu-processing';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
 export async function uploadCateringPlan(formData: FormData) {
   const supabase = await createClient();
-  
-  // Get authenticated user
+
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    throw new Error('Unauthorized');
+    throw new Error('Não autorizado');
   }
 
-  if (!isAdminEmail(user.email)) {
-    throw new Error('Only the administrator can update the meal plan PDF.');
-  }
-  
+  await assertCurrentAdmin();
+
   const file = formData.get('file') as File;
   if (!file) {
-    throw new Error('No file provided');
+    throw new Error('Nenhum arquivo enviado');
   }
-  
+
   if (file.type !== 'application/pdf') {
-    throw new Error('Only PDF files are allowed');
+    throw new Error('Somente arquivos PDF são permitidos');
   }
-  
+
   try {
-    // 1. Convert file to buffer
+    const adminClient = createAdminClient();
+    const { data: masterProfile, error: masterProfileError } = await adminClient
+      .from('profiles')
+      .select('id')
+      .eq('email', ADMIN_EMAIL)
+      .maybeSingle();
+
+    if (masterProfileError || !masterProfile?.id) {
+      throw new Error('Não foi possível encontrar o perfil master do meal plan.');
+    }
+
     const arrayBuffer = await file.arrayBuffer();
     const pdfBuffer = Buffer.from(arrayBuffer);
-    
-    // 2. Upload PDF to Supabase Storage
-    const fileName = `${user.id}/${Date.now()}-${file.name}`;
+
+    const fileName = `${masterProfile.id}/${Date.now()}-${file.name}`;
     const { error: uploadError } = await supabase.storage
       .from('catering-plans')
       .upload(fileName, pdfBuffer, {
         contentType: 'application/pdf',
       });
-    
+
     if (uploadError) {
       console.warn(`Catering PDF parsed but not saved to Storage: ${uploadError.message}`);
     }
 
     const storageWarning = uploadError
-      ? ` PDF file was parsed, but not saved to Storage: ${uploadError.message}`
+      ? ` O PDF foi processado, mas não foi salvo no Storage: ${uploadError.message}`
       : '';
-    
-    const adminClient = createAdminClient();
+
     const result = await processCateringPdfBuffer({
       supabase: adminClient,
-      userId: user.id,
+      userId: masterProfile.id,
       pdfBuffer,
       sourceName: file.name,
       refreshAllFlightLegs: true,
     });
-    
+
     return {
       success: true,
       rulesAdded: result.rulesInserted,
       rules: result.entries,
       message:
-        `Meal plan replaced successfully. ${result.rulesDeleted} old rules deleted, ` +
-        `${result.rulesInserted} new rules inserted, ${result.flightLegsCleared} old flight leg meals cleared, ` +
-        `${result.flightLegsUpdated} flight legs updated from the new PDF.${storageWarning}`,
+        `Meal plan atualizado com sucesso. ${result.rulesDeleted} regras antigas removidas, ` +
+        `${result.rulesInserted} novas regras inseridas, ${result.flightLegsCleared} voos antigos limpos, ` +
+        `${result.flightLegsUpdated} voos atualizados pelo novo PDF.${storageWarning}`,
     };
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error during upload',
+      error: error instanceof Error ? error.message : 'Erro desconhecido durante o envio',
     };
   }
 }

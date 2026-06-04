@@ -18,22 +18,22 @@ export const SecuritySettingsPage = () => {
                         <div className="p-2 bg-brand-50 rounded-lg">
                             <Shield className="size-5 text-brand-600" />
                         </div>
-                        <CardTitle>Security Settings</CardTitle>
+                        <CardTitle>Configurações de segurança</CardTitle>
                     </div>
-                    <CardDescription>Manage your account security and authentication methods.</CardDescription>
+                    <CardDescription>Gerencie a segurança da conta e os métodos de autenticação.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8">
                     {/* Two-Factor Authentication */}
                     <div className="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                                <h4 className="font-bold text-gray-900">Two-factor authentication (2FA)</h4>
+                                <h4 className="font-bold text-gray-900">Autenticação de dois fatores (2FA)</h4>
                                 <Badge variant={isTwoFactorEnabled ? "success" : "default"} size="sm">
-                                    {isTwoFactorEnabled ? "Enabled" : "Disabled"}
+                                    {isTwoFactorEnabled ? "Ativada" : "Desativada"}
                                 </Badge>
                             </div>
                             <p className="text-sm text-gray-500 max-w-md">
-                                Add an extra layer of security to your account. We'll ask for a code whenever you log in on a new device.
+                                Adicione uma camada extra de segurança à sua conta. Vamos pedir um código sempre que você entrar em um novo dispositivo.
                             </p>
                         </div>
                         <Toggle
@@ -44,41 +44,41 @@ export const SecuritySettingsPage = () => {
 
                     {/* Password Section */}
                     <div className="space-y-4 pt-4 border-t border-gray-100">
-                        <h4 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Password</h4>
+                        <h4 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Senha</h4>
                         <div className="flex items-center justify-between p-4 rounded-xl border border-gray-200">
                             <div className="flex items-center gap-4">
                                 <div className="p-2 bg-gray-100 rounded-lg">
                                     <Lock className="size-4 text-gray-500" />
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-sm font-semibold text-gray-900">Account Password</p>
-                                    <p className="text-xs text-gray-500">Last changed 3 months ago</p>
+                                    <p className="text-sm font-semibold text-gray-900">Senha da conta</p>
+                                    <p className="text-xs text-gray-500">Alterada há 3 meses</p>
                                 </div>
                             </div>
-                            <Button variant="secondary" size="sm">Change password</Button>
+                            <Button variant="secondary" size="sm">Alterar senha</Button>
                         </div>
                     </div>
 
                     {/* Active Sessions */}
                     <div className="space-y-4 pt-4 border-t border-gray-100">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Active Sessions</h4>
+                            <h4 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Sessões ativas</h4>
                             <Button variant="tertiary" size="sm" className="text-error-700 hover:text-error-800">
-                                Log out from all other devices
+                                Sair de todos os outros dispositivos
                             </Button>
                         </div>
                         <div className="divide-y divide-gray-100">
                             <SessionItem
                                 device="MacBook Pro"
-                                location="Melbourne, Australia"
+                                location="São Paulo, Brasil"
                                 activeNow
                                 browser="Chrome"
                                 icon={Monitor}
                             />
                             <SessionItem
                                 device="iPhone 15 Pro"
-                                location="Melbourne, Australia"
-                                lastSeen="2 hours ago"
+                                location="São Paulo, Brasil"
+                                lastSeen="há 2 horas"
                                 browser="Safari"
                                 icon={Smartphone}
                             />
@@ -89,12 +89,12 @@ export const SecuritySettingsPage = () => {
 
             <Card className="border-error-100 bg-error-25/30">
                 <CardHeader>
-                    <CardTitle className="text-error-900">Danger Zone</CardTitle>
-                    <CardDescription className="text-error-700">Irreversible and destructive actions for your account.</CardDescription>
+                    <CardTitle className="text-error-900">Zona de risco</CardTitle>
+                    <CardDescription className="text-error-700">Ações irreversíveis para sua conta.</CardDescription>
                 </CardHeader>
                 <CardFooter className="border-t border-error-100 px-6 py-4 flex items-center justify-between">
-                    <p className="text-sm text-error-800 font-medium">Delete account and all workspace data</p>
-                    <Button variant="destructive" size="sm">Delete account</Button>
+                    <p className="text-sm text-error-800 font-medium">Excluir conta e todos os dados</p>
+                    <Button variant="destructive" size="sm">Excluir conta</Button>
                 </CardFooter>
             </Card>
         </div>
@@ -113,12 +113,12 @@ const SessionItem = ({ device, location, activeNow, lastSeen, browser, icon: Ico
                     {activeNow && <Badge variant="success" size="sm" className="h-1.5 w-1.5 p-0 rounded-full" />}
                 </div>
                 <p className="text-xs text-gray-500">
-                    {browser} • {location} • {activeNow ? "Active now" : lastSeen}
+                    {browser} • {location} • {activeNow ? "Ativo agora" : lastSeen}
                 </p>
             </div>
         </div>
         <Button variant="tertiary" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-            Revoke
+            Revogar
         </Button>
     </div>
 );

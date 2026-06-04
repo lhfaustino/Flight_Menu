@@ -17,7 +17,7 @@ export default function Page() {
                     className="gap-2 -ml-2 text-gray-500 hover:text-gray-900 font-bold"
                     onClick={() => setView("kb")}
                 >
-                    <ArrowLeft className="size-4" /> Back to Help Center
+                    <ArrowLeft className="size-4" /> Voltar para a central de ajuda
                 </Button>
                 <SupportTicketFlow />
             </div>

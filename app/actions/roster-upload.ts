@@ -18,16 +18,16 @@ export async function uploadRoster(formData: FormData) {
   // Get authenticated user
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    throw new Error('Unauthorized');
+    throw new Error('Não autorizado');
   }
   
   const file = formData.get('file') as File;
   if (!file) {
-    throw new Error('No file provided');
+    throw new Error('Nenhum arquivo enviado');
   }
   
   if (file.type !== 'application/pdf') {
-    throw new Error('Only PDF files are allowed');
+    throw new Error('Somente arquivos PDF são permitidos');
   }
   
   try {
@@ -42,7 +42,7 @@ export async function uploadRoster(formData: FormData) {
     const rosterEntries = parseRosterText(pdfText);
     
     if (rosterEntries.length === 0) {
-      throw new Error('No flight data found in PDF. Check the format.');
+      throw new Error('Nenhum voo encontrado no PDF. Confira o formato do arquivo.');
     }
     
     // 4. Upload PDF to Supabase Storage
@@ -227,7 +227,7 @@ export async function uploadRoster(formData: FormData) {
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error during upload',
+      error: error instanceof Error ? error.message : 'Erro desconhecido durante o envio',
     };
   }
 }
@@ -237,7 +237,7 @@ export async function refreshCurrentUserMealPlan() {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    throw new Error('Unauthorized');
+    throw new Error('Não autorizado');
   }
 
   try {
@@ -280,7 +280,7 @@ export async function refreshCurrentUserMealPlan() {
     return {
       success: false,
       rows: await fetchFlightMenuRows(supabase, user.id),
-      error: error instanceof Error ? error.message : 'Unknown error while refreshing services.',
+      error: error instanceof Error ? error.message : 'Erro desconhecido ao atualizar os serviços.',
     };
   }
 }
@@ -290,7 +290,7 @@ export async function getCurrentMealPlanVersion() {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return { success: false, mealPlanUpdatedAt: null, error: 'Unauthorized' };
+    return { success: false, mealPlanUpdatedAt: null, error: 'Não autorizado' };
   }
 
   try {
@@ -317,7 +317,7 @@ export async function getCurrentMealPlanVersion() {
     return {
       success: false,
       mealPlanUpdatedAt: null,
-      error: error instanceof Error ? error.message : 'Unknown error while checking meal plan version.',
+      error: error instanceof Error ? error.message : 'Erro desconhecido ao verificar a versão do meal plan.',
     };
   }
 }

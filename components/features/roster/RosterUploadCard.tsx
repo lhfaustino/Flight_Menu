@@ -69,7 +69,7 @@ export function RosterUploadCard({ onUploaded, onFileSelected, deferUpload = fal
   return (
     <div className="w-full max-w-md mx-auto p-4">
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900">Upload Escala</h3>
+        <h3 className="mb-4 text-lg font-semibold text-gray-900">Enviar escala</h3>
 
         <div
           className="mb-4 rounded-lg border-2 border-dashed border-gray-300 p-6 text-center transition-colors hover:border-blue-500 hover:bg-blue-50"

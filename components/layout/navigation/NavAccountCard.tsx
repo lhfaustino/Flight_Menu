@@ -100,7 +100,7 @@ export const NavAccountMenu = ({
                 <div className="rounded-xl bg-primary ring-1 ring-secondary">
                     <div className="flex flex-col gap-0.5 py-1.5">
                         <NavAccountCardMenuItem
-                            label="View profile"
+                            label="Ver perfil"
                             icon={User01}
                             shortcut="⌘K->P"
                             onClick={() => {
@@ -109,7 +109,7 @@ export const NavAccountMenu = ({
                             }}
                         />
                         <NavAccountCardMenuItem
-                            label="Account settings"
+                            label="Configurações da conta"
                             icon={Settings01}
                             shortcut="⌘S"
                             onClick={() => {
@@ -118,7 +118,7 @@ export const NavAccountMenu = ({
                             }}
                         />
                         <NavAccountCardMenuItem
-                            label="Documentation"
+                            label="Ajuda"
                             icon={BookOpen01}
                             onClick={() => {
                                 router.push("/support");
@@ -127,7 +127,7 @@ export const NavAccountMenu = ({
                         />
                     </div>
                     <div className="flex flex-col gap-0.5 border-t border-secondary py-1.5">
-                        <div className="px-3 pt-1.5 pb-1 text-xs font-semibold text-tertiary">Current Workspace</div>
+                        <div className="px-3 pt-1.5 pb-1 text-xs font-semibold text-tertiary">Conta atual</div>
 
                         <div className="flex flex-col gap-0.5 px-1.5">
                             <div
@@ -143,13 +143,13 @@ export const NavAccountMenu = ({
                     </div>
                     <div className="flex flex-col gap-2 px-2 pt-0.5 pb-2">
                         <Button variant="secondary" size="sm" className="w-full justify-start gap-2">
-                            <Plus className="size-4" /> Add workspace
+                            <Plus className="size-4" /> Adicionar conta
                         </Button>
                     </div>
 
                     <div className="border-t border-secondary pt-1 pb-1.5">
                         <NavAccountCardMenuItem
-                            label="Sign out"
+                            label="Sair"
                             icon={LogOut01}
                             shortcut="⌥⇧Q"
                             onClick={async () => {

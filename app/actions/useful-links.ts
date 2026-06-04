@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { isAdminEmail } from "@/lib/admin-access";
+import { assertCurrentAdmin } from "@/app/actions/admin-users";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -108,14 +108,7 @@ export async function deleteUsefulLink(id: string) {
 }
 
 async function assertAdmin() {
-    const supabase = await createClient();
-    const { data: { user }, error } = await supabase.auth.getUser();
-
-    if (error || !user || !isAdminEmail(user.email)) {
-        throw new Error("Only the administrator can manage useful links.");
-    }
-
-    return user;
+    return assertCurrentAdmin();
 }
 
 function normalizeUsefulLinkInput(input: UsefulLinkInput) {
@@ -124,7 +117,7 @@ function normalizeUsefulLinkInput(input: UsefulLinkInput) {
     const sortOrder = Number.isFinite(Number(input.sort_order)) ? Number(input.sort_order) : 0;
 
     if (title.length < 2) {
-        throw new Error("Title must be at least 2 characters.");
+        throw new Error("O título deve ter pelo menos 2 caracteres.");
     }
 
     new URL(href);
@@ -138,7 +131,7 @@ function normalizeUsefulLinkInput(input: UsefulLinkInput) {
 
 function normalizeHref(value: string) {
     const trimmed = value.trim();
-    if (!trimmed) throw new Error("Link URL is required.");
+    if (!trimmed) throw new Error("A URL do link é obrigatória.");
     if (/^https?:\/\//i.test(trimmed)) return trimmed;
     return `https://${trimmed}`;
 }

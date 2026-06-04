@@ -10,27 +10,27 @@ export const PricingPage = () => {
 
     const plans = [
         {
-            name: "Free",
+            name: "Gratuito",
             price: "0",
-            description: "Essential features for small projects.",
-            features: ["Basic analytics", "Up to 3 projects", "Unlimited viewers", "Email support"],
-            cta: "Get started",
+            description: "Recursos essenciais para começar.",
+            features: ["Escala por PDF", "Links úteis", "Alocuções", "Suporte por e-mail"],
+            cta: "Começar",
             popular: false
         },
         {
             name: "Pro",
             price: billingCycle === "yearly" ? "29" : "39",
-            description: "Advanced tools for growing teams.",
-            features: ["Advanced analytics", "Unlimited projects", "Team collaboration", "Priority support", "Custom domains"],
-            cta: "Start free trial",
+            description: "Ferramentas avançadas para uso diário.",
+            features: ["Telegram", "Atualização de meal plan", "Admin de links", "Admin de alocuções", "Suporte prioritário"],
+            cta: "Iniciar teste",
             popular: true
         },
         {
-            name: "Enterprise",
-            price: "Custom",
-            description: "Sophisticated solutions for large orgs.",
-            features: ["Custom integrations", "Dedicated account manager", "SLA guarantees", "Advanced security", "On-premise options"],
-            cta: "Contact sales",
+            name: "Empresarial",
+            price: "Sob consulta",
+            description: "Soluções sob medida para equipes maiores.",
+            features: ["Integrações personalizadas", "Atendimento dedicado", "SLA", "Segurança avançada", "Implantação personalizada"],
+            cta: "Falar com vendas",
             popular: false
         }
     ];
@@ -39,18 +39,17 @@ export const PricingPage = () => {
         <div className="bg-white py-24 sm:py-32">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="text-center">
-                    <h2 className="text-brand-600 font-semibold mb-2">Pricing</h2>
+                    <h2 className="text-brand-600 font-semibold mb-2">Preços</h2>
                     <h3 className="text-4xl font-bold text-gray-900 sm:text-5xl">
-                        Plans for teams of all sizes
+                        Planos para diferentes necessidades
                     </h3>
                     <p className="mt-6 text-lg text-gray-500 max-w-2xl mx-auto">
-                        Whether you're a solo founder or a large organization, we have a plan that fits your needs.
-                        Save 20% by choosing yearly billing.
+                        Escolha o plano que combina com sua rotina. Economize escolhendo a cobrança anual.
                     </p>
 
                     {/* Toggle */}
                     <div className="mt-12 flex items-center justify-center gap-4">
-                        <span className={cx("text-sm font-medium", billingCycle === "monthly" ? "text-gray-900" : "text-gray-500")}>Monthly</span>
+                        <span className={cx("text-sm font-medium", billingCycle === "monthly" ? "text-gray-900" : "text-gray-500")}>Mensal</span>
                         <button
                             onClick={() => setBillingCycle(prev => prev === "monthly" ? "yearly" : "monthly")}
                             className="relative h-6 w-11 rounded-full bg-gray-200 transition-colors hover:bg-gray-300"
@@ -60,7 +59,7 @@ export const PricingPage = () => {
                                 billingCycle === "yearly" ? "translate-x-5" : "translate-x-0"
                             )} />
                         </button>
-                        <span className={cx("text-sm font-medium", billingCycle === "yearly" ? "text-gray-900" : "text-gray-500")}>Yearly</span>
+                        <span className={cx("text-sm font-medium", billingCycle === "yearly" ? "text-gray-900" : "text-gray-500")}>Anual</span>
                     </div>
                 </div>
 
@@ -75,16 +74,16 @@ export const PricingPage = () => {
                         >
                             {plan.popular && (
                                 <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                                    Most Popular
+                                    Mais popular
                                 </span>
                             )}
                             <div className="mb-8">
                                 <h4 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h4>
                                 <p className="text-gray-500 text-sm h-10">{plan.description}</p>
                                 <div className="mt-6 flex items-baseline">
-                                    <span className="text-5xl font-extrabold text-gray-900">{plan.price !== "Custom" && "$"}{plan.price}</span>
-                                    {plan.price !== "Custom" && (
-                                        <span className="ml-2 text-gray-500 font-medium">/mo</span>
+                                    <span className="text-5xl font-extrabold text-gray-900">{plan.price !== "Sob consulta" && "R$"}{plan.price}</span>
+                                    {plan.price !== "Sob consulta" && (
+                                        <span className="ml-2 text-gray-500 font-medium">/mês</span>
                                     )}
                                 </div>
                             </div>
@@ -111,23 +110,23 @@ export const PricingPage = () => {
 
                 {/* FAQs */}
                 <div className="mt-32 max-w-4xl mx-auto">
-                    <h3 className="text-3xl font-bold text-gray-900 text-center mb-12">Frequently Asked Questions</h3>
+                    <h3 className="text-3xl font-bold text-gray-900 text-center mb-12">Perguntas frequentes</h3>
                     <div className="space-y-4">
                         <FAQItem
-                            question="Can I change my plan later?"
-                            answer="Yes, you can upgrade or downgrade your plan at any time. If you upgrade, the new price will be prorated for the remainder of your billing cycle."
+                            question="Posso mudar de plano depois?"
+                            answer="Sim, você pode mudar de plano quando precisar."
                         />
                         <FAQItem
-                            question="Is there a free trial for the Pro plan?"
-                            answer="Absolutely! You can try the Pro plan for free for 14 days. No credit card required to start."
+                            question="Existe teste grátis no plano Pro?"
+                            answer="Sim. Você pode testar o plano Pro antes de decidir."
                         />
                         <FAQItem
-                            question="What happens if I exceed my project limit?"
-                            answer="We'll notify you when you're close to your limit. You can easily upgrade to Pro to unlock unlimited projects."
+                            question="O que acontece se eu precisar de mais recursos?"
+                            answer="Você pode fazer upgrade para liberar mais recursos."
                         />
                         <FAQItem
-                            question="Do you offer discounts for non-profits?"
-                            answer="Yes, we support mission-driven organizations with special discounts. Please contact our sales team to learn more."
+                            question="Vocês oferecem condições especiais?"
+                            answer="Sim. Entre em contato para conversarmos sobre sua necessidade."
                         />
                     </div>
                 </div>

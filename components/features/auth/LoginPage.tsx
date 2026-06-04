@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { UntitledUiLogo } from "@/components/ui/logos";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { SocialIcon } from "@/components/ui/social-icons";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -47,18 +47,18 @@ export const LoginPage = () => {
             if (signInError) throw signInError;
 
             addToast({
-                title: "Welcome back!",
-                description: "You have successfully logged in.",
+                title: "Bem-vindo de volta!",
+                description: "Login realizado com sucesso.",
                 type: "success",
             });
 
             router.push(AUTH_CONFIG.afterLoginPath);
             router.refresh();
         } catch (err: any) {
-            const errorMessage = err.message || "Invalid email or password.";
+            const errorMessage = err.message || "E-mail ou senha inválidos.";
             setError(errorMessage);
             addToast({
-                title: "Login failed",
+                title: "Falha no login",
                 description: errorMessage,
                 type: "error",
             });
@@ -83,12 +83,12 @@ export const LoginPage = () => {
             <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
                 <div className="mx-auto w-full max-w-sm lg:w-96">
                     <div>
-                        <UntitledUiLogo className="h-8 w-auto text-brand-600" />
-                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">Sign in to your account</h2>
+                        <BrandLogo href="/" size="md" />
+                        <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">Entre na sua conta</h2>
                         <p className="mt-2 text-sm text-gray-600">
-                            Or{" "}
+                            Ou{" "}
                             <a href="/signup" className="font-medium text-brand-600 hover:text-brand-500">
-                                start your 14-day free trial
+                                crie sua conta
                             </a>
                         </p>
                     </div>
@@ -103,17 +103,17 @@ export const LoginPage = () => {
 
                             <form onSubmit={handleSubmit} method="POST" className="space-y-6">
                                 <Input
-                                    label="Email address"
+                                    label="E-mail"
                                     name="email"
                                     type="email"
-                                    placeholder="Enter your email"
+                                    placeholder="Digite seu e-mail"
                                     value={formData.email}
                                     onChange={handleChange}
                                     required
                                 />
 
                                 <Input
-                                    label="Password"
+                                    label="Senha"
                                     name="password"
                                     type="password"
                                     placeholder="••••••••"
@@ -128,7 +128,7 @@ export const LoginPage = () => {
                                         name="remember"
                                         isSelected={formData.remember}
                                         onChange={(isSelected) => setFormData(prev => ({ ...prev, remember: isSelected }))}
-                                        label="Remember for 30 days"
+                                        label="Lembrar por 30 dias"
                                     />
                                 </div>
 
@@ -138,14 +138,14 @@ export const LoginPage = () => {
                                         className="w-full justify-center"
                                         isDisabled={isLoading}
                                     >
-                                        {isLoading ? "Signing in..." : "Sign in"}
+                                        {isLoading ? "Entrando..." : "Entrar"}
                                     </Button>
                                 </div>
                             </form>
 
                             <div className="mt-4 text-center text-sm">
                                 <Link href="/forgot-password" className="font-medium text-brand-600 hover:text-brand-500">
-                                    Forgot password?
+                                    Esqueceu a senha?
                                 </Link>
                             </div>
                         </div>
@@ -156,7 +156,7 @@ export const LoginPage = () => {
                                     <div className="w-full border-t border-gray-200" />
                                 </div>
                                 <div className="relative flex justify-center text-sm">
-                                    <span className="bg-white px-2 text-gray-500">Or sign in with</span>
+                                    <span className="bg-white px-2 text-gray-500">Ou entre com</span>
                                 </div>
                             </div>
 
@@ -164,19 +164,19 @@ export const LoginPage = () => {
                                 <div>
                                     <Button variant="secondary" className="w-full justify-center" onClick={() => handleSocialLogin('google')}>
                                         <SocialIcon type="google" className="h-5 w-5" />
-                                        <span className="sr-only">Sign in with Google</span>
+                                        <span className="sr-only">Entrar com Google</span>
                                     </Button>
                                 </div>
                                 <div>
                                     <Button variant="secondary" className="w-full justify-center" onClick={() => handleSocialLogin('facebook')}>
                                         <SocialIcon type="facebook" className="h-5 w-5" />
-                                        <span className="sr-only">Sign in with Facebook</span>
+                                        <span className="sr-only">Entrar com Facebook</span>
                                     </Button>
                                 </div>
                                 <div>
                                     <Button variant="secondary" className="w-full justify-center" onClick={() => handleSocialLogin('twitter')}>
                                         <SocialIcon type="twitter" className="h-5 w-5" />
-                                        <span className="sr-only">Sign in with Twitter</span>
+                                        <span className="sr-only">Entrar com Twitter</span>
                                     </Button>
                                 </div>
                             </div>
@@ -190,7 +190,7 @@ export const LoginPage = () => {
                 <img
                     className="absolute inset-0 h-full w-full object-cover"
                     src="https://images.unsplash.com/photo-1496917756835-20cb06e75b4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1908&q=80"
-                    alt="Office background"
+                    alt="Imagem de fundo"
                 />
                 <div className="absolute inset-0 bg-gray-900/10 mix-blend-multiply" />
             </div>

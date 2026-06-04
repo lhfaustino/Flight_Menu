@@ -1,27 +1,32 @@
 import { redirect } from 'next/navigation';
 import { CateringUploadCard } from '@/components/features/catering/CateringUploadCard';
-import { createClient } from '@/lib/supabase/server';
-import { isAdminEmail } from '@/lib/admin-access';
+import { getCurrentAdminAccess } from '@/app/actions/admin-users';
+import { ADMIN_EMAIL } from '@/lib/admin-access';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export default async function MealPlanAdminPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const access = await getCurrentAdminAccess();
 
-  if (!user || !isAdminEmail(user.email)) {
+  if (!access.isAdmin) {
     redirect('/roster-upload');
   }
 
-  const { count } = await supabase
+  const adminClient = createAdminClient();
+  const { data: masterProfile } = await adminClient
+    .from('profiles')
+    .select('id')
+    .eq('email', ADMIN_EMAIL)
+    .maybeSingle();
+
+  const { count } = await adminClient
     .from('catering_rules')
     .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id);
+    .eq('user_id', masterProfile?.id ?? access.id);
 
-  const { data: latestRule } = await supabase
+  const { data: latestRule } = await adminClient
     .from('catering_rules')
     .select('updated_at, created_at')
-    .eq('user_id', user.id)
+    .eq('user_id', masterProfile?.id ?? access.id)
     .order('updated_at', { ascending: false })
     .limit(1)
     .maybeSingle();

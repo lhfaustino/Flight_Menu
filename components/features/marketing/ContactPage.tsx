@@ -12,44 +12,43 @@ export const ContactPage = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
                     {/* Left - Contact Info */}
                     <div>
-                        <h2 className="text-brand-600 font-semibold mb-2">Contact us</h2>
-                        <h3 className="text-4xl font-bold text-gray-900 mb-6">Get in touch with our team</h3>
+                        <h2 className="text-brand-600 font-semibold mb-2">Contato</h2>
+                        <h3 className="text-4xl font-bold text-gray-900 mb-6">Fale com nossa equipe</h3>
                         <p className="text-lg text-gray-500 mb-12">
-                            Have questions about our plans, components, or enterprise solutions?
-                            We're here to help. Reach out and we'll get back to you within 24 hours.
+                            Tem dúvidas sobre o Flight Menu? Envie uma mensagem e retornaremos em breve.
                         </p>
 
                         <div className="space-y-8">
                             <ContactItem
                                 icon={Mail}
-                                title="Email"
-                                description="Our friendly team is here to help."
-                                detail="support@untitledui.com"
+                                title="E-mail"
+                                description="Nossa equipe está pronta para ajudar."
+                                detail="suporte@flightmenu.com"
                             />
                             <ContactItem
                                 icon={MessageSquare}
-                                title="Live chat"
-                                description="Available Mon-Fri from 9am to 5pm."
-                                detail="Start a conversation"
+                                title="Chat"
+                                description="Disponível de segunda a sexta."
+                                detail="Iniciar conversa"
                                 isLink
                             />
                             <ContactItem
                                 icon={MapPin}
-                                title="Office"
-                                description="Come say hello at our office HQ."
-                                detail="100 Melbourne St, Southbank VIC 3006"
+                                title="Escritório"
+                                description="Atendimento remoto para usuários no Brasil."
+                                detail="Brasil"
                             />
                             <ContactItem
                                 icon={Phone}
-                                title="Phone"
-                                description="Mon-Fri from 9am to 5pm."
+                                title="Telefone"
+                                description="Segunda a sexta, das 9h às 17h."
                                 detail="+1 (555) 000-0000"
                             />
                         </div>
 
                         {/* Socials */}
                         <div className="mt-12">
-                            <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 text-brand-600">Follow us</h4>
+                            <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 text-brand-600">Siga-nos</h4>
                             <div className="flex gap-4">
                                 <SocialLink icon={Twitter} href="#" />
                                 <SocialLink icon={Github} href="#" />
@@ -62,23 +61,23 @@ export const ContactPage = () => {
                     <div className="bg-gray-50 p-8 rounded-2xl border border-gray-100 lg:p-12">
                         <form className="space-y-6">
                             <div className="grid gap-6 sm:grid-cols-2">
-                                <Input label="First name" placeholder="First name" required />
-                                <Input label="Last name" placeholder="Last name" required />
+                                <Input label="Nome" placeholder="Nome" required />
+                                <Input label="Sobrenome" placeholder="Sobrenome" required />
                             </div>
-                            <Input label="Email" type="email" placeholder="you@company.com" required />
-                            <Input label="Phone number (optional)" type="tel" placeholder="+1 (555) 000-0000" />
+                            <Input label="E-mail" type="email" placeholder="voce@email.com" required />
+                            <Input label="Telefone (opcional)" type="tel" placeholder="+55 11 99999-9999" />
 
                             <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-gray-700">Message</label>
+                                <label className="text-sm font-medium text-gray-700">Mensagem</label>
                                 <TextArea
-                                    placeholder="Leave us a message..."
+                                    placeholder="Deixe sua mensagem..."
                                     rows={5}
                                     isRequired
                                 />
                             </div>
 
                             <Button size="lg" className="w-full justify-center h-12">
-                                Send message
+                                Enviar mensagem
                             </Button>
                         </form>
                     </div>

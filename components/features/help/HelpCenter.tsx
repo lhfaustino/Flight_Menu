@@ -15,17 +15,17 @@ interface Article {
 }
 
 const categories = [
-    { id: "getting-started", title: "Getting Started", icon: Zap, description: "Everything you need to know to get up and running." },
-    { id: "account", title: "Account & Billing", icon: Shield, description: "Manage your subscription, team, and security settings." },
-    { id: "features", title: "Product Features", icon: Book, description: "Deep dives into projects, automations, and reporting." },
-    { id: "support", title: "Support & FAQ", icon: HelpCircle, description: "Find answers to frequently asked questions." },
+    { id: "getting-started", title: "Primeiros passos", icon: Zap, description: "Tudo que você precisa para começar a usar o app." },
+    { id: "account", title: "Conta", icon: Shield, description: "Gerencie perfil, segurança e preferências." },
+    { id: "features", title: "Recursos do app", icon: Book, description: "Guias sobre planilhas, Telegram, links e alocuções." },
+    { id: "support", title: "Suporte e FAQ", icon: HelpCircle, description: "Encontre respostas para dúvidas frequentes." },
 ];
 
 const articles: Article[] = [
-    { id: "1", title: "Setting up your workspace", description: "Learn how to configure your team's workspace for the first time.", category: "getting-started" },
-    { id: "2", title: "Inviting team members", description: "How to send invitations and manage team roles.", category: "getting-started" },
-    { id: "3", title: "Managing billing & plans", description: "Updating your credit card and choosing the right tier.", category: "account" },
-    { id: "4", title: "Configuring multi-factor auth", description: "Keep your account safe with 2FA and secure passwords.", category: "security" },
+    { id: "1", title: "Enviando sua planilha", description: "Veja como importar sua escala e consultar os voos do dia.", category: "getting-started" },
+    { id: "2", title: "Conectando o Telegram", description: "Configure sua conta para enviar informações dos voos pelo bot.", category: "getting-started" },
+    { id: "3", title: "Gerenciando seu perfil", description: "Atualize nome, foto e preferências da sua conta.", category: "account" },
+    { id: "4", title: "Segurança da conta", description: "Mantenha sua conta protegida com boas práticas de senha.", category: "security" },
 ];
 
 interface HelpCenterProps {
@@ -54,12 +54,12 @@ export const HelpCenter = ({ onContactSupport }: HelpCenterProps) => {
                     <div className="bg-brand-900 rounded-3xl p-12 text-center space-y-8 relative overflow-hidden">
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--color-brand-600)_0%,_transparent_50%)] opacity-40" />
                         <div className="relative z-10 space-y-4">
-                            <h1 className="text-display-sm font-bold text-white">How can we help?</h1>
-                            <p className="text-brand-200 text-lg max-w-xl mx-auto">Search our knowledge base for answers or explore help topics below.</p>
+                            <h1 className="text-display-sm font-bold text-white">Como podemos ajudar?</h1>
+                            <p className="text-brand-200 text-lg max-w-xl mx-auto">Busque respostas ou explore os tópicos de ajuda abaixo.</p>
                             <div className="max-w-2xl mx-auto relative group">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-500 transition-colors" />
                                 <Input
-                                    placeholder="Search for articles, guides, and more..."
+                                    placeholder="Buscar artigos, guias e dúvidas..."
                                     className="h-14 pl-12 bg-white/95 border-none shadow-xl text-lg rounded-2xl focus:ring-4 focus:ring-brand-500/20"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
@@ -73,7 +73,7 @@ export const HelpCenter = ({ onContactSupport }: HelpCenterProps) => {
                         {/* Sidebar */}
                         <aside className="lg:col-span-1 space-y-8">
                             <div className="space-y-4">
-                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest px-2">Knowledge Base</h3>
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest px-2">Base de conhecimento</h3>
                                 <nav className="space-y-1">
                                     {categories.map((cat) => (
                                         <button
@@ -98,13 +98,13 @@ export const HelpCenter = ({ onContactSupport }: HelpCenterProps) => {
                                     <MessageSquare className="size-20" />
                                 </div>
                                 <CardContent className="p-6 space-y-4 relative z-10">
-                                    <h4 className="font-bold text-lg leading-tight">Can't find what you're looking for?</h4>
-                                    <p className="text-gray-400 text-sm">Our support team is available 24/7 to help with any questions.</p>
+                                    <h4 className="font-bold text-lg leading-tight">Não encontrou o que procurava?</h4>
+                                    <p className="text-gray-400 text-sm">Nossa equipe de suporte pode ajudar com suas dúvidas.</p>
                                     <Button
                                         className="w-full bg-white text-gray-900 hover:bg-gray-100 border-none transition-transform hover:-translate-y-1"
                                         onClick={onContactSupport}
                                     >
-                                        Contact Support
+                                        Falar com suporte
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -114,7 +114,7 @@ export const HelpCenter = ({ onContactSupport }: HelpCenterProps) => {
                         <main className="lg:col-span-3 space-y-8">
                             {selectedCategory && (
                                 <div className="flex items-center gap-2 text-sm">
-                                    <button onClick={() => setSelectedCategory(null)} className="text-gray-400 hover:text-gray-900 transition-colors">All articles</button>
+                                    <button onClick={() => setSelectedCategory(null)} className="text-gray-400 hover:text-gray-900 transition-colors">Todos os artigos</button>
                                     <ChevronRight className="size-4 text-gray-300" />
                                     <span className="font-bold text-gray-900">{categories.find(c => c.id === selectedCategory)?.title}</span>
                                 </div>
@@ -128,8 +128,8 @@ export const HelpCenter = ({ onContactSupport }: HelpCenterProps) => {
                                 ) : (
                                     <div className="col-span-full py-20 text-center border-2 border-dashed border-gray-100 rounded-3xl">
                                         <Search className="size-12 text-gray-200 mx-auto mb-4" />
-                                        <h3 className="text-lg font-bold text-gray-900">No results found</h3>
-                                        <p className="text-gray-500">Try adjusting your search or category filters.</p>
+                                        <h3 className="text-lg font-bold text-gray-900">Nenhum resultado encontrado</h3>
+                                        <p className="text-gray-500">Tente ajustar a busca ou os filtros.</p>
                                     </div>
                                 )}
                             </div>
@@ -137,15 +137,15 @@ export const HelpCenter = ({ onContactSupport }: HelpCenterProps) => {
                             {/* Popular Resources */}
                             <div className="pt-12 border-t border-gray-100">
                                 <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-bold text-gray-900">Popular Resources</h2>
+                                    <h2 className="text-xl font-bold text-gray-900">Recursos populares</h2>
                                     <Button variant="tertiary" className="text-brand-700 font-bold group">
-                                        View all documentation <ArrowRight className="size-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                        Ver toda a documentação <ArrowRight className="size-4 ml-2 group-hover:translate-x-1 transition-transform" />
                                     </Button>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                                    <ResourceLink title="API Reference" icon={ExternalLink} />
-                                    <ResourceLink title="Changelog" icon={ChevronRight} />
-                                    <ResourceLink title="Video Tutorials" icon={ExternalLink} />
+                                    <ResourceLink title="Guia de uso" icon={ExternalLink} />
+                                    <ResourceLink title="Atualizações" icon={ChevronRight} />
+                                    <ResourceLink title="Tutoriais em vídeo" icon={ExternalLink} />
                                 </div>
                             </div>
                         </main>
@@ -160,7 +160,7 @@ const ArticleView = ({ article, onBack }: { article: Article, onBack: () => void
     <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="space-y-6">
             <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors group">
-                <ArrowRight className="size-4 rotate-180 group-hover:-translate-x-1 transition-transform" /> Back to Knowledge Base
+                <ArrowRight className="size-4 rotate-180 group-hover:-translate-x-1 transition-transform" /> Voltar para a base de conhecimento
             </button>
             <div className="space-y-4">
                 <div className="flex items-center gap-2 text-sm font-bold text-brand-700 uppercase tracking-widest">
@@ -173,21 +173,21 @@ const ArticleView = ({ article, onBack }: { article: Article, onBack: () => void
 
         <div className="prose prose-brand max-w-none">
             <div className="p-8 bg-gray-50 rounded-3xl border border-gray-100 space-y-6">
-                <h3 className="text-xl font-bold text-gray-900">In this article</h3>
+                <h3 className="text-xl font-bold text-gray-900">Neste artigo</h3>
                 <ul className="space-y-3">
-                    <li><a href="#" className="text-brand-700 font-semibold hover:underline">Prerequisites</a></li>
-                    <li><a href="#" className="text-brand-700 font-semibold hover:underline">Initial Configuration</a></li>
-                    <li><a href="#" className="text-brand-700 font-semibold hover:underline">Troubleshooting Common Issues</a></li>
+                    <li><a href="#" className="text-brand-700 font-semibold hover:underline">Pré-requisitos</a></li>
+                    <li><a href="#" className="text-brand-700 font-semibold hover:underline">Configuração inicial</a></li>
+                    <li><a href="#" className="text-brand-700 font-semibold hover:underline">Solução de problemas comuns</a></li>
                 </ul>
             </div>
 
             <div className="py-12 space-y-8 text-gray-700 leading-7">
                 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-                <h2 className="text-2xl font-bold text-gray-900 pt-4">Step 1: Initial Setup</h2>
+                <h2 className="text-2xl font-bold text-gray-900 pt-4">Passo 1: configuração inicial</h2>
                 <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
                 <div className="bg-brand-50 border-l-4 border-brand-600 p-6 rounded-r-2xl">
-                    <p className="font-semibold text-brand-900 text-sm uppercase tracking-wide mb-2">Pro Tip</p>
-                    <p className="text-brand-800 italic">"Always ensure your workspace is backed up before making significant changes to the team structure."</p>
+                    <p className="font-semibold text-brand-900 text-sm uppercase tracking-wide mb-2">Dica</p>
+                    <p className="text-brand-800 italic">Mantenha seus dados atualizados antes de fazer alterações importantes.</p>
                 </div>
                 <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
             </div>
@@ -195,12 +195,12 @@ const ArticleView = ({ article, onBack }: { article: Article, onBack: () => void
 
         <div className="pt-12 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-8">
             <div className="space-y-1">
-                <h4 className="font-bold text-gray-900">Was this article helpful?</h4>
-                <p className="text-sm text-gray-500">Your feedback helps us improve our documentation.</p>
+                <h4 className="font-bold text-gray-900">Este artigo foi útil?</h4>
+                <p className="text-sm text-gray-500">Seu feedback ajuda a melhorar a documentação.</p>
             </div>
             <div className="flex items-center gap-3">
-                <Button variant="secondary" className="px-6">Yes, thanks!</Button>
-                <Button variant="secondary" className="px-6 text-gray-500">Not really</Button>
+                <Button variant="secondary" className="px-6">Sim, obrigado!</Button>
+                <Button variant="secondary" className="px-6 text-gray-500">Não muito</Button>
             </div>
         </div>
     </div>
@@ -212,7 +212,7 @@ const ArticleCard = ({ article, onClick }: { article: Article, onClick: () => vo
             <h4 className="font-bold text-gray-900 group-hover:text-brand-700 transition-colors">{article.title}</h4>
             <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">{article.description}</p>
             <div className="pt-2 flex items-center text-xs font-bold text-brand-700 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
-                Read Article <ChevronRight className="size-3.5 ml-1" />
+                Ler artigo <ChevronRight className="size-3.5 ml-1" />
             </div>
         </CardContent>
     </Card>

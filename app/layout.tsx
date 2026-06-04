@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
     title: "Flight Menu",
-    description: "Flight meal service planning and roster upload application.",
+    description: "Aplicativo para escala, serviço de bordo e documentos rápidos.",
     icons: {
         icon: "/logo.svg",
         shortcut: "/logo.svg",
@@ -22,7 +22,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" suppressHydrationWarning>
+        <html lang="pt-BR" suppressHydrationWarning>
             <body className={`${inter.className} antialiased`} suppressHydrationWarning>
                 <AuthProvider>
                     <ToastProvider>

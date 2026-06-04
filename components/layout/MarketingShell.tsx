@@ -13,9 +13,9 @@ interface MarketingShellProps {
 
 export const MarketingShell = ({ children, currentView, onViewChange }: MarketingShellProps) => {
     const navItems = [
-        { label: "Home", view: "landing" },
-        { label: "Pricing", view: "pricing" },
-        { label: "Contact", view: "contact" },
+        { label: "Início", view: "landing" },
+        { label: "Preços", view: "pricing" },
+        { label: "Contato", view: "contact" },
     ];
 
     return (
@@ -26,7 +26,7 @@ export const MarketingShell = ({ children, currentView, onViewChange }: Marketin
                     <div className="flex items-center gap-8">
                         <button onClick={() => onViewChange("landing")} className="flex items-center gap-2">
                             <UntitledUiLogo className="h-8 w-auto text-brand-600" />
-                            <span className="text-xl font-bold text-gray-900">Untitled UI</span>
+                            <span className="text-xl font-bold text-gray-900">Flight Menu</span>
                         </button>
                         <nav className="hidden md:flex items-center gap-6">
                             {navItems.map((item) => (
@@ -48,10 +48,10 @@ export const MarketingShell = ({ children, currentView, onViewChange }: Marketin
                             onClick={() => onViewChange("login")}
                             className="text-sm font-semibold text-gray-600 hover:text-gray-900 px-4 py-2"
                         >
-                            Log in
+                            Entrar
                         </button>
                         <Button size="md" onClick={() => onViewChange("signup")}>
-                            Sign up
+                            Cadastrar
                         </Button>
                     </div>
                 </div>
@@ -69,39 +69,39 @@ export const MarketingShell = ({ children, currentView, onViewChange }: Marketin
                         <div className="col-span-2 lg:col-span-2">
                             <div className="flex items-center gap-2">
                                 <UntitledUiLogo className="h-8 w-auto text-brand-600" />
-                                <span className="text-xl font-bold text-gray-900">Untitled UI</span>
+                                <span className="text-xl font-bold text-gray-900">Flight Menu</span>
                             </div>
                             <p className="mt-4 max-w-xs text-base text-gray-500">
-                                Design amazing digital experiences that create more happy in the world.
+                                Organize sua escala, serviços de bordo e documentos rápidos em um só lugar.
                             </p>
                         </div>
                         <div>
-                            <h3 className="text-sm font-semibold text-gray-900">Product</h3>
+                            <h3 className="text-sm font-semibold text-gray-900">Produto</h3>
                             <ul className="mt-4 space-y-3">
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Overview</a></li>
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Features</a></li>
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Solutions</a></li>
+                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Visão geral</a></li>
+                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Recursos</a></li>
+                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Soluções</a></li>
                             </ul>
                         </div>
                         <div>
-                            <h3 className="text-sm font-semibold text-gray-900">Resources</h3>
+                            <h3 className="text-sm font-semibold text-gray-900">Recursos</h3>
                             <ul className="mt-4 space-y-3">
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Documentation</a></li>
+                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Documentação</a></li>
                                 <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Blog</a></li>
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Support</a></li>
+                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Suporte</a></li>
                             </ul>
                         </div>
                         <div>
                             <h3 className="text-sm font-semibold text-gray-900">Legal</h3>
                             <ul className="mt-4 space-y-3">
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Privacy</a></li>
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Terms</a></li>
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Cookie Policy</a></li>
+                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Privacidade</a></li>
+                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Termos</a></li>
+                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Política de cookies</a></li>
                             </ul>
                         </div>
                     </div>
                     <div className="mt-12 border-t border-gray-200 pt-8 text-center text-sm text-gray-500 mt-12 md:mt-24">
-                        © 2026 Untitled UI. All rights reserved.
+                        © 2026 Flight Menu. Todos os direitos reservados.
                     </div>
                 </div>
             </footer>

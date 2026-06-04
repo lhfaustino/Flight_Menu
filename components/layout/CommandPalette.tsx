@@ -9,7 +9,7 @@ interface CommandItem {
     title: string;
     description?: string;
     icon: React.ElementType;
-    category: "Pages";
+    category: "Páginas";
     onClick: () => void;
 }
 
@@ -45,18 +45,18 @@ export const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
     const commands: CommandItem[] = [
         {
             id: "meal-plan",
-            title: "Meal Plan",
-            description: "Upload PDFs and view flight meal service",
+            title: "Planilha",
+            description: "Enviar PDFs e consultar serviço de bordo dos voos",
             icon: ClipboardList,
-            category: "Pages",
+            category: "Páginas",
             onClick: () => onNavigate?.("meal-plan"),
         },
         {
             id: "settings",
-            title: "Settings",
-            description: "Profile and workspace settings",
+            title: "Configurações",
+            description: "Perfil e preferências da conta",
             icon: Settings,
-            category: "Pages",
+            category: "Páginas",
             onClick: () => onNavigate?.("settings"),
         },
         {
@@ -64,23 +64,23 @@ export const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
             title: "Alocuções",
             description: "Biblioteca de alocuções trilíngues",
             icon: Megaphone,
-            category: "Pages",
+            category: "Páginas",
             onClick: () => onNavigate?.("alocucoes"),
         },
         {
             id: "links-uteis",
             title: "Links Úteis",
-            description: "Acessos rapidos",
+            description: "Acessos rápidos",
             icon: Link2,
-            category: "Pages",
+            category: "Páginas",
             onClick: () => onNavigate?.("links-uteis"),
         },
         {
             id: "support",
-            title: "Support",
-            description: "Get help and support",
+            title: "Suporte",
+            description: "Obter ajuda e suporte",
             icon: HelpCircle,
-            category: "Pages",
+            category: "Páginas",
             onClick: () => onNavigate?.("support"),
         },
     ];
@@ -101,7 +101,7 @@ export const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
                             <Search className="size-5 text-gray-400" />
                             <input
                                 autoFocus
-                                placeholder="Search pages..."
+                                placeholder="Buscar páginas..."
                                 className="flex-1 border-none bg-transparent text-lg text-gray-900 outline-hidden placeholder:text-gray-400"
                                 value={search}
                                 onChange={(event) => setSearch(event.target.value)}
@@ -115,7 +115,7 @@ export const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
                             {filteredCommands.length > 0 ? (
                                 <div className="mb-4 last:mb-0">
                                     <h3 className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                                        Pages
+                                        Páginas
                                     </h3>
                                     <div className="space-y-1">
                                         {filteredCommands.map((command) => (
@@ -146,15 +146,15 @@ export const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
                                     <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-gray-50">
                                         <Search className="size-6 text-gray-300" />
                                     </div>
-                                    <h4 className="font-bold text-gray-900">No results found</h4>
-                                    <p className="text-sm text-gray-500">Try searching for something else.</p>
+                                    <h4 className="font-bold text-gray-900">Nenhum resultado encontrado</h4>
+                                    <p className="text-sm text-gray-500">Tente buscar por outro termo.</p>
                                 </div>
                             )}
                         </div>
 
                         <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                             <span className="flex items-center gap-1.5">
-                                <ArrowRight className="size-3 rotate-90" /> Select
+                                <ArrowRight className="size-3 rotate-90" /> Selecionar
                             </span>
                             <span>Flight Menu</span>
                         </div>

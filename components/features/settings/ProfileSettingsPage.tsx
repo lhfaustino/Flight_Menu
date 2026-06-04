@@ -63,7 +63,7 @@ export const ProfileSettingsPage = () => {
                 setFormData(nextValues);
             } else if (!response.success) {
                 addToast({
-                    title: "Could not load profile",
+                    title: "Não foi possível carregar o perfil",
                     description: response.error,
                     type: "error",
                 });
@@ -92,8 +92,8 @@ export const ProfileSettingsPage = () => {
 
         if (fullName.length < 2) {
             addToast({
-                title: "Validation error",
-                description: "Please enter your name before saving.",
+                title: "Erro de validação",
+                description: "Informe seu nome antes de salvar.",
                 type: "error",
             });
             return;
@@ -124,14 +124,14 @@ export const ProfileSettingsPage = () => {
             setInitialValues(nextValues);
             setFormData(nextValues);
             addToast({
-                title: "Profile updated",
-                description: "Your personal details were saved.",
+                title: "Perfil atualizado",
+                description: "Seus dados foram salvos.",
                 type: "success",
             });
             await refreshProfileSession();
         } else {
             addToast({
-                title: "Could not save profile",
+                title: "Não foi possível salvar o perfil",
                 description: result.error,
                 type: "error",
             });
@@ -157,14 +157,14 @@ export const ProfileSettingsPage = () => {
             setFormData(prev => ({ ...prev, avatarUrl }));
             setInitialValues(prev => ({ ...prev, avatarUrl }));
             addToast({
-                title: "Avatar updated",
-                description: "Your new profile photo is now active.",
+                title: "Foto atualizada",
+                description: "Sua nova foto de perfil está ativa.",
                 type: "success",
             });
             await refreshProfileSession();
         } else {
             addToast({
-                title: "Could not update avatar",
+                title: "Não foi possível atualizar a foto",
                 description: result.error,
                 type: "error",
             });
@@ -182,14 +182,14 @@ export const ProfileSettingsPage = () => {
             setFormData(prev => ({ ...prev, avatarUrl: "" }));
             setInitialValues(prev => ({ ...prev, avatarUrl: "" }));
             addToast({
-                title: "Avatar removed",
-                description: "Your profile photo was removed.",
+                title: "Foto removida",
+                description: "Sua foto de perfil foi removida.",
                 type: "success",
             });
             await refreshProfileSession();
         } else {
             addToast({
-                title: "Could not remove avatar",
+                title: "Não foi possível remover a foto",
                 description: result.error,
                 type: "error",
             });
@@ -211,13 +211,13 @@ export const ProfileSettingsPage = () => {
             setTelegramCommand(result.connectionCommand ?? "");
             window.open(result.botUrl, "_blank", "noopener,noreferrer");
             addToast({
-                title: "Telegram opened",
-                description: "Tap Start in Telegram. If it sends only /start, copy the command shown here.",
+                title: "Telegram aberto",
+                description: "Toque em Start no Telegram. Se ele enviar apenas /start, copie o comando exibido aqui.",
                 type: "success",
             });
         } else {
             addToast({
-                title: "Could not connect Telegram",
+                title: "Não foi possível conectar o Telegram",
                 description: result.error,
                 type: "error",
             });
@@ -237,13 +237,13 @@ export const ProfileSettingsPage = () => {
             setInitialValues(prev => ({ ...prev, isTelegramConnected: isConnected }));
             if (isConnected) setTelegramCommand("");
             addToast({
-                title: isConnected ? "Telegram connected" : "Telegram not connected yet",
-                description: isConnected ? "Your Telegram account is ready." : "Tap Start in Telegram and check again.",
+                title: isConnected ? "Telegram conectado" : "Telegram ainda não conectado",
+                description: isConnected ? "Sua conta do Telegram está pronta." : "Toque em Start no Telegram e verifique novamente.",
                 type: isConnected ? "success" : "error",
             });
         } else {
             addToast({
-                title: "Could not check Telegram",
+                title: "Não foi possível verificar o Telegram",
                 description: result.error,
                 type: "error",
             });
@@ -262,13 +262,13 @@ export const ProfileSettingsPage = () => {
             setInitialValues(prev => ({ ...prev, isTelegramConnected: false }));
             setTelegramCommand("");
             addToast({
-                title: "Telegram disconnected",
-                description: "Telegram sends are disabled for your account.",
+                title: "Telegram desconectado",
+                description: "Os envios pelo Telegram foram desativados para sua conta.",
                 type: "success",
             });
         } else {
             addToast({
-                title: "Could not disconnect Telegram",
+                title: "Não foi possível desconectar o Telegram",
                 description: result.error,
                 type: "error",
             });
@@ -280,8 +280,8 @@ export const ProfileSettingsPage = () => {
 
         await navigator.clipboard.writeText(telegramCommand);
         addToast({
-            title: "Command copied",
-            description: "Paste it into the Telegram bot chat.",
+            title: "Comando copiado",
+            description: "Cole no chat do bot no Telegram.",
             type: "success",
         });
     };
@@ -290,8 +290,8 @@ export const ProfileSettingsPage = () => {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>Personal Information</CardTitle>
-                    <CardDescription>Loading your profile details...</CardDescription>
+                    <CardTitle>Informações pessoais</CardTitle>
+                    <CardDescription>Carregando seus dados de perfil...</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="h-20 w-20 animate-pulse rounded-full bg-gray-100" />
@@ -309,15 +309,15 @@ export const ProfileSettingsPage = () => {
         <form onSubmit={handleSave} className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Personal Information</CardTitle>
-                    <CardDescription>Update your photo and personal details here.</CardDescription>
+                    <CardTitle>Informações pessoais</CardTitle>
+                    <CardDescription>Atualize sua foto e seus dados pessoais.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {/* Avatar Section */}
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
                         <Avatar
                             src={formData.avatarUrl}
-                            alt={fullName || "Profile photo"}
+                            alt={fullName || "Foto de perfil"}
                             size="xl"
                         />
                         <div className="space-y-2">
@@ -336,7 +336,7 @@ export const ProfileSettingsPage = () => {
                                     isDisabled={isAvatarBusy}
                                     onPress={() => fileInputRef.current?.click()}
                                 >
-                                    {isAvatarBusy ? "Uploading..." : "Change avatar"}
+                                    {isAvatarBusy ? "Enviando..." : "Alterar foto"}
                                 </Button>
                                 <Button
                                     type="button"
@@ -346,23 +346,23 @@ export const ProfileSettingsPage = () => {
                                     onPress={handleDeleteAvatar}
                                     className="text-error-700 hover:text-error-800"
                                 >
-                                    Delete
+                                    Remover
                                 </Button>
                             </div>
-                            <p className="text-xs text-gray-500">JPG, GIF, PNG or WebP. 1MB max.</p>
+                            <p className="text-xs text-gray-500">JPG, GIF, PNG ou WebP. Máximo de 1MB.</p>
                         </div>
                     </div>
 
                     <div className="grid gap-6 sm:grid-cols-2">
                         <Input
-                            label="First name"
+                            label="Nome"
                             value={formData.firstName}
                             onChange={(event) => setFormData(prev => ({ ...prev, firstName: event.target.value }))}
                             isDisabled={isSaving}
                             required
                         />
                         <Input
-                            label="Last name"
+                            label="Sobrenome"
                             value={formData.lastName}
                             onChange={(event) => setFormData(prev => ({ ...prev, lastName: event.target.value }))}
                             isDisabled={isSaving}
@@ -370,7 +370,7 @@ export const ProfileSettingsPage = () => {
                     </div>
 
                     <Input
-                        label="Email address"
+                        label="E-mail"
                         type="email"
                         value={formData.email}
                         onChange={(event) => setFormData(prev => ({ ...prev, email: event.target.value }))}
@@ -383,7 +383,7 @@ export const ProfileSettingsPage = () => {
                             <div>
                                 <p className="text-sm font-semibold text-gray-900">Telegram</p>
                                 <p className="mt-1 text-sm text-gray-500">
-                                    {formData.isTelegramConnected ? "Connected" : "Not connected"}
+                                    {formData.isTelegramConnected ? "Conectado" : "Não conectado"}
                                 </p>
                             </div>
                             <div className="flex flex-col gap-2 sm:flex-row">
@@ -395,7 +395,7 @@ export const ProfileSettingsPage = () => {
                                     isDisabled={isTelegramBusy}
                                     onPress={handleConnectTelegram}
                                 >
-                                    {formData.isTelegramConnected ? "Reconnect" : "Connect Telegram"}
+                                    {formData.isTelegramConnected ? "Reconectar" : "Conectar Telegram"}
                                 </Button>
                                 <Button
                                     type="button"
@@ -405,7 +405,7 @@ export const ProfileSettingsPage = () => {
                                     isDisabled={isTelegramBusy}
                                     onPress={handleCheckTelegram}
                                 >
-                                    Check connection
+                                    Verificar conexão
                                 </Button>
                                 {formData.isTelegramConnected && (
                                     <Button
@@ -417,14 +417,14 @@ export const ProfileSettingsPage = () => {
                                         onPress={handleDisconnectTelegram}
                                         className="text-error-700 hover:text-error-800"
                                     >
-                                        Disconnect
+                                        Desconectar
                                     </Button>
                                 )}
                             </div>
                         </div>
                         {telegramCommand && !formData.isTelegramConnected && (
                             <div className="mt-4 rounded-lg border border-gray-200 bg-white p-3">
-                                <p className="text-xs font-medium text-gray-700">Fallback command</p>
+                                <p className="text-xs font-medium text-gray-700">Comando alternativo</p>
                                 <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
                                     <code className="min-w-0 flex-1 overflow-x-auto rounded-md bg-gray-100 px-3 py-2 text-xs text-gray-900">
                                         {telegramCommand}
@@ -436,7 +436,7 @@ export const ProfileSettingsPage = () => {
                                         iconLeading={Copy}
                                         onPress={handleCopyTelegramCommand}
                                     >
-                                        Copy
+                                        Copiar
                                     </Button>
                                 </div>
                             </div>
@@ -446,21 +446,21 @@ export const ProfileSettingsPage = () => {
                     <div className="space-y-1.5">
                         <label className="text-sm font-medium text-gray-700">Bio</label>
                         <TextArea
-                            placeholder="Write a short introduction..."
+                            placeholder="Escreva uma breve apresentação..."
                             value={formData.bio}
                             onChange={(value) => setFormData(prev => ({ ...prev, bio: value }))}
                             isDisabled={isSaving}
                             rows={4}
                         />
-                        <p className="text-xs text-gray-500">Brief description for your profile. URLs are hyperlinked.</p>
+                        <p className="text-xs text-gray-500">Breve descrição para seu perfil. URLs viram links automaticamente.</p>
                     </div>
                 </CardContent>
                 <CardFooter className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
                     <Button type="button" variant="secondary" isDisabled={isSaving} onPress={handleCancel}>
-                        Cancel
+                        Cancelar
                     </Button>
                     <Button type="submit" isDisabled={isSaving || isAvatarBusy}>
-                        {isSaving ? "Saving..." : "Save changes"}
+                        {isSaving ? "Salvando..." : "Salvar alterações"}
                     </Button>
                 </CardFooter>
             </Card>

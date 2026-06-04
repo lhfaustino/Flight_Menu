@@ -69,7 +69,7 @@ export function CateringUploadCard({ onUploaded, onFileSelected, deferUpload = f
   return (
     <div className="w-full max-w-md mx-auto p-4">
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900">Upload Meal Plan Fixo</h3>
+        <h3 className="mb-4 text-lg font-semibold text-gray-900">Enviar meal plan fixo</h3>
 
         <div
           className="mb-4 rounded-lg border-2 border-dashed border-gray-300 p-6 text-center transition-colors hover:border-blue-500 hover:bg-blue-50"
@@ -147,7 +147,7 @@ export function CateringUploadCard({ onUploaded, onFileSelected, deferUpload = f
             className="w-full"
             size="lg"
           >
-            {loading ? 'Enviando...' : 'Atualizar Meal Plan'}
+            {loading ? 'Enviando...' : 'Atualizar meal plan'}
           </Button>
         )}
       </div>

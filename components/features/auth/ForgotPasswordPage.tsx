@@ -29,14 +29,14 @@ export const ForgotPasswordPage = () => {
 
             setIsSubmitted(true);
             addToast({
-                title: "Email sent",
-                description: "Check your inbox for password reset instructions.",
+                title: "E-mail enviado",
+                description: "Confira sua caixa de entrada para redefinir a senha.",
                 type: "success"
             });
         } catch (error: any) {
             addToast({
-                title: "Error",
-                description: error.message || "Failed to send reset email.",
+                title: "Erro",
+                description: error.message || "Não foi possível enviar o e-mail de recuperação.",
                 type: "error"
             });
         } finally {
@@ -55,25 +55,25 @@ export const ForgotPasswordPage = () => {
                         <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-success-100">
                             <KeyRound className="h-6 w-6 text-success-600" />
                         </div>
-                        <h2 className="text-2xl font-bold tracking-tight text-gray-900">Check your email</h2>
+                        <h2 className="text-2xl font-bold tracking-tight text-gray-900">Confira seu e-mail</h2>
                         <p className="mt-2 text-sm text-gray-600 mb-8">
-                            We sent a password reset link to <span className="font-medium text-gray-900">{email}</span>.
+                            Enviamos um link de recuperação de senha para <span className="font-medium text-gray-900">{email}</span>.
                         </p>
                         <Button className="w-full justify-center" onPress={() => window.open("mailto:")}>
-                            Open email app
+                            Abrir app de e-mail
                         </Button>
                         <div className="mt-6 flex justify-center">
                             <p className="text-sm text-gray-600">
-                                Didn't receive the email?{" "}
+                                Não recebeu o e-mail?{" "}
                                 <button type="button" className="font-medium text-brand-600 hover:text-brand-500" onClick={() => setIsSubmitted(false)}>
-                                    Click to resend
+                                    Clique para reenviar
                                 </button>
                             </p>
                         </div>
                         <div className="mt-6 flex justify-center">
                             <a href="/login" className="flex items-center text-sm font-medium text-gray-600 hover:text-gray-500">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
-                                Back to log in
+                                Voltar para o login
                             </a>
                         </div>
                     </div>
@@ -88,9 +88,9 @@ export const ForgotPasswordPage = () => {
                 <div className="flex justify-center">
                     <UntitledUiLogo className="h-10 w-auto" />
                 </div>
-                <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">Forgot password?</h2>
+                <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">Esqueceu a senha?</h2>
                 <p className="mt-2 text-center text-sm text-gray-600">
-                    No worries, we'll send you reset instructions.
+                    Sem problemas, enviaremos as instruções de recuperação.
                 </p>
             </div>
 
@@ -98,9 +98,9 @@ export const ForgotPasswordPage = () => {
                 <div className="bg-white py-8 px-4 shadow-sm sm:rounded-lg sm:px-10">
                     <form className="space-y-6" onSubmit={handleSubmit} method="POST">
                         <Input
-                            label="Email"
+                            label="E-mail"
                             type="email"
-                            placeholder="Enter your email"
+                            placeholder="Digite seu e-mail"
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -108,7 +108,7 @@ export const ForgotPasswordPage = () => {
 
                         <div>
                             <Button type="submit" className="w-full justify-center" isDisabled={isLoading}>
-                                {isLoading ? "Sending..." : "Reset password"}
+                                {isLoading ? "Enviando..." : "Redefinir senha"}
                             </Button>
                         </div>
                     </form>
@@ -116,7 +116,7 @@ export const ForgotPasswordPage = () => {
                     <div className="mt-6 flex justify-center">
                         <a href="/login" className="flex items-center text-sm font-medium text-gray-600 hover:text-gray-500">
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Back to log in
+                            Voltar para o login
                         </a>
                     </div>
                 </div>

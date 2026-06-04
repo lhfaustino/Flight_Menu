@@ -4,7 +4,7 @@
 
 export const APP_CONFIG = {
     name: "Flight Menu",
-    description: "Flight meal service planning and roster upload application.",
+    description: "Aplicativo para escala, serviço de bordo e documentos rápidos.",
     version: "1.0.0",
 };
 
@@ -23,15 +23,15 @@ export const BRAND_CONFIG = {
 
 export const NAVIGATION = {
     main: [
-        { name: "Dashboard", href: "dashboard" },
-        { name: "Projects", href: "projects" },
-        { name: "Users", href: "users" },
-        { name: "Settings", href: "settings" },
+        { name: "Painel", href: "dashboard" },
+        { name: "Projetos", href: "projects" },
+        { name: "Usuários", href: "users" },
+        { name: "Configurações", href: "settings" },
     ],
     admin: [
-        { name: "Users", href: "users" },
-        { name: "Roles", href: "roles" },
-        { name: "Activity", href: "activity" },
+        { name: "Usuários", href: "users" },
+        { name: "Funções", href: "roles" },
+        { name: "Atividade", href: "activity" },
     ],
 };
 

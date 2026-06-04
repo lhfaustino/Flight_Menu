@@ -14,15 +14,14 @@ export const LandingPage = () => {
                             Gerencie seus serviços de bordo e seus documentos de voo.
                         </h1>
                         <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-500 md:text-xl">
-                            Flight Menu keeps roster PDFs and meal-plan updates aligned, so flight service
-                            information stays current for each user.
+                            O Flight Menu mantém sua escala, meal plan e informações de serviço de bordo sempre alinhados.
                         </p>
                         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
                             <Button size="xl" className="h-14 px-8 text-lg">
-                                Get started free
+                                Começar agora
                             </Button>
                             <Button variant="secondary" size="xl" className="h-14 px-8 text-lg">
-                                View components
+                                Entrar no app
                             </Button>
                         </div>
                     </div>
@@ -40,7 +39,7 @@ export const LandingPage = () => {
             <section className="bg-gray-50 py-16">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
                     <p className="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-8">
-                        TRUSTED BY OVER 1,000+ DISRUPTIVE TEAMS
+                        FEITO PARA TRIPULANTES QUE PRECISAM DE AGILIDADE
                     </p>
                     <div className="flex flex-wrap justify-center items-center gap-12 opacity-40 grayscale">
                         {/* Placeholder Logos */}
@@ -57,45 +56,45 @@ export const LandingPage = () => {
             <section className="py-24 bg-white">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-16">
-                        <h2 className="text-brand-600 font-semibold mb-2">Features</h2>
+                        <h2 className="text-brand-600 font-semibold mb-2">Recursos</h2>
                         <h3 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-                            Everything you need to ship faster
+                            Tudo que você precisa antes do voo
                         </h3>
                         <p className="mt-4 text-lg text-gray-500">
-                            Build and scale your application with a suite of professional components.
+                            Consulte escala, serviços, links úteis e alocuções em uma interface rápida.
                         </p>
                     </div>
 
                     <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
                         <FeatureCard
                             icon={Zap}
-                            title="Lightning Fast"
-                            description="Built on top of Vite and React 18, optimized for performance and developer experience."
+                            title="Rápido"
+                            description="Acesse suas informações essenciais sem perder tempo."
                         />
                         <FeatureCard
                             icon={BarChart3}
-                            title="Advanced Charts"
-                            description="Ready-to-use charts with Recharts, beautifully styled to match your dashboard."
+                            title="Serviços atualizados"
+                            description="Atualize os serviços dos voos quando o meal plan fixo mudar."
                         />
                         <FeatureCard
                             icon={Shield}
-                            title="Role-based Access"
-                            description="Pre-built authentication flows and layout structures for permissions management."
+                            title="Acesso seguro"
+                            description="Conta autenticada e áreas administrativas protegidas."
                         />
                         <FeatureCard
                             icon={Users}
-                            title="Team Collaboration"
-                            description="Components designed for multi-user environments and team workspaces."
+                            title="Telegram"
+                            description="Envie apenas os voos selecionados diretamente pelo Telegram."
                         />
                         <FeatureCard
                             icon={Globe}
-                            title="Global Ready"
-                            description="Full support for internationalization and responsive layouts for any screen."
+                            title="Alocuções"
+                            description="Biblioteca trilíngue com leitura em tela cheia."
                         />
                         <FeatureCard
                             icon={CheckCircle2}
-                            title="Production Ready"
-                            description="Thoroughly tested components that follow accessibility and security best practices."
+                            title="Links úteis"
+                            description="Acesse portais e documentos importantes em formato linktree."
                         />
                     </div>
                 </div>
@@ -107,31 +106,30 @@ export const LandingPage = () => {
                     <div className="flex flex-col lg:flex-row items-center gap-16">
                         <div className="lg:w-1/2">
                             <h2 className="text-3xl font-bold sm:text-4xl mb-6">
-                                Meal planning at your <br />
-                                <span className="text-brand-400">fingertips.</span>
+                                Planejamento de bordo <br />
+                                <span className="text-brand-400">na palma da mão.</span>
                             </h2>
                             <p className="text-lg text-gray-400 mb-8">
-                                Keep uploaded rosters synchronized with the latest master meal plan,
-                                including clear not-found states when a flight has no meal-plan match.
+                                Mantenha sua escala sincronizada com o meal plan mais recente e veja rapidamente os serviços de cada voo.
                             </p>
                             <ul className="space-y-4">
                                 <li className="flex items-center gap-3">
                                     <div className="rounded-full bg-brand-500/10 p-1">
                                         <CheckCircle2 className="h-5 w-5 text-brand-400" />
                                     </div>
-                                    <span className="text-gray-300 font-medium">Meal-plan driven roster refresh</span>
+                                    <span className="text-gray-300 font-medium">Atualização da escala pelo meal plan</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <div className="rounded-full bg-brand-500/10 p-1">
                                         <CheckCircle2 className="h-5 w-5 text-brand-400" />
                                     </div>
-                                    <span className="text-gray-300 font-medium">PDF roster and meal-plan parsing</span>
+                                    <span className="text-gray-300 font-medium">Leitura de PDFs de escala e meal plan</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <div className="rounded-full bg-brand-500/10 p-1">
                                         <CheckCircle2 className="h-5 w-5 text-brand-400" />
                                     </div>
-                                    <span className="text-gray-300 font-medium">Explicit not-found flight status</span>
+                                    <span className="text-gray-300 font-medium">Status claro para voos sem correspondência</span>
                                 </li>
                             </ul>
                         </div>
@@ -139,7 +137,7 @@ export const LandingPage = () => {
                             <div className="aspect-video rounded-2xl bg-gray-800 border-8 border-gray-700 shadow-2xl overflow-hidden">
                                 <img
                                     src="https://images.unsplash.com/photo-1551288049-bbbda536339a?q=80&w=2670&auto=format&fit=crop"
-                                    alt="Dashboard preview"
+                                    alt="Prévia do painel"
                                     className="w-full h-full object-cover"
                                 />
                             </div>

@@ -31,7 +31,7 @@ export async function createTelegramConnectionLink() {
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return { success: false, error: 'Unauthorized' };
+    return { success: false, error: 'Não autorizado' };
   }
 
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -79,7 +79,7 @@ export async function getTelegramConnectionStatus() {
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return { success: false, error: 'Unauthorized' };
+    return { success: false, error: 'Não autorizado' };
   }
 
   const { data, error } = await supabase
@@ -103,7 +103,7 @@ export async function disconnectTelegram() {
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return { success: false, error: 'Unauthorized' };
+    return { success: false, error: 'Não autorizado' };
   }
 
   const { error } = await supabase
@@ -131,7 +131,7 @@ export async function sendTodayFlightInformation(selectedFlightKeys: string[] = 
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return { success: false, error: 'Unauthorized' };
+    return { success: false, error: 'Não autorizado' };
   }
 
   const uniqueSelectedKeys = [...new Set(selectedFlightKeys.map((key) => key.trim()).filter(Boolean))];
@@ -156,7 +156,7 @@ export async function sendTodayFlightInformation(selectedFlightKeys: string[] = 
 
   const chatId = String(profile?.telegram_chat_id ?? '').trim();
   if (!chatId) {
-    return { success: false, error: 'Connect Telegram in profile settings before sending.' };
+    return { success: false, error: 'Conecte o Telegram nas configurações do perfil antes de enviar.' };
   }
 
   const timezone = String(profile?.timezone ?? 'America/Sao_Paulo');

@@ -36,7 +36,7 @@ export function UsefulLinksAdminPage({ initialLinks }: { initialLinks: UsefulLin
                 : await createUsefulLink(form);
 
             if (!result.success) {
-                setMessage({ type: "error", text: result.error ?? "Nao foi possivel salvar o link." });
+                setMessage({ type: "error", text: result.error ?? "Não foi possível salvar o link." });
                 return;
             }
 
@@ -56,7 +56,7 @@ export function UsefulLinksAdminPage({ initialLinks }: { initialLinks: UsefulLin
         } catch (error) {
             setMessage({
                 type: "error",
-                text: error instanceof Error ? error.message : "Nao foi possivel salvar o link.",
+                text: error instanceof Error ? error.message : "Não foi possível salvar o link.",
             });
         } finally {
             setIsSaving(false);
@@ -89,7 +89,7 @@ export function UsefulLinksAdminPage({ initialLinks }: { initialLinks: UsefulLin
         });
 
         if (!result.success || !result.link) {
-            setMessage({ type: "error", text: result.error ?? "Nao foi possivel alterar o link." });
+            setMessage({ type: "error", text: result.error ?? "Não foi possível alterar o link." });
             return;
         }
 
@@ -104,7 +104,7 @@ export function UsefulLinksAdminPage({ initialLinks }: { initialLinks: UsefulLin
 
         const result = await deleteUsefulLink(link.id);
         if (!result.success) {
-            setMessage({ type: "error", text: result.error ?? "Nao foi possivel remover o link." });
+            setMessage({ type: "error", text: result.error ?? "Não foi possível remover o link." });
             return;
         }
 
@@ -175,7 +175,7 @@ export function UsefulLinksAdminPage({ initialLinks }: { initialLinks: UsefulLin
 
                 <div className="space-y-4">
                     <label className="block">
-                        <span className="text-sm font-semibold text-gray-700">Titulo</span>
+                        <span className="text-sm font-semibold text-gray-700">Título</span>
                         <input
                             value={form.title}
                             onChange={(event) => setForm({ ...form, title: event.target.value })}

@@ -160,12 +160,12 @@ export function FlightMenuUploadWorkspace({
       if (result.success) {
         setMessage({ type: 'success', text: result.message ?? 'Voos enviados pelo Telegram.' });
       } else {
-        setMessage({ type: 'error', text: result.error ?? 'Nao foi possivel enviar pelo Telegram.' });
+        setMessage({ type: 'error', text: result.error ?? 'Não foi possível enviar pelo Telegram.' });
       }
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error instanceof Error ? error.message : 'Nao foi possivel enviar pelo Telegram.',
+        text: error instanceof Error ? error.message : 'Não foi possível enviar pelo Telegram.',
       });
     } finally {
       setIsSendingTelegram(false);
@@ -211,12 +211,12 @@ export function FlightMenuUploadWorkspace({
         router.refresh();
       } else {
         setRows(result.rows ?? rows);
-        setMessage({ type: 'error', text: result.error ?? 'Nao foi possivel atualizar os servicos.' });
+        setMessage({ type: 'error', text: result.error ?? 'Não foi possível atualizar os serviços.' });
       }
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error instanceof Error ? error.message : 'Nao foi possivel atualizar os servicos.',
+        text: error instanceof Error ? error.message : 'Não foi possível atualizar os serviços.',
       });
     } finally {
       setIsRefreshingMealPlan(false);
@@ -337,12 +337,12 @@ export function FlightMenuUploadWorkspace({
                       onChange={toggleAllVisibleRows}
                     />
                   </TableHead>
-                  <TableHead className="h-9 px-3">Date</TableHead>
-                  <TableHead className="h-9 px-3">Flight</TableHead>
-                  <TableHead className="h-9 px-3">Origin</TableHead>
-                  <TableHead className="h-9 px-3">Destiny</TableHead>
-                  <TableHead className="h-9 px-3">Service crew</TableHead>
-                  <TableHead className="h-9 px-3">Service pax</TableHead>
+                  <TableHead className="h-9 px-3">Data</TableHead>
+                  <TableHead className="h-9 px-3">Voo</TableHead>
+                  <TableHead className="h-9 px-3">Origem</TableHead>
+                  <TableHead className="h-9 px-3">Destino</TableHead>
+                  <TableHead className="h-9 px-3">Serviço crew</TableHead>
+                  <TableHead className="h-9 px-3">Serviço pax</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>

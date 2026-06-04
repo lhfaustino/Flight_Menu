@@ -29,11 +29,11 @@ export const SupportTicketFlow = () => {
         <div className="space-y-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                 <div>
-                    <h1 className="text-display-xs font-bold text-gray-900">Support & Feedback</h1>
-                    <p className="text-gray-500">Need help or have a feature suggestion? Let our team know.</p>
+                    <h1 className="text-display-xs font-bold text-gray-900">Suporte e feedback</h1>
+                    <p className="text-gray-500">Precisa de ajuda ou tem uma sugestão? Avise nossa equipe.</p>
                 </div>
                 <Button className="gap-2 shadow-lg hover:shadow-none transition-shadow" onClick={() => setIsModalOpen(true)}>
-                    <Plus className="size-4" /> New Ticket
+                    <Plus className="size-4" /> Novo chamado
                 </Button>
             </div>
 
@@ -43,15 +43,15 @@ export const SupportTicketFlow = () => {
                         <div className="size-12 bg-brand-50 rounded-2xl flex items-center justify-center mb-2">
                             <MessageCircle className="size-6 text-brand-600" />
                         </div>
-                        <CardTitle>Direct Support</CardTitle>
-                        <CardDescription>Open a ticket with our technical support team for help with any issues.</CardDescription>
+                        <CardTitle>Suporte direto</CardTitle>
+                        <CardDescription>Abra um chamado com nosso suporte técnico para receber ajuda.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
                             <div className="size-2 bg-success-500 rounded-full animate-pulse" />
-                            Average response time: &lt; 2 hours
+                            Tempo médio de resposta: &lt; 2 horas
                         </div>
-                        <Button variant="secondary" className="w-full" onClick={() => setIsModalOpen(true)}>Open Technical Ticket</Button>
+                        <Button variant="secondary" className="w-full" onClick={() => setIsModalOpen(true)}>Abrir chamado técnico</Button>
                     </CardContent>
                 </Card>
 
@@ -60,14 +60,14 @@ export const SupportTicketFlow = () => {
                         <div className="size-12 bg-success-50 rounded-2xl flex items-center justify-center mb-2">
                             <AlertCircle className="size-6 text-success-600" />
                         </div>
-                        <CardTitle>Share Feedback</CardTitle>
-                        <CardDescription>Help us improve by sharing your thoughts, feature requests, or bugs.</CardDescription>
+                        <CardTitle>Enviar feedback</CardTitle>
+                        <CardDescription>Ajude a melhorar o app enviando ideias, pedidos ou problemas.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                            <span className="font-semibold text-gray-900">12</span> requests implemented this month
+                            <span className="font-semibold text-gray-900">12</span> solicitações implementadas este mês
                         </div>
-                        <Button variant="secondary" className="w-full" onClick={() => setIsModalOpen(true)}>Submit Feedback</Button>
+                        <Button variant="secondary" className="w-full" onClick={() => setIsModalOpen(true)}>Enviar feedback</Button>
                     </CardContent>
                 </Card>
             </div>
@@ -83,17 +83,17 @@ export const SupportTicketFlow = () => {
                                         <CheckCircle2 className="size-10 text-success-600" />
                                     </div>
                                     <div className="space-y-2">
-                                        <h3 className="text-2xl font-bold text-gray-900">Ticket Submitted</h3>
-                                        <p className="text-gray-500">Thank you for reaching out! Our team has received your ticket (#TK-4912) and will get back to you shortly.</p>
+                                        <h3 className="text-2xl font-bold text-gray-900">Chamado enviado</h3>
+                                        <p className="text-gray-500">Obrigado pelo contato! Nossa equipe recebeu seu chamado (#TK-4912) e responderá em breve.</p>
                                     </div>
-                                    <Button className="w-full h-12 text-lg" onClick={reset}>Got it, thanks!</Button>
+                                    <Button className="w-full h-12 text-lg" onClick={reset}>Entendi, obrigado!</Button>
                                 </div>
                             ) : (
                                 <form onSubmit={handleSubmit} className="flex flex-col">
                                     <div className="p-8 border-b border-gray-100 flex items-center justify-between">
                                         <div className="space-y-1">
-                                            <h3 className="text-xl font-bold text-gray-900">Create Support Ticket</h3>
-                                            <p className="text-sm text-gray-500">Provide as much detail as possible for a faster resolution.</p>
+                                            <h3 className="text-xl font-bold text-gray-900">Criar chamado de suporte</h3>
+                                            <p className="text-sm text-gray-500">Informe o máximo de detalhes possível para agilizar a solução.</p>
                                         </div>
                                         <Button variant="tertiary" size="sm" className="p-1 h-8 w-8" onClick={reset}>
                                             <X className="size-5 text-gray-400" />
@@ -102,36 +102,36 @@ export const SupportTicketFlow = () => {
 
                                     <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
                                         <div className="space-y-4">
-                                            <label className="text-sm font-bold text-gray-700">Category</label>
+                                            <label className="text-sm font-bold text-gray-700">Categoria</label>
                                             <div className="grid grid-cols-2 gap-3">
-                                                <CategoryBtn active={category === "technical"} label="Technical Issue" onClick={() => setCategory("technical")} />
-                                                <CategoryBtn active={category === "billing"} label="Billing/Account" onClick={() => setCategory("billing")} />
-                                                <CategoryBtn active={category === "feedback"} label="Product Feedback" onClick={() => setCategory("feedback")} />
-                                                <CategoryBtn active={category === "other"} label="Other" onClick={() => setCategory("other")} />
+                                                <CategoryBtn active={category === "technical"} label="Problema técnico" onClick={() => setCategory("technical")} />
+                                                <CategoryBtn active={category === "billing"} label="Conta" onClick={() => setCategory("billing")} />
+                                                <CategoryBtn active={category === "feedback"} label="Feedback" onClick={() => setCategory("feedback")} />
+                                                <CategoryBtn active={category === "other"} label="Outro" onClick={() => setCategory("other")} />
                                             </div>
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-gray-700">Subject</label>
-                                            <Input placeholder="Brief overview of the issue" className="h-11" required />
+                                            <label className="text-sm font-bold text-gray-700">Assunto</label>
+                                            <Input placeholder="Resumo breve do problema" className="h-11" required />
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-gray-700">Description</label>
-                                            <TextArea placeholder="Tell us more about what's happening..." rows={4} isRequired />
+                                            <label className="text-sm font-bold text-gray-700">Descrição</label>
+                                            <TextArea placeholder="Conte mais sobre o que está acontecendo..." rows={4} isRequired />
                                         </div>
 
                                         <div className="p-4 border-2 border-dashed border-gray-100 rounded-xl flex flex-col items-center justify-center py-8 group hover:border-brand-200 transition-colors cursor-pointer">
                                             <Paperclip className="size-8 text-gray-300 group-hover:text-brand-500 mb-2 transition-colors" />
-                                            <span className="text-sm font-semibold text-gray-500 group-hover:text-gray-900 transition-colors">Attach screenshots or logs</span>
-                                            <span className="text-xs text-gray-400">Max size 10MB</span>
+                                            <span className="text-sm font-semibold text-gray-500 group-hover:text-gray-900 transition-colors">Anexar prints ou logs</span>
+                                            <span className="text-xs text-gray-400">Tamanho máximo 10MB</span>
                                         </div>
                                     </div>
 
                                     <div className="p-8 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
-                                        <Button variant="tertiary" type="button" onClick={reset}>Cancel</Button>
+                                        <Button variant="tertiary" type="button" onClick={reset}>Cancelar</Button>
                                         <Button type="submit" className="gap-2 min-w-[140px]" isDisabled={status === "submitting"}>
-                                            {status === "submitting" ? "Submitting..." : <><Send className="size-4" /> Send Ticket</>}
+                                            {status === "submitting" ? "Enviando..." : <><Send className="size-4" /> Enviar chamado</>}
                                         </Button>
                                     </div>
                                 </form>

@@ -55,7 +55,7 @@ export const UpdatePasswordPage = () => {
                 window.history.replaceState({}, document.title, "/auth/update-password");
                 setLinkStatus("ready");
             } catch (sessionError: any) {
-                setError(sessionError.message || "This password reset link is invalid or expired.");
+                setError(sessionError.message || "Este link de recuperação é inválido ou expirou.");
                 setLinkStatus("invalid");
             }
         };
@@ -68,12 +68,12 @@ export const UpdatePasswordPage = () => {
         setError(null);
 
         if (password.length < 6) {
-            setError("Password must be at least 6 characters.");
+            setError("A senha deve ter pelo menos 6 caracteres.");
             return;
         }
 
         if (password !== confirmPassword) {
-            setError("Passwords do not match.");
+            setError("As senhas não conferem.");
             return;
         }
 
@@ -86,18 +86,18 @@ export const UpdatePasswordPage = () => {
             if (updateError) throw updateError;
 
             addToast({
-                title: "Password updated",
-                description: "You can now sign in with your new password.",
+                title: "Senha atualizada",
+                description: "Agora você pode entrar com sua nova senha.",
                 type: "success",
             });
 
             router.push(AUTH_CONFIG.loginPath);
             router.refresh();
         } catch (updateError: any) {
-            setError(updateError.message || "Failed to update your password.");
+            setError(updateError.message || "Não foi possível atualizar sua senha.");
             addToast({
-                title: "Password update failed",
-                description: updateError.message || "Please request a new password reset email.",
+                title: "Falha ao atualizar a senha",
+                description: updateError.message || "Solicite um novo e-mail de recuperação de senha.",
                 type: "error",
             });
         } finally {
@@ -111,9 +111,9 @@ export const UpdatePasswordPage = () => {
                 <div className="flex justify-center">
                     <UntitledUiLogo className="h-10 w-auto" />
                 </div>
-                <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">Update password</h2>
+                <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">Atualizar senha</h2>
                 <p className="mt-2 text-center text-sm text-gray-600">
-                    Choose a new password for your Flight Menu account.
+                    Escolha uma nova senha para sua conta Flight Menu.
                 </p>
             </div>
 
@@ -124,7 +124,7 @@ export const UpdatePasswordPage = () => {
                             <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50">
                                 <KeyRound className="h-6 w-6 text-brand-600" />
                             </div>
-                            <p className="text-sm text-gray-600">Checking your reset link...</p>
+                            <p className="text-sm text-gray-600">Verificando seu link de recuperação...</p>
                         </div>
                     )}
 
@@ -133,12 +133,12 @@ export const UpdatePasswordPage = () => {
                             <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-error-50">
                                 <KeyRound className="h-6 w-6 text-error-600" />
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-900">Reset link expired</h3>
+                            <h3 className="text-lg font-semibold text-gray-900">Link de recuperação expirado</h3>
                             <p className="mt-2 text-sm text-gray-600">
-                                {error || "Please request a new password reset email and try again."}
+                                {error || "Solicite um novo e-mail de recuperação de senha e tente novamente."}
                             </p>
                             <Button className="mt-6 w-full justify-center" onPress={() => router.push("/forgot-password")}>
-                                Request new link
+                                Solicitar novo link
                             </Button>
                         </div>
                     )}
@@ -152,7 +152,7 @@ export const UpdatePasswordPage = () => {
                             )}
 
                             <Input
-                                label="New password"
+                                label="Nova senha"
                                 type="password"
                                 autoComplete="new-password"
                                 required
@@ -161,7 +161,7 @@ export const UpdatePasswordPage = () => {
                             />
 
                             <Input
-                                label="Confirm password"
+                                label="Confirmar senha"
                                 type="password"
                                 autoComplete="new-password"
                                 required
@@ -170,7 +170,7 @@ export const UpdatePasswordPage = () => {
                             />
 
                             <Button type="submit" className="w-full justify-center" isDisabled={isLoading}>
-                                {isLoading ? "Updating..." : "Update password"}
+                                {isLoading ? "Atualizando..." : "Atualizar senha"}
                             </Button>
                         </form>
                     )}
@@ -178,7 +178,7 @@ export const UpdatePasswordPage = () => {
                     <div className="mt-6 flex justify-center">
                         <Link href="/login" className="flex items-center text-sm font-medium text-gray-600 hover:text-gray-500">
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Back to log in
+                            Voltar para o login
                         </Link>
                     </div>
                 </div>

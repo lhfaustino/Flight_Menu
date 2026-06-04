@@ -44,18 +44,18 @@ export async function updateFlightMenu(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    throw new Error('Unauthorized');
+    throw new Error('Não autorizado');
   }
 
   const rosterFile = formData.get('rosterFile') as File | null;
   const cateringFile = formData.get('cateringFile') as File | null;
 
   if (!rosterFile || !cateringFile) {
-    return { success: false, error: 'Select both PDF files before updating.' };
+    return { success: false, error: 'Selecione os dois arquivos PDF antes de atualizar.' };
   }
 
   if (rosterFile.type !== 'application/pdf' || cateringFile.type !== 'application/pdf') {
-    return { success: false, error: 'Only PDF files are allowed.' };
+    return { success: false, error: 'Somente arquivos PDF são permitidos.' };
   }
 
   try {
@@ -75,7 +75,7 @@ export async function updateFlightMenu(formData: FormData) {
     const rosterEntries = parseRosterText(rosterText);
 
     if (rosterEntries.length === 0) {
-      return { success: false, error: 'No flight data found in roster PDF. Check the format.' };
+      return { success: false, error: 'Nenhum voo encontrado no PDF da escala. Confira o formato.' };
     }
 
     const cateringByKey = new Map(
@@ -144,7 +144,7 @@ export async function updateFlightMenu(formData: FormData) {
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error while updating flight menu.',
+      error: error instanceof Error ? error.message : 'Erro desconhecido ao atualizar o Flight Menu.',
     };
   }
 }

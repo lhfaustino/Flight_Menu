@@ -20,20 +20,20 @@ export const MarketingHeader = () => {
 
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex gap-8">
-                        <NavLink href="/">Home</NavLink>
-                        <NavLink href="/pricing">Pricing</NavLink>
-                        <NavLink href="/contact">Contact</NavLink>
+                        <NavLink href="/">Início</NavLink>
+                        <NavLink href="/pricing">Preços</NavLink>
+                        <NavLink href="/contact">Contato</NavLink>
                     </nav>
 
                     {/* Auth Buttons */}
                     <div className="hidden md:flex items-center gap-4">
                         <Link href="/login">
                             <Button variant="tertiary" className="text-gray-600 hover:text-gray-900">
-                                Log in
+                                Entrar
                             </Button>
                         </Link>
                         <Link href="/signup">
-                            <Button>Sign up</Button>
+                            <Button>Cadastrar</Button>
                         </Link>
                     </div>
 
@@ -41,7 +41,7 @@ export const MarketingHeader = () => {
                     <button
                         className="md:hidden p-2 text-gray-600"
                         onClick={toggleMenu}
-                        aria-label="Toggle menu"
+                        aria-label="Abrir ou fechar menu"
                     >
                         {isMobileMenuOpen ? <X /> : <Menu />}
                     </button>
@@ -52,16 +52,16 @@ export const MarketingHeader = () => {
             {isMobileMenuOpen && (
                 <div className="md:hidden border-t border-gray-100 bg-white">
                     <div className="space-y-1 px-4 pb-3 pt-2">
-                        <MobileNavLink href="/" onClick={toggleMenu}>Home</MobileNavLink>
-                        <MobileNavLink href="/pricing" onClick={toggleMenu}>Pricing</MobileNavLink>
-                        <MobileNavLink href="/contact" onClick={toggleMenu}>Contact</MobileNavLink>
+                        <MobileNavLink href="/" onClick={toggleMenu}>Início</MobileNavLink>
+                        <MobileNavLink href="/pricing" onClick={toggleMenu}>Preços</MobileNavLink>
+                        <MobileNavLink href="/contact" onClick={toggleMenu}>Contato</MobileNavLink>
                     </div>
                     <div className="border-t border-gray-100 px-4 py-3 space-y-2">
                         <Link href="/login" onClick={toggleMenu} className="block">
-                            <Button variant="tertiary" className="w-full justify-start text-gray-600">Log in</Button>
+                            <Button variant="tertiary" className="w-full justify-start text-gray-600">Entrar</Button>
                         </Link>
                         <Link href="/signup" onClick={toggleMenu} className="block">
-                            <Button className="w-full">Sign up</Button>
+                            <Button className="w-full">Cadastrar</Button>
                         </Link>
                     </div>
                 </div>

@@ -33,7 +33,7 @@ export async function getMyProfile() {
         // Get user from session (Security: never accept user_id from client)
         const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        if (authError || !user) throw new Error("Unauthorized");
+        if (authError || !user) throw new Error("Não autorizado");
 
         const { data, error } = await supabase
             .from("profiles")
@@ -67,7 +67,7 @@ export async function updateMyProfile(updates: ProfileUpdateParams) {
 
         // 1. Auth Validation
         const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) throw new Error("Unauthorized");
+        if (authError || !user) throw new Error("Não autorizado");
 
         // 2. Input Validation (Fail Fast)
         const fullName = updates.full_name?.trim() ?? "";
@@ -78,11 +78,11 @@ export async function updateMyProfile(updates: ProfileUpdateParams) {
         const timezone = updates.timezone?.trim() || "America/Sao_Paulo";
 
         if (fullName.length < 2) {
-            throw new Error("Full name must be at least 2 characters.");
+            throw new Error("O nome completo deve ter pelo menos 2 caracteres.");
         }
 
         if (!email || !email.includes("@")) {
-            throw new Error("Please enter a valid email address.");
+            throw new Error("Digite um e-mail válido.");
         }
 
         if (email !== user.email) {
@@ -136,19 +136,19 @@ export async function uploadMyProfileAvatar(formData: FormData) {
         const supabase = await createClient();
 
         const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) throw new Error("Unauthorized");
+        if (authError || !user) throw new Error("Não autorizado");
 
         const file = formData.get("avatar");
         if (!(file instanceof File)) {
-            throw new Error("Please choose an image to upload.");
+            throw new Error("Escolha uma imagem para enviar.");
         }
 
         if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
-            throw new Error("Avatar must be a JPG, PNG, GIF, or WebP image.");
+            throw new Error("A foto deve ser JPG, PNG, GIF ou WebP.");
         }
 
         if (file.size > MAX_AVATAR_SIZE_BYTES) {
-            throw new Error("Avatar must be 1MB or smaller.");
+            throw new Error("A foto deve ter no máximo 1MB.");
         }
 
         const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -203,7 +203,7 @@ export async function deleteMyProfileAvatar() {
         const supabase = await createClient();
 
         const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) throw new Error("Unauthorized");
+        if (authError || !user) throw new Error("Não autorizado");
 
         const { data, error } = await supabase
             .from("profiles")

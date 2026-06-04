@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { isAdminEmail } from "@/lib/admin-access";
+import { assertCurrentAdmin } from "@/app/actions/admin-users";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -124,14 +124,7 @@ export async function deleteAlocucao(id: string) {
 }
 
 async function assertAdmin() {
-    const supabase = await createClient();
-    const { data: { user }, error } = await supabase.auth.getUser();
-
-    if (error || !user || !isAdminEmail(user.email)) {
-        throw new Error("Only the administrator can manage alocucoes.");
-    }
-
-    return user;
+    return assertCurrentAdmin();
 }
 
 function normalizeAlocucaoInput(input: AlocucaoInput) {
@@ -141,8 +134,8 @@ function normalizeAlocucaoInput(input: AlocucaoInput) {
     const es = input.es.trim();
     const sortOrder = Number.isFinite(Number(input.sort_order)) ? Number(input.sort_order) : 0;
 
-    if (title.length < 2) throw new Error("Title must be at least 2 characters.");
-    if (!pt && !en && !es) throw new Error("Add at least one speech body.");
+    if (title.length < 2) throw new Error("O título deve ter pelo menos 2 caracteres.");
+    if (!pt && !en && !es) throw new Error("Adicione o texto da alocução em pelo menos um idioma.");
 
     return { title, pt, en, es, sort_order: sortOrder };
 }

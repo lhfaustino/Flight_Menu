@@ -51,7 +51,7 @@ const UserMenuDialog = ({
     const [profileAvatarUrl, setProfileAvatarUrl] = useState("");
     const [profileName, setProfileName] = useState("");
 
-    const userName = profileName || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
+    const userName = profileName || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Usuário";
     const userEmail = user?.email || "user@example.com";
     const userAvatar = profileAvatarUrl || user?.user_metadata?.avatar_url || "";
 
@@ -119,7 +119,7 @@ const UserMenuDialog = ({
                 <div className="rounded-xl bg-primary ring-1 ring-secondary">
                     <div className="flex flex-col gap-0.5 py-1.5">
                         <UserMenuItem
-                            label="View profile"
+                            label="Ver perfil"
                             icon={User01}
                             shortcut="⌘K->P"
                             onClick={() => {
@@ -128,7 +128,7 @@ const UserMenuDialog = ({
                             }}
                         />
                         <UserMenuItem
-                            label="Account settings"
+                            label="Configurações da conta"
                             icon={Settings}
                             shortcut="⌘S"
                             onClick={() => {
@@ -137,7 +137,7 @@ const UserMenuDialog = ({
                             }}
                         />
                         <UserMenuItem
-                            label="Documentation"
+                            label="Ajuda"
                             icon={BookOpen}
                             onClick={() => {
                                 router.push("/support");
@@ -146,7 +146,7 @@ const UserMenuDialog = ({
                         />
                     </div>
                     <div className="flex flex-col gap-0.5 border-t border-secondary py-1.5">
-                        <div className="px-3 pt-1.5 pb-1 text-xs font-semibold text-tertiary">Current Workspace</div>
+                        <div className="px-3 pt-1.5 pb-1 text-xs font-semibold text-tertiary">Conta atual</div>
 
                         <div className="flex flex-col gap-0.5 px-1.5">
                             <div
@@ -162,13 +162,13 @@ const UserMenuDialog = ({
                     </div>
                     <div className="flex flex-col gap-2 px-2 pt-0.5 pb-2 border-t border-secondary mt-1">
                         <Button variant="secondary" size="sm" className="w-full justify-start gap-2" onPress={close}>
-                            <Plus className="size-4" /> Add workspace
+                            <Plus className="size-4" /> Adicionar conta
                         </Button>
                     </div>
 
                     <div className="pt-1 pb-1.5 border-t border-secondary">
                         <UserMenuItem
-                            label="Sign out"
+                            label="Sair"
                             icon={LogOut}
                             shortcut="⌥⇧Q"
                             onClick={async () => {
@@ -261,7 +261,7 @@ export const UserMenu = ({
     }, [user]);
 
     // Prefer User Metadata name, then email, then display fallback
-    const userName = profileName || user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
+    const userName = profileName || user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Usuário";
     const userEmail = user?.email || "user@example.com";
     const userAvatar = profileAvatarUrl || user?.user_metadata?.avatar_url || "";
 
@@ -285,7 +285,7 @@ export const UserMenu = ({
         >
             <AriaDialogTrigger>
                 <AriaButton
-                    aria-label="Open user menu"
+                    aria-label="Abrir menu do usuário"
                     className={cx(
                         "cursor-pointer outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2",
                         compact
