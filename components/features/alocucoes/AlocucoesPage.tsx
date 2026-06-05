@@ -25,6 +25,7 @@ const storageKey = "flight-menu:alocucoes-order";
 
 export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
     const activeDragIdRef = useRef<string | null>(null);
+    const lastTargetIdRef = useRef<string | null>(null);
     const [orderedIds, setOrderedIds] = useState<string[]>(() => speeches.map((speech) => speech.id));
     const [draggedId, setDraggedId] = useState<string | null>(null);
     const [hoverTargetId, setHoverTargetId] = useState<string | null>(null);
@@ -112,20 +113,46 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
             }
 
             const targetId = target?.dataset.speechId;
-            if (targetId && targetId !== sourceId) {
+            
+            // Only reorder when target changes, not on every move
+            if (targetId && targetId !== sourceId && targetId !== lastTargetIdRef.current) {
+                lastTargetIdRef.current = targetId;
                 setHoverTargetId(targetId);
+
+                // Determine if cursor is in top or bottom half of target
+                const targetRect = target!.getBoundingClientRect();
+                const cursorInTopHalf = event.clientY < (targetRect.top + targetRect.height / 2);
+
                 setOrderedIds((currentIds) => {
+                    const sourceIndex = currentIds.indexOf(sourceId);
+                    const targetIndex = currentIds.indexOf(targetId);
+                    if (sourceIndex === -1 || targetIndex === -1) return currentIds;
+
+                    // Remove source from array
                     const nextIds = currentIds.filter((id) => id !== sourceId);
-                    const targetIndex = nextIds.indexOf(targetId);
-                    if (targetIndex === -1) return currentIds;
-                    nextIds.splice(targetIndex, 0, sourceId);
+                    const newTargetIndex = nextIds.indexOf(targetId);
+
+                    // Insert based on cursor position and direction
+                    if (cursorInTopHalf) {
+                        // Insert before target
+                        nextIds.splice(newTargetIndex, 0, sourceId);
+                    } else {
+                        // Insert after target
+                        nextIds.splice(newTargetIndex + 1, 0, sourceId);
+                    }
+
                     return nextIds;
                 });
+            } else if (!targetId || targetId === sourceId) {
+                // Clear hover when not over a valid target
+                lastTargetIdRef.current = null;
+                setHoverTargetId(null);
             }
         };
 
         const handlePointerEnd = () => {
             activeDragIdRef.current = null;
+            lastTargetIdRef.current = null;
             setDraggedId(null);
             setHoverTargetId(null);
         };
