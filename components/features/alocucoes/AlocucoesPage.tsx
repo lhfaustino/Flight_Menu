@@ -27,6 +27,7 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
     const activeDragIdRef = useRef<string | null>(null);
     const [orderedIds, setOrderedIds] = useState<string[]>(() => speeches.map((speech) => speech.id));
     const [draggedId, setDraggedId] = useState<string | null>(null);
+    const [hoverTargetId, setHoverTargetId] = useState<string | null>(null);
     const [selectedSpeech, setSelectedSpeech] = useState<Alocucao | null>(null);
     const [language, setLanguage] = useState<LanguageCode>("pt");
 
@@ -112,6 +113,7 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
 
             const targetId = target?.dataset.speechId;
             if (targetId && targetId !== sourceId) {
+                setHoverTargetId(targetId);
                 setOrderedIds((currentIds) => {
                     const nextIds = currentIds.filter((id) => id !== sourceId);
                     const targetIndex = nextIds.indexOf(targetId);
@@ -125,6 +127,7 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
         const handlePointerEnd = () => {
             activeDragIdRef.current = null;
             setDraggedId(null);
+            setHoverTargetId(null);
         };
 
         document.addEventListener("pointermove", handlePointerMove);
@@ -156,8 +159,12 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
                         <div
                             key={speech.id}
                             data-speech-id={speech.id}
-                            className={`group flex items-center gap-3 rounded-lg border bg-white px-3 py-3 shadow-sm transition-colors ${
-                                draggedId === speech.id ? "border-brand-300 bg-brand-50" : "border-gray-200 hover:border-brand-200 hover:bg-brand-50/40"
+                            className={`group flex items-center gap-3 rounded-lg border bg-white px-3 py-3 transition-all ${
+                                draggedId === speech.id 
+                                    ? "border-brand-400 bg-brand-50 shadow-lg shadow-brand-200 scale-105" 
+                                    : hoverTargetId === speech.id
+                                    ? "border-brand-300 bg-brand-50 shadow-md"
+                                    : "border-gray-200 hover:border-brand-200 hover:bg-brand-50/40 shadow-sm"
                             }`}
                         >
                             <button
