@@ -136,18 +136,6 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
             document.removeEventListener("pointercancel", handlePointerEnd);
         };
     }, []);
-        };
-
-        document.addEventListener("pointermove", handlePointerMove);
-        document.addEventListener("pointerup", handlePointerEnd);
-        document.addEventListener("pointercancel", handlePointerEnd);
-
-        return () => {
-            document.removeEventListener("pointermove", handlePointerMove);
-            document.removeEventListener("pointerup", handlePointerEnd);
-            document.removeEventListener("pointercancel", handlePointerEnd);
-        };
-    }, []);
 
     const selectedBody = selectedSpeech ? selectedSpeech[language] : "";
 
