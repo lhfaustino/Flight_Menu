@@ -191,7 +191,7 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
                         <div
                             key={speech.id}
                             data-speech-id={speech.id}
-                            className={`group flex items-center gap-3 rounded-lg border bg-white px-3 py-3 transition-all ${
+                            className={`group flex min-h-20 items-center gap-3 rounded-lg border bg-white px-3 py-3 transition-all ${
                                 draggedId === speech.id 
                                     ? "border-brand-400 bg-brand-50 shadow-lg shadow-brand-200 scale-105" 
                                     : hoverTargetId === speech.id
@@ -220,7 +220,7 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
                                     <Megaphone className="size-5" />
                                 </span>
                                 <span className="min-w-0">
-                                    <span className="block font-semibold text-gray-900">{speech.title}</span>
+                                    <span className="block truncate font-semibold text-gray-900">{speech.title}</span>
                                     <span className="block truncate text-sm text-gray-500">{speech.pt}</span>
                                 </span>
                             </button>

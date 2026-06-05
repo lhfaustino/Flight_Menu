@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ClipboardList, Link2, Megaphone, Settings, Search, LifeBuoy, ShieldCheck } from "lucide-react";
+import { UtensilsCrossed, Link2, Megaphone, Settings, Search, LifeBuoy, ShieldCheck } from "lucide-react";
 import { NavList, NavAccountCard, MobileNavigationHeader } from "./navigation/SidebarNavigation";
 import type { NavItemType } from "./navigation/NavList";
 import { UserMenu } from "./navigation/UserMenu";
@@ -13,7 +13,7 @@ import { RouterProvider } from "react-aria-components";
 type AppNavItem = NavItemType & { view?: string; items?: AppNavItem[] };
 
 const baseNavigation: AppNavItem[] = [
-    { label: "Planilha", href: "/roster-upload", view: "meal-plan", icon: ClipboardList },
+    { label: "Alimentação", href: "/roster-upload", view: "meal-plan", icon: UtensilsCrossed },
     { label: "Alocuções", href: "/alocucoes", view: "alocucoes", icon: Megaphone },
     { label: "Links Úteis", href: "/links-uteis", view: "links-uteis", icon: Link2 },
     { label: "Configurações", href: "/settings", view: "settings", icon: Settings },
