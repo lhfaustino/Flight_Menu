@@ -125,9 +125,6 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
         const handlePointerEnd = () => {
             activeDragIdRef.current = null;
             setDraggedId(null);
-            document.removeEventListener("pointermove", handlePointerMove);
-            document.removeEventListener("pointerup", handlePointerEnd);
-            document.removeEventListener("pointercancel", handlePointerEnd);
         };
 
         document.addEventListener("pointermove", handlePointerMove);
