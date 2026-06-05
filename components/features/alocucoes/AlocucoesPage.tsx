@@ -114,7 +114,13 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
 
             const targetId = target?.dataset.speechId;
             if (targetId && targetId !== sourceId) {
-                moveBefore(sourceId, targetId);
+                setOrderedIds((currentIds) => {
+                    const nextIds = currentIds.filter((id) => id !== sourceId);
+                    const targetIndex = nextIds.indexOf(targetId);
+                    if (targetIndex === -1) return currentIds;
+                    nextIds.splice(targetIndex, 0, sourceId);
+                    return nextIds;
+                });
             }
         };
 
