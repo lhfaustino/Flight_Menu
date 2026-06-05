@@ -80,8 +80,6 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
     };
 
     useEffect(() => {
-        if (activeDragIdRef.current === null) return;
-
         const handlePointerMove = (event: PointerEvent) => {
             const sourceId = activeDragIdRef.current;
             if (!sourceId) return;
