@@ -25,7 +25,7 @@ const storageKey = "flight-menu:alocucoes-order";
 
 export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
     const activeDragIdRef = useRef<string | null>(null);
-    const lastTargetIdRef = useRef<string | null>(null);
+    const lastReorderPosRef = useRef<{ x: number; y: number; targetId: string } | null>(null);
     const [orderedIds, setOrderedIds] = useState<string[]>(() => speeches.map((speech) => speech.id));
     const [draggedId, setDraggedId] = useState<string | null>(null);
     const [hoverTargetId, setHoverTargetId] = useState<string | null>(null);
@@ -114,9 +114,14 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
 
             const targetId = target?.dataset.speechId;
             
-            // Only reorder when target changes, not on every move
-            if (targetId && targetId !== sourceId && targetId !== lastTargetIdRef.current) {
-                lastTargetIdRef.current = targetId;
+            // Only reorder when cursor moved far enough or when switching to new target
+            const shouldReorder = targetId && targetId !== sourceId && 
+                (!lastReorderPosRef.current || 
+                 lastReorderPosRef.current.targetId !== targetId ||
+                 Math.abs(event.clientY - lastReorderPosRef.current.y) > 20);
+
+            if (shouldReorder) {
+                lastReorderPosRef.current = { x: event.clientX, y: event.clientY, targetId: targetId! };
                 setHoverTargetId(targetId);
 
                 // Determine if cursor is in top or bottom half of target
@@ -145,14 +150,14 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
                 });
             } else if (!targetId || targetId === sourceId) {
                 // Clear hover when not over a valid target
-                lastTargetIdRef.current = null;
+                lastReorderPosRef.current = null;
                 setHoverTargetId(null);
             }
         };
 
         const handlePointerEnd = () => {
             activeDragIdRef.current = null;
-            lastTargetIdRef.current = null;
+            lastReorderPosRef.current = null;
             setDraggedId(null);
             setHoverTargetId(null);
         };
