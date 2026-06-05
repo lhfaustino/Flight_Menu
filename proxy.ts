@@ -1,8 +1,16 @@
 import { createMiddlewareClient } from "@/lib/supabase/middleware";
+import { AUTH_CONFIG } from "@/lib/constants";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function proxy(request: NextRequest) {
     const { supabase, supabaseResponse } = createMiddlewareClient(request);
+    const pathname = request.nextUrl.pathname;
+
+    if (pathname === "/") {
+        const url = request.nextUrl.clone();
+        url.pathname = AUTH_CONFIG.authPath;
+        return NextResponse.redirect(url);
+    }
 
     // IMPORTANT: Avoid writing any logic between createServerClient and
     // supabase.auth.getUser(). A simple mistake can make it very hard to debug
@@ -14,15 +22,14 @@ export async function proxy(request: NextRequest) {
 
     if (
         !user &&
-        !request.nextUrl.pathname.startsWith("/login") &&
-        !request.nextUrl.pathname.startsWith("/signup") &&
-        !request.nextUrl.pathname.startsWith("/forgot-password") &&
-        !request.nextUrl.pathname.startsWith("/auth") &&
-        request.nextUrl.pathname !== "/"
+        !pathname.startsWith(AUTH_CONFIG.authPath) &&
+        !pathname.startsWith(AUTH_CONFIG.loginPath) &&
+        !pathname.startsWith(AUTH_CONFIG.signupPath) &&
+        !pathname.startsWith("/forgot-password")
     ) {
         // no user, potentially respond by redirecting the user to the login page
         const url = request.nextUrl.clone();
-        url.pathname = "/login";
+        url.pathname = AUTH_CONFIG.authPath;
         return NextResponse.redirect(url);
     }
 
@@ -37,8 +44,9 @@ export const config = {
          * - _next/image (image optimization files)
          * - api (webhooks and API routes)
          * - favicon.ico (favicon file)
+         * - sw.js and manifest.json (PWA assets)
          * Feel free to modify this pattern to include more paths.
          */
-        "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+        "/((?!api|_next/static|_next/image|favicon.ico|sw.js|manifest.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
     ],
 };

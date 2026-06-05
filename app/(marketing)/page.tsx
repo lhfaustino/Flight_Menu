@@ -1,8 +1,9 @@
-import { LandingPage } from "@/components/features/marketing/LandingPage";
+import { redirect } from "next/navigation";
+import { AUTH_CONFIG } from "@/lib/constants";
 
 /**
- * Root Landing Page
+ * Root route.
  */
 export default function Home() {
-    return <LandingPage />;
+    redirect(AUTH_CONFIG.authPath);
 }
