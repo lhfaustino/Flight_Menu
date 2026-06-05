@@ -26,7 +26,7 @@ export const MarketingShell = ({ children, currentView, onViewChange }: Marketin
                     <div className="flex items-center gap-8">
                         <button onClick={() => onViewChange("landing")} className="flex items-center gap-2">
                             <UntitledUiLogo className="h-8 w-auto text-brand-600" />
-                            <span className="text-xl font-bold text-gray-900">Flight Menu</span>
+                            <span className="text-xl font-bold text-gray-900">Trip Space</span>
                         </button>
                         <nav className="hidden md:flex items-center gap-6">
                             {navItems.map((item) => (
@@ -69,7 +69,7 @@ export const MarketingShell = ({ children, currentView, onViewChange }: Marketin
                         <div className="col-span-2 lg:col-span-2">
                             <div className="flex items-center gap-2">
                                 <UntitledUiLogo className="h-8 w-auto text-brand-600" />
-                                <span className="text-xl font-bold text-gray-900">Flight Menu</span>
+                                <span className="text-xl font-bold text-gray-900">Trip Space</span>
                             </div>
                             <p className="mt-4 max-w-xs text-base text-gray-500">
                                 Organize sua escala, serviços de bordo e documentos rápidos em um só lugar.
@@ -101,7 +101,7 @@ export const MarketingShell = ({ children, currentView, onViewChange }: Marketin
                         </div>
                     </div>
                     <div className="mt-12 border-t border-gray-200 pt-8 text-center text-sm text-gray-500 mt-12 md:mt-24">
-                        © 2026 Flight Menu. Todos os direitos reservados.
+                        © 2026 Trip Space. Todos os direitos reservados.
                     </div>
                 </div>
             </footer>

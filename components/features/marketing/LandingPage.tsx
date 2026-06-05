@@ -14,7 +14,7 @@ export const LandingPage = () => {
                             Gerencie seus serviços de bordo e seus documentos de voo.
                         </h1>
                         <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-500 md:text-xl">
-                            O Flight Menu mantém sua escala, meal plan e informações de serviço de bordo sempre alinhados.
+                            O Trip Space mantém sua escala, meal plan e informações de serviço de bordo sempre alinhados.
                         </p>
                         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
                             <Button size="xl" className="h-14 px-8 text-lg">

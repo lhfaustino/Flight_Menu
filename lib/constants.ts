@@ -3,17 +3,17 @@
  */
 
 export const APP_CONFIG = {
-    name: "Flight Menu",
+    name: "Trip Space",
     description: "Aplicativo para escala, serviço de bordo e documentos rápidos.",
     version: "1.0.0",
 };
 
 export const BRAND_CONFIG = {
-    name: "Flight Menu",
+    name: "Trip Space",
     logo: {
-        light: "/logo.svg",
-        dark: "/logo.svg",
-        icon: "/logo.svg",
+        light: "/logo.png",
+        dark: "/logo.png",
+        icon: "/logo.png",
     },
     name_logo: true, // Show brand name alongside logo
     theme: {

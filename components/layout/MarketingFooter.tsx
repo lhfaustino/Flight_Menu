@@ -50,7 +50,7 @@ export const MarketingFooter = () => {
                         <UntitledUiLogo className="h-8 w-auto text-gray-900" />
                     </div>
                     <p className="text-sm text-gray-500">
-                        &copy; {new Date().getFullYear()} Flight Menu. Todos os direitos reservados.
+                        &copy; {new Date().getFullYear()} Trip Space. Todos os direitos reservados.
                     </p>
                 </div>
             </div>

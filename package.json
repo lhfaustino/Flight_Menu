@@ -1,5 +1,5 @@
 {
-  "name": "flight-menu",
+  "name": "tripspace",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@internationalized/date": "^3.10.1",
+    "@reduxjs/toolkit": "^2.12.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.106.2",
     "@tailwindcss/postcss": "^4.1.18",
@@ -30,6 +31,7 @@
     "react-aria": "^3.45.0",
     "react-aria-components": "^1.14.0",
     "react-dom": "^19.2.4",
+    "react-redux": "^9.3.0",
     "recharts": "^3.7.0"
   },
   "devDependencies": {

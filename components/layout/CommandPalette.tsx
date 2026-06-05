@@ -156,7 +156,7 @@ export const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
                             <span className="flex items-center gap-1.5">
                                 <ArrowRight className="size-3 rotate-90" /> Selecionar
                             </span>
-                            <span>Flight Menu</span>
+                            <span>Trip Space</span>
                         </div>
                     </div>
                 </Dialog>

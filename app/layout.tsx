@@ -7,12 +7,12 @@ import { AuthProvider } from "@/components/features/auth/AuthProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "Flight Menu",
+    title: "Trip Space",
     description: "Aplicativo para escala, serviço de bordo e documentos rápidos.",
     icons: {
-        icon: "/logo.svg",
-        shortcut: "/logo.svg",
-        apple: "/logo.svg",
+        icon: "/logo.png",
+        shortcut: "/logo.png",
+        apple: "/logo.png",
     },
 };
 

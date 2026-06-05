@@ -15,7 +15,7 @@ export const ContactPage = () => {
                         <h2 className="text-brand-600 font-semibold mb-2">Contato</h2>
                         <h3 className="text-4xl font-bold text-gray-900 mb-6">Fale com nossa equipe</h3>
                         <p className="text-lg text-gray-500 mb-12">
-                            Tem dúvidas sobre o Flight Menu? Envie uma mensagem e retornaremos em breve.
+                            Tem dúvidas sobre o Trip Space? Envie uma mensagem e retornaremos em breve.
                         </p>
 
                         <div className="space-y-8">
@@ -23,7 +23,7 @@ export const ContactPage = () => {
                                 icon={Mail}
                                 title="E-mail"
                                 description="Nossa equipe está pronta para ajudar."
-                                detail="suporte@flightmenu.com"
+                                detail="suporte@tripspace.com"
                             />
                             <ContactItem
                                 icon={MessageSquare}
