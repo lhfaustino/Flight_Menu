@@ -79,26 +79,75 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
         event.currentTarget.setPointerCapture(event.pointerId);
     };
 
-    const handlePointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
-        const sourceId = activeDragIdRef.current;
-        if (!sourceId) return;
+    useEffect(() => {
+        if (activeDragIdRef.current === null) return;
 
-        event.preventDefault();
-        const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-speech-id]");
-        const targetId = target?.dataset.speechId;
+        const handlePointerMove = (event: PointerEvent) => {
+            const sourceId = activeDragIdRef.current;
+            if (!sourceId) return;
 
-        if (targetId && targetId !== sourceId) {
-            moveBefore(sourceId, targetId);
-        }
-    };
+            // Find element at cursor position, excluding the dragged item
+            let target = document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null;
+            target = target?.closest<HTMLElement>("[data-speech-id]") || null;
+            
+            // Look for nearby speech items if direct hit doesn't work
+            if (!target) {
+                const allSpeechElements = Array.from(document.querySelectorAll<HTMLElement>("[data-speech-id]"));
+                const cursor = { x: event.clientX, y: event.clientY };
+                
+                target = allSpeechElements.reduce((closest, elem) => {
+                    const rect = elem.getBoundingClientRect();
+                    const distance = Math.sqrt(
+                        Math.pow(cursor.x - (rect.left + rect.width / 2), 2) +
+                        Math.pow(cursor.y - (rect.top + rect.height / 2), 2)
+                    );
+                    
+                    const closestRect = closest?.getBoundingClientRect();
+                    const closestDistance = closestRect ? Math.sqrt(
+                        Math.pow(cursor.x - (closestRect.left + closestRect.width / 2), 2) +
+                        Math.pow(cursor.y - (closestRect.top + closestRect.height / 2), 2)
+                    ) : Infinity;
+                    
+                    return distance < closestDistance ? elem : closest;
+                }, null as HTMLElement | null);
+            }
 
-    const handlePointerEnd = (event: React.PointerEvent<HTMLButtonElement>) => {
-        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-            event.currentTarget.releasePointerCapture(event.pointerId);
-        }
-        activeDragIdRef.current = null;
-        setDraggedId(null);
-    };
+            const targetId = target?.dataset.speechId;
+            if (targetId && targetId !== sourceId) {
+                moveBefore(sourceId, targetId);
+            }
+        };
+
+        const handlePointerEnd = () => {
+            activeDragIdRef.current = null;
+            setDraggedId(null);
+            document.removeEventListener("pointermove", handlePointerMove);
+            document.removeEventListener("pointerup", handlePointerEnd);
+            document.removeEventListener("pointercancel", handlePointerEnd);
+        };
+
+        document.addEventListener("pointermove", handlePointerMove);
+        document.addEventListener("pointerup", handlePointerEnd);
+        document.addEventListener("pointercancel", handlePointerEnd);
+
+        return () => {
+            document.removeEventListener("pointermove", handlePointerMove);
+            document.removeEventListener("pointerup", handlePointerEnd);
+            document.removeEventListener("pointercancel", handlePointerEnd);
+        };
+    }, []);
+        };
+
+        document.addEventListener("pointermove", handlePointerMove);
+        document.addEventListener("pointerup", handlePointerEnd);
+        document.addEventListener("pointercancel", handlePointerEnd);
+
+        return () => {
+            document.removeEventListener("pointermove", handlePointerMove);
+            document.removeEventListener("pointerup", handlePointerEnd);
+            document.removeEventListener("pointercancel", handlePointerEnd);
+        };
+    }, []);
 
     const selectedBody = selectedSpeech ? selectedSpeech[language] : "";
 
@@ -127,9 +176,6 @@ export function AlocucoesPage({ speeches }: { speeches: Alocucao[] }) {
                                 className="flex size-9 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-700 active:cursor-grabbing active:bg-brand-50 active:text-brand-700"
                                 aria-label={`Mover ${speech.title}`}
                                 onPointerDown={(event) => handlePointerDown(event, speech.id)}
-                                onPointerMove={handlePointerMove}
-                                onPointerUp={handlePointerEnd}
-                                onPointerCancel={handlePointerEnd}
                             >
                                 <GripVertical className="size-5" />
                             </button>
