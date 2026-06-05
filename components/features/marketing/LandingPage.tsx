@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { CheckCircle2, Zap, BarChart3, Users, Globe, Shield } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
@@ -17,12 +18,16 @@ export const LandingPage = () => {
                             O Trip Space mantém sua escala, meal plan e informações de serviço de bordo sempre alinhados.
                         </p>
                         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-                            <Button size="xl" className="h-14 px-8 text-lg">
+                            <Link href="/signup">
+                                <Button size="xl" className="h-14 px-8 text-lg">
                                 Começar agora
-                            </Button>
-                            <Button variant="secondary" size="xl" className="h-14 px-8 text-lg">
+                                </Button>
+                            </Link>
+                            <Link href="/auth">
+                                <Button variant="secondary" size="xl" className="h-14 px-8 text-lg">
                                 Entrar no app
-                            </Button>
+                                </Button>
+                            </Link>
                         </div>
                     </div>
                 </div>

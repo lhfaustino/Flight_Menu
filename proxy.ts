@@ -6,12 +6,6 @@ export async function proxy(request: NextRequest) {
     const { supabase, supabaseResponse } = createMiddlewareClient(request);
     const pathname = request.nextUrl.pathname;
 
-    if (pathname === "/") {
-        const url = request.nextUrl.clone();
-        url.pathname = AUTH_CONFIG.authPath;
-        return NextResponse.redirect(url);
-    }
-
     // IMPORTANT: Avoid writing any logic between createServerClient and
     // supabase.auth.getUser(). A simple mistake can make it very hard to debug
     // issues with users being randomly logged out.
@@ -22,6 +16,7 @@ export async function proxy(request: NextRequest) {
 
     if (
         !user &&
+        pathname !== "/" &&
         !pathname.startsWith(AUTH_CONFIG.authPath) &&
         !pathname.startsWith(AUTH_CONFIG.loginPath) &&
         !pathname.startsWith(AUTH_CONFIG.signupPath) &&
