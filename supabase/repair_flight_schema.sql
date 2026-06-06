@@ -1,6 +1,14 @@
 -- Repair script for the Flight Menu feature.
 -- Run this in Supabase Dashboard -> SQL Editor for the remote project.
 
+-- Email confirmation is disabled in supabase/config.toml. Hosted Supabase projects
+-- also need Authentication -> Providers -> Email -> Confirm email turned off.
+-- This marks existing email users confirmed so they can sign in without email approval.
+UPDATE auth.users
+SET email_confirmed_at = COALESCE(email_confirmed_at, NOW())
+WHERE email IS NOT NULL
+  AND email_confirmed_at IS NULL;
+
 CREATE TABLE IF NOT EXISTS public.flight_rosters (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,

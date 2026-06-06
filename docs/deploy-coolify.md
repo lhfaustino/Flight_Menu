@@ -34,6 +34,7 @@ At minimum, this app currently needs:
 supabase/repair_flight_schema.sql
 supabase/migrations/20260531000000_profile_settings.sql
 supabase/migrations/20260531010000_meal_plan_email_ingest.sql
+supabase/migrations/20260606000000_disable_email_confirmation.sql
 ```
 
 Then configure Supabase Auth URLs:
@@ -48,6 +49,13 @@ Then configure Supabase Auth URLs:
    https://flight-menu.example.com/auth/callback
    http://localhost:3000/auth/callback
    ```
+
+Then disable email confirmation for every email/password user:
+
+1. Go to **Authentication -> Providers -> Email**.
+2. Turn off **Confirm email**.
+3. Save the provider settings.
+4. Run `supabase/migrations/20260606000000_disable_email_confirmation.sql` in the SQL Editor, or run the latest `supabase/repair_flight_schema.sql`, to mark existing email users confirmed.
 
 Copy these Supabase values for Coolify later:
 

@@ -52,12 +52,26 @@ export const SignUpPage = () => {
             if (signUpError) throw signUpError;
 
             if (authData.user) {
+                if (!authData.session) {
+                    const { error: signInError } = await supabase.auth.signInWithPassword({
+                        email: formData.email,
+                        password: formData.password,
+                    });
+
+                    if (signInError) {
+                        throw new Error(
+                            "Cadastro criado, mas o Supabase ainda esta exigindo confirmacao por e-mail. Desative a confirmacao de e-mail no Supabase Auth e tente entrar novamente."
+                        );
+                    }
+                }
+
                 // 2. Create a default organization for the new user
                 // We do this via server action to ensure membership is created correctly
                 const orgName = `Equipe de ${formData.fullName}`;
                 const orgSlug = formData.fullName.toLowerCase().replace(/\s+/g, '-') + '-' + Math.random().toString(36).substring(2, 7);
 
-                await createOrganization(orgName, orgSlug);
+                const orgResult = await createOrganization(orgName, orgSlug);
+                if (!orgResult.success) throw new Error(orgResult.error);
 
                 addToast({
                     title: "Conta criada!",
