@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { UntitledUiLogo } from "@/components/ui/logos";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { SocialIcon } from "@/components/ui/social-icons";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -11,23 +12,66 @@ import { createOrganization } from "@/app/actions/organizations";
 import { useToast } from "@/components/ui/Toast";
 import { AUTH_CONFIG } from "@/lib/constants";
 
+type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
+
 export const SignUpPage = () => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>("idle");
     const { addToast } = useToast();
     const [formData, setFormData] = useState({
         fullName: "",
+        username: "",
         email: "",
         password: "",
     });
 
+    const normalizedUsername = useMemo(() => normalizeUsername(formData.username), [formData.username]);
+    const isUsernameReady = usernameStatus === "available" && normalizedUsername.length >= 3;
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+
         setFormData(prev => ({
             ...prev,
-            [e.target.name]: e.target.value
+            [name]: name === "username" ? normalizeUsername(value) : value,
         }));
     };
+
+    useEffect(() => {
+        if (!formData.username) {
+            setUsernameStatus("idle");
+            return;
+        }
+
+        if (normalizedUsername.length < 3 || normalizedUsername.length > 24) {
+            setUsernameStatus("invalid");
+            return;
+        }
+
+        let isCancelled = false;
+        const timeoutId = window.setTimeout(async () => {
+            setUsernameStatus("checking");
+            const supabase = createClient();
+            const { data, error: usernameError } = await supabase.rpc("is_username_available", {
+                candidate: normalizedUsername,
+            });
+
+            if (isCancelled) return;
+            if (usernameError) {
+                setUsernameStatus("error");
+                return;
+            }
+
+            setUsernameStatus(data === true ? "available" : "taken");
+        }, 350);
+
+        return () => {
+            isCancelled = true;
+            window.clearTimeout(timeoutId);
+        };
+    }, [formData.username, normalizedUsername]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,13 +81,17 @@ export const SignUpPage = () => {
         const supabase = createClient();
 
         try {
-            // 1. Sign up user
+            if (!isUsernameReady) {
+                throw new Error("Escolha um nome de usuário disponível antes de continuar.");
+            }
+
             const { data: authData, error: signUpError } = await supabase.auth.signUp({
                 email: formData.email,
                 password: formData.password,
                 options: {
                     data: {
                         full_name: formData.fullName,
+                        username: normalizedUsername,
                     },
                     emailRedirectTo: `${window.location.origin}/auth/callback`,
                 },
@@ -60,15 +108,13 @@ export const SignUpPage = () => {
 
                     if (signInError) {
                         throw new Error(
-                            "Cadastro criado, mas o Supabase ainda esta exigindo confirmacao por e-mail. Desative a confirmacao de e-mail no Supabase Auth e tente entrar novamente."
+                            "Cadastro criado, mas o Supabase ainda está exigindo confirmação por e-mail. Desative a confirmação de e-mail no Supabase Auth e tente entrar novamente."
                         );
                     }
                 }
 
-                // 2. Create a default organization for the new user
-                // We do this via server action to ensure membership is created correctly
                 const orgName = `Equipe de ${formData.fullName}`;
-                const orgSlug = formData.fullName.toLowerCase().replace(/\s+/g, '-') + '-' + Math.random().toString(36).substring(2, 7);
+                const orgSlug = `${normalizedUsername}-${Math.random().toString(36).substring(2, 7)}`;
 
                 const orgResult = await createOrganization(orgName, orgSlug);
                 if (!orgResult.success) throw new Error(orgResult.error);
@@ -94,7 +140,7 @@ export const SignUpPage = () => {
         }
     };
 
-    const handleSocialLogin = async (provider: 'google' | 'facebook' | 'twitter') => {
+    const handleSocialLogin = async (provider: "google" | "apple") => {
         const supabase = createClient();
         await supabase.auth.signInWithOAuth({
             provider,
@@ -106,17 +152,16 @@ export const SignUpPage = () => {
 
     return (
         <div className="flex min-h-screen bg-white">
-            {/* Left Section - Form */}
             <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
                 <div className="mx-auto w-full max-w-sm lg:w-96">
                     <div>
-                        <UntitledUiLogo className="h-8 w-auto text-brand-600" />
+                        <BrandLogo href="/" size="md" />
                         <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">Criar conta</h2>
                         <p className="mt-2 text-sm text-gray-600">
                             Já tem uma conta?{" "}
-                            <a href="/login" className="font-medium text-brand-600 hover:text-brand-500">
+                            <Link href="/auth" className="font-medium text-brand-600 hover:text-brand-500">
                                 Entrar
-                            </a>
+                            </Link>
                         </p>
                     </div>
 
@@ -136,6 +181,19 @@ export const SignUpPage = () => {
                                     placeholder="Digite seu nome"
                                     value={formData.fullName}
                                     onChange={handleChange}
+                                    required
+                                />
+
+                                <Input
+                                    label="Nome de Usuário"
+                                    name="username"
+                                    type="text"
+                                    placeholder="ex: tripulante_01"
+                                    value={formData.username}
+                                    onChange={handleChange}
+                                    helperText={getUsernameHelperText(usernameStatus)}
+                                    error={usernameStatus === "taken" || usernameStatus === "invalid" || usernameStatus === "error"}
+                                    autoComplete="username"
                                     required
                                 />
 
@@ -160,15 +218,9 @@ export const SignUpPage = () => {
                                     required
                                 />
 
-                                <div>
-                                    <Button
-                                        type="submit"
-                                        className="w-full justify-center"
-                                        isDisabled={isLoading}
-                                    >
-                                        {isLoading ? "Criando conta..." : "Começar"}
-                                    </Button>
-                                </div>
+                                <Button type="submit" className="w-full justify-center" isDisabled={isLoading || !isUsernameReady}>
+                                    {isLoading ? "Criando conta..." : "Começar"}
+                                </Button>
                             </form>
                         </div>
 
@@ -182,32 +234,21 @@ export const SignUpPage = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-6 grid grid-cols-3 gap-3">
-                                <div>
-                                    <Button variant="secondary" className="w-full justify-center" onClick={() => handleSocialLogin('google')}>
-                                        <SocialIcon type="google" className="h-5 w-5" />
-                                        <span className="sr-only">Cadastrar com Google</span>
-                                    </Button>
-                                </div>
-                                <div>
-                                    <Button variant="secondary" className="w-full justify-center" onClick={() => handleSocialLogin('facebook')}>
-                                        <SocialIcon type="facebook" className="h-5 w-5" />
-                                        <span className="sr-only">Cadastrar com Facebook</span>
-                                    </Button>
-                                </div>
-                                <div>
-                                    <Button variant="secondary" className="w-full justify-center" onClick={() => handleSocialLogin('twitter')}>
-                                        <SocialIcon type="twitter" className="h-5 w-5" />
-                                        <span className="sr-only">Cadastrar com Twitter</span>
-                                    </Button>
-                                </div>
+                            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <Button variant="secondary" className="w-full justify-center gap-2" onClick={() => handleSocialLogin("google")}>
+                                    <SocialIcon type="google" className="h-5 w-5" />
+                                    <span>Google</span>
+                                </Button>
+                                <Button variant="secondary" className="w-full justify-center gap-2" onClick={() => handleSocialLogin("apple")}>
+                                    <SocialIcon type="apple" className="h-5 w-5" />
+                                    <span>Apple</span>
+                                </Button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Right Section - Image/Branding */}
             <div className="relative hidden w-0 flex-1 lg:block">
                 <img
                     className="absolute inset-0 h-full w-full object-cover"
@@ -218,4 +259,24 @@ export const SignUpPage = () => {
             </div>
         </div>
     );
+};
+
+const normalizeUsername = (value: string) =>
+    value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24);
+
+const getUsernameHelperText = (status: UsernameStatus) => {
+    switch (status) {
+        case "checking":
+            return "Verificando disponibilidade...";
+        case "available":
+            return "Nome de usuário disponível.";
+        case "taken":
+            return "Este nome de usuário já existe.";
+        case "invalid":
+            return "Use 3 a 24 caracteres: letras, números ou underline.";
+        case "error":
+            return "Não foi possível verificar agora. Confirme a migration de username no Supabase.";
+        default:
+            return "Use 3 a 24 caracteres: letras, números ou underline.";
+    }
 };

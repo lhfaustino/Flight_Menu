@@ -1,8 +1,6 @@
-"use client";
-
 import Link from "next/link";
 import { CheckCircle2, Zap, BarChart3, Users, Globe, Shield } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import type { ElementType } from "react";
 
 export const LandingPage = () => {
     return (
@@ -18,15 +16,19 @@ export const LandingPage = () => {
                             O Trip Space mantém sua escala, meal plan e informações de serviço de bordo sempre alinhados.
                         </p>
                         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-                            <Link href="/signup">
-                                <Button size="xl" className="h-14 px-8 text-lg">
+                            <Link
+                                href="/signup"
+                                prefetch={false}
+                                className="inline-flex h-14 items-center justify-center rounded-lg bg-brand-600 px-8 text-lg font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
+                            >
                                 Começar agora
-                                </Button>
                             </Link>
-                            <Link href="/auth">
-                                <Button variant="secondary" size="xl" className="h-14 px-8 text-lg">
+                            <Link
+                                href="/auth"
+                                prefetch={false}
+                                className="inline-flex h-14 items-center justify-center rounded-lg border border-gray-300 bg-white px-8 text-lg font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
+                            >
                                 Entrar no app
-                                </Button>
                             </Link>
                         </div>
                     </div>
@@ -105,58 +107,11 @@ export const LandingPage = () => {
                 </div>
             </section>
 
-            {/* Image/Highlight Section */}
-            <section className="py-24 bg-gray-900 text-white overflow-hidden">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex flex-col lg:flex-row items-center gap-16">
-                        <div className="lg:w-1/2">
-                            <h2 className="text-3xl font-bold sm:text-4xl mb-6">
-                                Planejamento de bordo <br />
-                                <span className="text-brand-400">na palma da mão.</span>
-                            </h2>
-                            <p className="text-lg text-gray-400 mb-8">
-                                Mantenha sua escala sincronizada com o meal plan mais recente e veja rapidamente os serviços de cada voo.
-                            </p>
-                            <ul className="space-y-4">
-                                <li className="flex items-center gap-3">
-                                    <div className="rounded-full bg-brand-500/10 p-1">
-                                        <CheckCircle2 className="h-5 w-5 text-brand-400" />
-                                    </div>
-                                    <span className="text-gray-300 font-medium">Atualização da escala pelo meal plan</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <div className="rounded-full bg-brand-500/10 p-1">
-                                        <CheckCircle2 className="h-5 w-5 text-brand-400" />
-                                    </div>
-                                    <span className="text-gray-300 font-medium">Leitura de PDFs de escala e meal plan</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <div className="rounded-full bg-brand-500/10 p-1">
-                                        <CheckCircle2 className="h-5 w-5 text-brand-400" />
-                                    </div>
-                                    <span className="text-gray-300 font-medium">Status claro para voos sem correspondência</span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div className="lg:w-1/2 relative">
-                            <div className="aspect-video rounded-2xl bg-gray-800 border-8 border-gray-700 shadow-2xl overflow-hidden">
-                                <img
-                                    src="https://images.unsplash.com/photo-1551288049-bbbda536339a?q=80&w=2670&auto=format&fit=crop"
-                                    alt="Prévia do painel"
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-                            {/* Accent elements */}
-                            <div className="absolute -bottom-6 -right-6 h-32 w-32 bg-brand-600/20 blur-3xl pointer-events-none" />
-                        </div>
-                    </div>
-                </div>
-            </section>
         </div>
     );
 };
 
-const FeatureCard = ({ icon: Icon, title, description }: { icon: any, title: string, description: string }) => (
+const FeatureCard = ({ icon: Icon, title, description }: { icon: ElementType, title: string, description: string }) => (
     <div className="flex flex-col p-6 rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow">
         <div className="size-12 rounded-lg bg-brand-50 flex items-center justify-center mb-6">
             <Icon className="h-6 w-6 text-brand-600" />

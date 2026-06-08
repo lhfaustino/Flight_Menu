@@ -7,6 +7,7 @@ import {
     Instagram,
     Youtube,
     Chrome,
+    Apple,
     Figma,
     Dribbble
 } from "lucide-react";
@@ -20,6 +21,7 @@ export const SocialIcon = ({ type, ...props }: { type: string } & SVGProps<SVGSV
         case "instagram": return <Instagram {...props} />;
         case "youtube": return <Youtube {...props} />;
         case "google": return <Chrome {...props} />; // Placeholder for Google
+        case "apple": return <Apple {...props} />;
         case "figma": return <Figma {...props} />;
         case "dribbble": return <Dribbble {...props} />;
         default: return null;

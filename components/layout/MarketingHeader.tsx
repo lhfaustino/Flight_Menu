@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
@@ -21,19 +20,24 @@ export const MarketingHeader = () => {
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex gap-8">
                         <NavLink href="/">Início</NavLink>
-                        <NavLink href="/pricing">Preços</NavLink>
                         <NavLink href="/contact">Contato</NavLink>
                     </nav>
 
                     {/* Auth Buttons */}
                     <div className="hidden md:flex items-center gap-4">
-                        <Link href="/login">
-                            <Button variant="tertiary" className="text-gray-600 hover:text-gray-900">
-                                Entrar
-                            </Button>
+                        <Link
+                            href="/auth"
+                            prefetch={false}
+                            className="inline-flex h-10 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
+                        >
+                            Entrar
                         </Link>
-                        <Link href="/signup">
-                            <Button>Cadastrar</Button>
+                        <Link
+                            href="/signup"
+                            prefetch={false}
+                            className="inline-flex h-10 items-center justify-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
+                        >
+                            Cadastrar
                         </Link>
                     </div>
 
@@ -53,15 +57,24 @@ export const MarketingHeader = () => {
                 <div className="md:hidden border-t border-gray-100 bg-white">
                     <div className="space-y-1 px-4 pb-3 pt-2">
                         <MobileNavLink href="/" onClick={toggleMenu}>Início</MobileNavLink>
-                        <MobileNavLink href="/pricing" onClick={toggleMenu}>Preços</MobileNavLink>
                         <MobileNavLink href="/contact" onClick={toggleMenu}>Contato</MobileNavLink>
                     </div>
                     <div className="border-t border-gray-100 px-4 py-3 space-y-2">
-                        <Link href="/login" onClick={toggleMenu} className="block">
-                            <Button variant="tertiary" className="w-full justify-start text-gray-600">Entrar</Button>
+                        <Link
+                            href="/auth"
+                            prefetch={false}
+                            onClick={toggleMenu}
+                            className="flex h-10 w-full items-center rounded-lg px-3 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
+                        >
+                            Entrar
                         </Link>
-                        <Link href="/signup" onClick={toggleMenu} className="block">
-                            <Button className="w-full">Cadastrar</Button>
+                        <Link
+                            href="/signup"
+                            prefetch={false}
+                            onClick={toggleMenu}
+                            className="flex h-10 w-full items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700"
+                        >
+                            Cadastrar
                         </Link>
                     </div>
                 </div>
@@ -73,6 +86,7 @@ export const MarketingHeader = () => {
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
     <Link
         href={href}
+        prefetch={false}
         className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
     >
         {children}
@@ -82,6 +96,7 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
 const MobileNavLink = ({ href, children, onClick }: { href: string; children: React.ReactNode, onClick: () => void }) => (
     <Link
         href={href}
+        prefetch={false}
         className="block px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-md"
         onClick={onClick}
     >

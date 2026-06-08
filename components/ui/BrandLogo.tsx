@@ -8,7 +8,7 @@ interface BrandLogoProps {
     className?: string;
     showText?: boolean;
     size?: "sm" | "md" | "lg";
-    href?: string;
+    href?: string | null;
     variant?: "default" | "light" | "dark";
 }
 
@@ -52,7 +52,7 @@ export const BrandLogo = ({
     );
 
     if (href) {
-        return <Link href={href}>{content}</Link>;
+        return <Link href={href} prefetch={false}>{content}</Link>;
     }
 
     return content;

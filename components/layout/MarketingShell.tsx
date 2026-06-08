@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { UntitledUiLogo } from "@/components/ui/logos";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { Button } from "@/components/ui/Button";
 import { cx } from "@/lib/utils";
 
@@ -14,7 +14,6 @@ interface MarketingShellProps {
 export const MarketingShell = ({ children, currentView, onViewChange }: MarketingShellProps) => {
     const navItems = [
         { label: "Início", view: "landing" },
-        { label: "Preços", view: "pricing" },
         { label: "Contato", view: "contact" },
     ];
 
@@ -25,8 +24,7 @@ export const MarketingShell = ({ children, currentView, onViewChange }: Marketin
                 <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center gap-8">
                         <button onClick={() => onViewChange("landing")} className="flex items-center gap-2">
-                            <UntitledUiLogo className="h-8 w-auto text-brand-600" />
-                            <span className="text-xl font-bold text-gray-900">Trip Space</span>
+                            <BrandLogo size="md" href={null} />
                         </button>
                         <nav className="hidden md:flex items-center gap-6">
                             {navItems.map((item) => (
@@ -63,45 +61,11 @@ export const MarketingShell = ({ children, currentView, onViewChange }: Marketin
             </main>
 
             {/* Footer */}
-            <footer className="border-t border-gray-100 bg-gray-50 py-12 md:py-24">
+            <footer className="border-t border-gray-100 bg-gray-50 py-8">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-5">
-                        <div className="col-span-2 lg:col-span-2">
-                            <div className="flex items-center gap-2">
-                                <UntitledUiLogo className="h-8 w-auto text-brand-600" />
-                                <span className="text-xl font-bold text-gray-900">Trip Space</span>
-                            </div>
-                            <p className="mt-4 max-w-xs text-base text-gray-500">
-                                Organize sua escala, serviços de bordo e documentos rápidos em um só lugar.
-                            </p>
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-semibold text-gray-900">Produto</h3>
-                            <ul className="mt-4 space-y-3">
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Visão geral</a></li>
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Recursos</a></li>
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Soluções</a></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-semibold text-gray-900">Recursos</h3>
-                            <ul className="mt-4 space-y-3">
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Documentação</a></li>
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Blog</a></li>
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Suporte</a></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-semibold text-gray-900">Legal</h3>
-                            <ul className="mt-4 space-y-3">
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Privacidade</a></li>
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Termos</a></li>
-                                <li><a href="#" className="text-sm text-gray-600 hover:text-brand-600">Política de cookies</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div className="mt-12 border-t border-gray-200 pt-8 text-center text-sm text-gray-500 mt-12 md:mt-24">
-                        © 2026 Trip Space. Todos os direitos reservados.
+                    <div className="flex flex-col items-center justify-between gap-6 text-sm text-gray-500 md:flex-row">
+                        <BrandLogo size="md" href={null} />
+                        <span>© 2026 Trip Space. Todos os direitos reservados.</span>
                     </div>
                 </div>
             </footer>
