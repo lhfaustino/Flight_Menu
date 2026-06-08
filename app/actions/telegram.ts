@@ -69,7 +69,7 @@ export async function createTelegramConnectionLink() {
   return {
     success: true,
     botUrl: `https://t.me/${botUsername}?start=${token}`,
-    connectionCommand: `/connect ${token}`,
+    connectionCommand: `/start ${token}`,
     expiresAt,
   };
 }

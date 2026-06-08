@@ -48,7 +48,6 @@ export function FlightMenuUploadWorkspace({
   const [isRefreshingMealPlan, setIsRefreshingMealPlan] = useState(false);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [latestMealPlanUpdatedAt, setLatestMealPlanUpdatedAt] = useState<string | null>(currentMealPlanUpdatedAt);
-  const [notifiedMealPlanUpdatedAt, setNotifiedMealPlanUpdatedAt] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [rows, setRows] = useState<FlightMenuRow[]>(initialRows);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
@@ -59,6 +58,7 @@ export function FlightMenuUploadWorkspace({
   const areAllVisibleRowsSelected = visibleRows.length > 0 && selectedVisibleRowCount === visibleRows.length;
   const areSomeVisibleRowsSelected = selectedVisibleRowCount > 0 && selectedVisibleRowCount < visibleRows.length;
   const mealPlanStorageKey = currentUserId ? `flight-menu:meal-plan-refresh:${currentUserId}` : null;
+  const mealPlanToastStorageKey = currentUserId ? `flight-menu:meal-plan-toast:${currentUserId}` : null;
 
   useEffect(() => {
     setRows(initialRows);
@@ -78,7 +78,7 @@ export function FlightMenuUploadWorkspace({
   }, []);
 
   useEffect(() => {
-    if (!mealPlanStorageKey || !latestMealPlanUpdatedAt || notifiedMealPlanUpdatedAt === latestMealPlanUpdatedAt) {
+    if (!mealPlanStorageKey || !mealPlanToastStorageKey || !latestMealPlanUpdatedAt) {
       return;
     }
 
@@ -87,14 +87,19 @@ export function FlightMenuUploadWorkspace({
       return;
     }
 
-    setNotifiedMealPlanUpdatedAt(latestMealPlanUpdatedAt);
+    const lastNotifiedMealPlan = window.sessionStorage.getItem(mealPlanToastStorageKey);
+    if (lastNotifiedMealPlan === latestMealPlanUpdatedAt) {
+      return;
+    }
+
+    window.sessionStorage.setItem(mealPlanToastStorageKey, latestMealPlanUpdatedAt);
     addToast({
       title: 'Novo meal plan disponivel',
       description: 'Clique em Atualizar para aplicar os novos servicos aos seus voos.',
       type: 'warning',
       duration: 0,
     });
-  }, [addToast, latestMealPlanUpdatedAt, mealPlanStorageKey, notifiedMealPlanUpdatedAt]);
+  }, [addToast, latestMealPlanUpdatedAt, mealPlanStorageKey, mealPlanToastStorageKey]);
 
   useEffect(() => {
     const intervalId = window.setInterval(async () => {
@@ -128,6 +133,9 @@ export function FlightMenuUploadWorkspace({
         const mealPlanVersion = await getCurrentMealPlanVersion();
         if (mealPlanStorageKey && mealPlanVersion.success && mealPlanVersion.mealPlanUpdatedAt) {
           window.localStorage.setItem(mealPlanStorageKey, mealPlanVersion.mealPlanUpdatedAt);
+          if (mealPlanToastStorageKey) {
+            window.sessionStorage.setItem(mealPlanToastStorageKey, mealPlanVersion.mealPlanUpdatedAt);
+          }
           setLatestMealPlanUpdatedAt(mealPlanVersion.mealPlanUpdatedAt);
         }
         setIsUploadOpen(false);
@@ -206,6 +214,9 @@ export function FlightMenuUploadWorkspace({
         setMessage({ type: 'success', text: result.message ?? 'Servicos atualizados.' });
         if (mealPlanStorageKey && result.mealPlanUpdatedAt) {
           window.localStorage.setItem(mealPlanStorageKey, result.mealPlanUpdatedAt);
+          if (mealPlanToastStorageKey) {
+            window.sessionStorage.setItem(mealPlanToastStorageKey, result.mealPlanUpdatedAt);
+          }
           setLatestMealPlanUpdatedAt(result.mealPlanUpdatedAt);
         }
         router.refresh();

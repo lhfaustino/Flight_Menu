@@ -14,6 +14,13 @@ import { AUTH_CONFIG } from "@/lib/constants";
 
 type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
 
+const USERNAME_LABEL = "Nome de Usu\u00e1rio";
+const USERNAME_HELPER_TEXT = "Use 3 a 24 caracteres: letras, n\u00fameros ou underline.";
+const USERNAME_AVAILABLE_TEXT = "Nome de Usu\u00e1rio dispon\u00edvel.";
+const USERNAME_TAKEN_TEXT = "Este nome de Usu\u00e1rio j\u00e1 existe.";
+const USERNAME_CHECK_ERROR_TEXT = "N\u00e3o foi poss\u00edvel verificar agora. Confirme a migration de username no Supabase.";
+const USERNAME_REQUIRED_TEXT = "Escolha um nome de Usu\u00e1rio dispon\u00edvel antes de continuar.";
+
 export const SignUpPage = () => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
@@ -83,7 +90,7 @@ export const SignUpPage = () => {
 
         try {
             if (!isUsernameReady) {
-                throw new Error("Escolha um nome de usuário disponível antes de continuar.");
+                throw new Error(USERNAME_REQUIRED_TEXT);
             }
 
             const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -205,7 +212,7 @@ export const SignUpPage = () => {
                                 />
 
                                 <Input
-                                    label="Nome de Usuário"
+                                    label={USERNAME_LABEL}
                                     name="username"
                                     type="text"
                                     placeholder="ex: tripulante_01"
@@ -299,14 +306,14 @@ const getUsernameHelperText = (status: UsernameStatus) => {
         case "checking":
             return "Verificando disponibilidade...";
         case "available":
-            return "Nome de usuário disponível.";
+            return USERNAME_AVAILABLE_TEXT;
         case "taken":
-            return "Este nome de usuário já existe.";
+            return USERNAME_TAKEN_TEXT;
         case "invalid":
-            return "Use 3 a 24 caracteres: letras, números ou underline.";
+            return USERNAME_HELPER_TEXT;
         case "error":
-            return "Não foi possível verificar agora. Confirme a migration de username no Supabase.";
+            return USERNAME_CHECK_ERROR_TEXT;
         default:
-            return "Use 3 a 24 caracteres: letras, números ou underline.";
+            return USERNAME_HELPER_TEXT;
     }
 };
