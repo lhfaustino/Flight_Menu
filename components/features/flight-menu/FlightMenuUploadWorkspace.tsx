@@ -98,6 +98,7 @@ export function FlightMenuUploadWorkspace({
       description: 'Clique em Atualizar para aplicar os novos servicos aos seus voos.',
       type: 'warning',
       duration: 0,
+      dedupeKey: `meal-plan-refresh:${currentUserId}:${latestMealPlanUpdatedAt}`,
     });
   }, [addToast, latestMealPlanUpdatedAt, mealPlanStorageKey, mealPlanToastStorageKey]);
 

@@ -12,6 +12,7 @@ export interface Toast {
     description?: string;
     type?: ToastType;
     duration?: number;
+    dedupeKey?: string;
 }
 
 interface ToastContextType {
@@ -31,7 +32,24 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
 
     const addToast = React.useCallback((toast: Omit<Toast, "id">) => {
         const id = Math.random().toString(36).substring(2, 9);
-        setToasts((prev) => [...prev, { ...toast, id }]);
+        setToasts((prev) => {
+            const isDuplicate = prev.some((currentToast) => {
+                if (toast.dedupeKey && currentToast.dedupeKey === toast.dedupeKey) {
+                    return true;
+                }
+
+                return (
+                    currentToast.title === toast.title &&
+                    currentToast.description === toast.description &&
+                    currentToast.type === toast.type &&
+                    currentToast.duration === toast.duration
+                );
+            });
+
+            if (isDuplicate) return prev;
+
+            return [...prev, { ...toast, id }];
+        });
 
         if (toast.duration !== 0) {
             setTimeout(() => {
