@@ -17,6 +17,7 @@ type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid" | 
 export const SignUpPage = () => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [socialProvider, setSocialProvider] = useState<"google" | "apple" | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>("idle");
     const { addToast } = useToast();
@@ -141,13 +142,32 @@ export const SignUpPage = () => {
     };
 
     const handleSocialLogin = async (provider: "google" | "apple") => {
+        setError(null);
+        setSocialProvider(provider);
         const supabase = createClient();
-        await supabase.auth.signInWithOAuth({
+        const { error: oauthError } = await supabase.auth.signInWithOAuth({
             provider,
             options: {
                 redirectTo: `${window.location.origin}/auth/callback`,
+                queryParams: provider === "google"
+                    ? {
+                        access_type: "offline",
+                        prompt: "consent",
+                    }
+                    : undefined,
             },
         });
+
+        if (oauthError) {
+            const errorMessage = oauthError.message || "Não foi possível iniciar o cadastro social.";
+            setError(errorMessage);
+            setSocialProvider(null);
+            addToast({
+                title: "Falha no cadastro social",
+                description: errorMessage,
+                type: "error",
+            });
+        }
     };
 
     return (
@@ -235,13 +255,23 @@ export const SignUpPage = () => {
                             </div>
 
                             <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <Button variant="secondary" className="w-full justify-center gap-2" onClick={() => handleSocialLogin("google")}>
+                                <Button
+                                    variant="secondary"
+                                    className="w-full justify-center gap-2"
+                                    onClick={() => handleSocialLogin("google")}
+                                    isDisabled={socialProvider !== null}
+                                >
                                     <SocialIcon type="google" className="h-5 w-5" />
-                                    <span>Google</span>
+                                    <span>{socialProvider === "google" ? "Conectando..." : "Google"}</span>
                                 </Button>
-                                <Button variant="secondary" className="w-full justify-center gap-2" onClick={() => handleSocialLogin("apple")}>
+                                <Button
+                                    variant="secondary"
+                                    className="w-full justify-center gap-2"
+                                    onClick={() => handleSocialLogin("apple")}
+                                    isDisabled={socialProvider !== null}
+                                >
                                     <SocialIcon type="apple" className="h-5 w-5" />
-                                    <span>Apple</span>
+                                    <span>{socialProvider === "apple" ? "Conectando..." : "Apple"}</span>
                                 </Button>
                             </div>
                         </div>
