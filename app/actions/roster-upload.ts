@@ -81,9 +81,8 @@ export async function uploadRoster(formData: FormData) {
       buildUniqueKey(entry.date || new Date().toISOString().split('T')[0], entry.flightNumber, entry.origin)
     );
     const adminClient = createAdminClient();
-    const [existingKeys, existingUserKeys, cateringByKey] = await Promise.all([
+    const [existingKeys, cateringByKey] = await Promise.all([
       fetchExistingKeys(adminClient, 'flight_leg_details', rosterKeys, user.id),
-      fetchUserFlightLegKeys(adminClient, user.id),
       fetchCateringByKey(rosterKeys),
     ]);
 
@@ -130,10 +129,8 @@ export async function uploadRoster(formData: FormData) {
     });
 
     const flightLegs = Array.from(flightLegsByKey.values());
-    const incomingKeys = new Set(flightLegsByKey.keys());
     const newFlightLegs = flightLegs.filter((flightLeg) => !existingKeys.has(flightLeg.unique_key));
     const existingFlightLegs = flightLegs.filter((flightLeg) => existingKeys.has(flightLeg.unique_key));
-    const staleKeys = [...existingUserKeys].filter((key) => !incomingKeys.has(key));
 
     const { error: insertError } = newFlightLegs.length > 0
       ? await adminClient
@@ -188,41 +185,13 @@ export async function uploadRoster(formData: FormData) {
       };
     }
 
-    let deleteErrorMessage: string | null = null;
-    let flightsDeleted = 0;
-    for (const chunk of chunkArray(staleKeys, 250)) {
-      const { error, count } = await adminClient
-        .from('flight_leg_details')
-        .delete({ count: 'exact' })
-        .eq('user_id', user.id)
-        .in('unique_key', chunk);
-
-      if (error) {
-        deleteErrorMessage = error.message;
-        break;
-      }
-
-      flightsDeleted += count ?? chunk.length;
-    }
-
-    if (deleteErrorMessage) {
-      return {
-        success: true,
-        rosterId: roster.id,
-        flightsAdded: newFlightLegs.length,
-        flights: rosterEntries,
-        rows: await fetchFlightMenuRows(supabase, user.id),
-        message: `Imported ${newFlightLegs.length} new flight legs and updated ${existingFlightLegs.length} existing flight legs, but could not delete removed flights: ${deleteErrorMessage}.${storageWarning}`,
-      };
-    }
-    
     return {
       success: true,
       rosterId: roster.id,
       flightsAdded: newFlightLegs.length,
       flights: rosterEntries,
       rows: await fetchFlightMenuRows(supabase, user.id),
-      message: `Roster synced successfully. ${newFlightLegs.length} new flight legs added, ${existingFlightLegs.length} existing flight legs updated, and ${flightsDeleted} removed flight legs deleted.${storageWarning}`,
+      message: `Escala importada. ${newFlightLegs.length} novos voos adicionados e ${existingFlightLegs.length} voos existentes atualizados. Voos antigos foram mantidos.${storageWarning}`,
     };
   } catch (error) {
     return {
@@ -355,36 +324,6 @@ async function fetchExistingKeys(supabase: any, table: string, keys: string[], u
     data?.forEach((row: { unique_key: string | null }) => {
       if (row.unique_key) existing.add(row.unique_key);
     });
-  }
-
-  return existing;
-}
-
-async function fetchUserFlightLegKeys(supabase: any, userId: string) {
-  const existing = new Set<string>();
-  let from = 0;
-  const pageSize = 1000;
-
-  while (true) {
-    const { data, error } = await supabase
-      .from('flight_leg_details')
-      .select('unique_key')
-      .eq('user_id', userId)
-      .not('unique_key', 'is', null)
-      .range(from, from + pageSize - 1);
-
-    if (error) {
-      throw new Error(`Could not load existing flight legs: ${error.message}`);
-    }
-
-    if (!data || data.length === 0) break;
-
-    data.forEach((row: { unique_key: string | null }) => {
-      if (row.unique_key) existing.add(row.unique_key);
-    });
-
-    if (data.length < pageSize) break;
-    from += pageSize;
   }
 
   return existing;

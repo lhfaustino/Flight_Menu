@@ -52,7 +52,8 @@ export function FlightMenuUploadWorkspace({
   const [rows, setRows] = useState<FlightMenuRow[]>(initialRows);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
   const [todayIso, setTodayIso] = useState('');
-  const visibleRows = todayIso ? rows.filter((row) => isTodayOrFuture(row.date, todayIso)) : rows;
+  const currentMonthIso = todayIso.slice(0, 7);
+  const visibleRows = currentMonthIso ? rows.filter((row) => isCurrentMonth(row.date, currentMonthIso)) : rows;
   const visibleRowIds = visibleRows.map((row) => row.id);
   const selectedVisibleRowCount = visibleRowIds.filter((id) => selectedRowIds.includes(id)).length;
   const areAllVisibleRowsSelected = visibleRows.length > 0 && selectedVisibleRowCount === visibleRows.length;
@@ -408,10 +409,10 @@ function formatDate(value: string) {
   return `${match[3]}/${match[2]}/${match[1]}`;
 }
 
-function isTodayOrFuture(value: string, today: string) {
+function isCurrentMonth(value: string, monthIso: string) {
   const rowDate = normalizeDate(value);
 
-  return Boolean(rowDate) && rowDate >= today;
+  return Boolean(rowDate) && rowDate.startsWith(`${monthIso}-`);
 }
 
 function isToday(value: string, today: string) {
