@@ -28,6 +28,8 @@ CREATE TABLE IF NOT EXISTS public.flight_leg_details (
   destination TEXT,
   departure_time TIMESTAMPTZ,
   arrival_time TIMESTAMPTZ,
+  flight_duration_minutes INTEGER,
+  equipment TEXT,
   service_type TEXT,
   meal_type TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -74,6 +76,8 @@ ALTER TABLE public.flight_leg_details
   ADD COLUMN IF NOT EXISTS destination TEXT,
   ADD COLUMN IF NOT EXISTS departure_time TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS arrival_time TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS flight_duration_minutes INTEGER,
+  ADD COLUMN IF NOT EXISTS equipment TEXT,
   ADD COLUMN IF NOT EXISTS service_type TEXT,
   ADD COLUMN IF NOT EXISTS meal_type TEXT,
   ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -171,6 +175,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS flight_leg_details_user_unique_key_idx
 
 CREATE INDEX IF NOT EXISTS flight_leg_details_user_departure_time_idx
   ON public.flight_leg_details (user_id, departure_time);
+
+CREATE INDEX IF NOT EXISTS flight_leg_details_user_equipment_idx
+  ON public.flight_leg_details (user_id, equipment);
 
 CREATE UNIQUE INDEX IF NOT EXISTS catering_rules_user_unique_key_idx
   ON public.catering_rules (user_id, unique_key)

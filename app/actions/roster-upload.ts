@@ -97,6 +97,8 @@ export async function uploadRoster(formData: FormData) {
       destination: string;
       departure_time: string;
       arrival_time: string;
+      flight_duration_minutes: number | null;
+      equipment: string | null;
       service_type: string | null;
       meal_type: string | null;
     }>();
@@ -123,6 +125,8 @@ export async function uploadRoster(formData: FormData) {
         destination: entry.destination,
         departure_time: departureTime.toISOString(),
         arrival_time: arrivalTime.toISOString(),
+        flight_duration_minutes: Math.max(0, Math.round((arrivalTime.getTime() - departureTime.getTime()) / 60000)),
+        equipment: entry.equipment || null,
         service_type: catering?.service_type || MEAL_PLAN_NOT_FOUND,
         meal_type: catering?.meal_type || MEAL_PLAN_NOT_FOUND,
       });
@@ -161,6 +165,8 @@ export async function uploadRoster(formData: FormData) {
           destination: flightLeg.destination,
           departure_time: flightLeg.departure_time,
           arrival_time: flightLeg.arrival_time,
+          flight_duration_minutes: flightLeg.flight_duration_minutes,
+          equipment: flightLeg.equipment,
           service_type: flightLeg.service_type,
           meal_type: flightLeg.meal_type,
           updated_at: new Date().toISOString(),

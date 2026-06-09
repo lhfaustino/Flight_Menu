@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { UtensilsCrossed, Link2, Megaphone, Settings, Search, LifeBuoy, ShieldCheck } from "lucide-react";
+import { Home, UtensilsCrossed, Link2, Megaphone, Settings, Search, LifeBuoy, ShieldCheck } from "lucide-react";
 import { NavList, NavAccountCard, MobileNavigationHeader } from "./navigation/SidebarNavigation";
 import type { NavItemType } from "./navigation/NavList";
 import { UserMenu } from "./navigation/UserMenu";
@@ -13,6 +13,7 @@ import { RouterProvider } from "react-aria-components";
 type AppNavItem = NavItemType & { view?: string; items?: AppNavItem[] };
 
 const baseNavigation: AppNavItem[] = [
+    { label: "Início", href: "/inicio", view: "inicio", icon: Home },
     { label: "Alimentação", href: "/roster-upload", view: "meal-plan", icon: UtensilsCrossed },
     { label: "Alocuções", href: "/alocucoes", view: "alocucoes", icon: Megaphone },
     { label: "Links Úteis", href: "/links-uteis", view: "links-uteis", icon: Link2 },
@@ -75,7 +76,7 @@ export function AppShell({ children, currentView, onViewChange }: AppShellProps)
         }
     };
 
-    const activeUrl = flatNavigation.find(n => n.view === currentView)?.href || "/roster-upload";
+    const activeUrl = flatNavigation.find(n => n.view === currentView || n.href === `/${currentView}`)?.href || "/inicio";
 
     return (
         <div className="flex min-h-screen flex-col bg-gray-50 lg:flex-row">

@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS public.flight_leg_details (
   destination TEXT NOT NULL,
   departure_time TIMESTAMPTZ,
   arrival_time TIMESTAMPTZ,
+  flight_duration_minutes INTEGER,
+  equipment TEXT,
   service_type TEXT,
   meal_type TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -82,6 +84,8 @@ BEGIN
     ADD COLUMN IF NOT EXISTS destination TEXT,
     ADD COLUMN IF NOT EXISTS departure_time TIMESTAMPTZ,
     ADD COLUMN IF NOT EXISTS arrival_time TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS flight_duration_minutes INTEGER,
+    ADD COLUMN IF NOT EXISTS equipment TEXT,
     ADD COLUMN IF NOT EXISTS service_type TEXT,
     ADD COLUMN IF NOT EXISTS meal_type TEXT;
 

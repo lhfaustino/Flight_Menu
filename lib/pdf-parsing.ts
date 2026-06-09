@@ -16,6 +16,7 @@ export interface RosterEntry {
   arrivalTime: string;
   date?: string;
   crewPosition?: string;
+  equipment?: string;
 }
 
 export interface CateringEntry {
@@ -77,6 +78,7 @@ export function parseRosterText(text: string): RosterEntry[] {
       arrivalTime: normalizeTime(flightMatch[4]),
       date: currentDate,
       crewPosition: line.startsWith('DH/') ? 'DH' : undefined,
+      equipment: extractEquipment(line),
     });
   }
 
@@ -167,6 +169,11 @@ function buildCateringEntryKey(entry: CateringEntry) {
 function normalizeTime(value: string): string {
   const padded = value.padStart(4, '0');
   return `${padded.slice(0, 2)}:${padded.slice(2)}`;
+}
+
+function extractEquipment(line: string): string | undefined {
+  const match = line.toUpperCase().match(/\b(B73G|B738)\b/);
+  return match?.[1];
 }
 
 function monthNameToNumber(month: string): number | undefined {

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArrowRight, ClipboardList, HelpCircle, Link2, Megaphone, Search, Settings } from "lucide-react";
+import { ArrowRight, ClipboardList, HelpCircle, Home, Link2, Megaphone, Search, Settings } from "lucide-react";
 import { Dialog, Modal, ModalOverlay } from "@/components/ui/Modal";
 
 interface CommandItem {
@@ -43,6 +43,14 @@ export const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
     }, []);
 
     const commands: CommandItem[] = [
+        {
+            id: "inicio",
+            title: "Início",
+            description: "Ver gráficos de horas, destinos e equipamentos",
+            icon: Home,
+            category: "Páginas",
+            onClick: () => onNavigate?.("inicio"),
+        },
         {
             id: "meal-plan",
             title: "Planilha",
