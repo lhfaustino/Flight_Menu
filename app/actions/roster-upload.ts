@@ -4,12 +4,17 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ADMIN_EMAIL } from '@/lib/admin-access';
 import { extractPdfText, parseRosterText } from '@/lib/pdf-parsing';
+import type { RosterEntry } from '@/lib/pdf-parsing';
 import { MEAL_PLAN_NOT_FOUND, refreshUserFlightLegMealsFromCurrentMealPlan } from '@/lib/flight-menu-processing';
 
 type CateringRuleRow = {
   unique_key: string;
   service_type: string | null;
   meal_type: string | null;
+};
+
+type ParsedRosterEntry = RosterEntry & {
+  rosterId: string;
 };
 
 export async function uploadRoster(formData: FormData) {
@@ -21,66 +26,72 @@ export async function uploadRoster(formData: FormData) {
     throw new Error('Não autorizado');
   }
   
-  const file = formData.get('file') as File;
-  if (!file) {
+  const files = getRosterFiles(formData);
+  if (files.length === 0) {
     throw new Error('Nenhum arquivo enviado');
   }
-  
-  if (file.type !== 'application/pdf') {
-    throw new Error('Somente arquivos PDF são permitidos');
+
+  const invalidFile = files.find((file) => file.type !== 'application/pdf');
+  if (invalidFile) {
+    throw new Error(`Somente arquivos PDF são permitidos. Arquivo inválido: ${invalidFile.name}`);
   }
   
   try {
-    // 1. Convert file to buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const pdfBuffer = Buffer.from(arrayBuffer);
-    
-    // 2. Extract text from PDF
-    const pdfText = await extractPdfText(pdfBuffer);
-    
-    // 3. Parse roster entries
-    const rosterEntries = parseRosterText(pdfText);
-    
-    if (rosterEntries.length === 0) {
-      throw new Error('Nenhum voo encontrado no PDF. Confira o formato do arquivo.');
-    }
-    
-    // 4. Upload PDF to Supabase Storage
-    const fileName = `${user.id}/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from('flight-rosters')
-      .upload(fileName, pdfBuffer, {
-        contentType: 'application/pdf',
-      });
+    const adminClient = createAdminClient();
+    const rosterEntries: ParsedRosterEntry[] = [];
+    const warnings: string[] = [];
 
-    const storageWarning = uploadError
-      ? ` PDF file was parsed, but not saved to Storage: ${uploadError.message}`
-      : '';
-    
-    // 5. Create roster record in database
-    const { data: roster, error: rosterError } = await supabase
-      .from('flight_rosters')
-      .insert({
-        user_id: user.id,
-        name: file.name.replace('.pdf', ''),
-        file_url: uploadError ? file.name : `flight-rosters/${fileName}`,
-      })
-      .select('id')
-      .single();
-    
-    if (rosterError) {
-      return {
-        success: true,
-        flightsAdded: rosterEntries.length,
-        flights: rosterEntries,
-        message: `Parsed ${rosterEntries.length} flight legs, but could not save the roster record: ${rosterError.message}.${storageWarning}`,
-      };
+    for (const [fileIndex, file] of files.entries()) {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfBuffer = Buffer.from(arrayBuffer);
+      const pdfText = await extractPdfText(pdfBuffer);
+      const parsedEntries = parseRosterText(pdfText);
+
+      if (parsedEntries.length === 0) {
+        warnings.push(`${file.name}: nenhum voo encontrado`);
+        continue;
+      }
+
+      const fileName = `${user.id}/${Date.now()}-${fileIndex}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('flight-rosters')
+        .upload(fileName, pdfBuffer, {
+          contentType: 'application/pdf',
+        });
+
+      if (uploadError) {
+        warnings.push(`${file.name}: PDF interpretado, mas não salvo no Storage (${uploadError.message})`);
+      }
+
+      const { data: roster, error: rosterError } = await supabase
+        .from('flight_rosters')
+        .insert({
+          user_id: user.id,
+          name: file.name.replace(/\.pdf$/i, ''),
+          file_url: uploadError ? file.name : `flight-rosters/${fileName}`,
+        })
+        .select('id')
+        .single();
+
+      if (rosterError || !roster?.id) {
+        warnings.push(`${file.name}: voos interpretados, mas registro da escala não foi salvo (${rosterError?.message ?? 'id ausente'})`);
+        continue;
+      }
+
+      rosterEntries.push(...parsedEntries.map((entry) => ({ ...entry, rosterId: roster.id })));
+    }
+
+    if (rosterEntries.length === 0) {
+      throw new Error(
+        warnings.length > 0
+          ? `Nenhum voo foi importado. ${warnings.join(' ')}`
+          : 'Nenhum voo encontrado nos PDFs. Confira o formato dos arquivos.'
+      );
     }
     
     const rosterKeys = rosterEntries.map((entry) =>
       buildUniqueKey(entry.date || new Date().toISOString().split('T')[0], entry.flightNumber, entry.origin)
     );
-    const adminClient = createAdminClient();
     const [existingKeys, cateringByKey] = await Promise.all([
       fetchExistingKeys(adminClient, 'flight_leg_details', rosterKeys, user.id),
       fetchCateringByKey(rosterKeys),
@@ -117,7 +128,7 @@ export async function uploadRoster(formData: FormData) {
       
       flightLegsByKey.set(uniqueKey, {
         unique_key: uniqueKey,
-        roster_id: roster.id,
+        roster_id: entry.rosterId,
         user_id: user.id,
         flight_number: entry.flightNumber,
         crew_position: entry.crewPosition || null,
@@ -145,11 +156,10 @@ export async function uploadRoster(formData: FormData) {
     if (insertError) {
       return {
         success: true,
-        rosterId: roster.id,
         flightsAdded: 0,
         flights: rosterEntries,
         rows: await fetchFlightMenuRows(supabase, user.id),
-        message: `Parsed ${rosterEntries.length} flight legs, but could not save new flight legs: ${insertError.message}.${storageWarning}`,
+        message: `Parsed ${rosterEntries.length} flight legs, but could not save new flight legs: ${insertError.message}.${formatWarnings(warnings)}`,
       };
     }
 
@@ -183,21 +193,22 @@ export async function uploadRoster(formData: FormData) {
     if (updateErrorMessage) {
       return {
         success: true,
-        rosterId: roster.id,
         flightsAdded: newFlightLegs.length,
         flights: rosterEntries,
         rows: await fetchFlightMenuRows(supabase, user.id),
-        message: `Imported ${newFlightLegs.length} new flight legs, but could not update some existing flight legs: ${updateErrorMessage}.${storageWarning}`,
+        message: `Imported ${newFlightLegs.length} new flight legs, but could not update some existing flight legs: ${updateErrorMessage}.${formatWarnings(warnings)}`,
       };
     }
 
     return {
       success: true,
-      rosterId: roster.id,
       flightsAdded: newFlightLegs.length,
       flights: rosterEntries,
       rows: await fetchFlightMenuRows(supabase, user.id),
-      message: `Escala importada. ${newFlightLegs.length} novos voos adicionados e ${existingFlightLegs.length} voos existentes atualizados. Voos antigos foram mantidos.${storageWarning}`,
+      message:
+        `Escala importada. ${files.length} arquivo${files.length === 1 ? '' : 's'} processado${files.length === 1 ? '' : 's'}, ` +
+        `${newFlightLegs.length} novos voos adicionados e ${existingFlightLegs.length} voos existentes atualizados. ` +
+        `Voos antigos foram mantidos.${formatWarnings(warnings)}`,
     };
   } catch (error) {
     return {
@@ -310,6 +321,18 @@ function normalizeDate(value: string) {
 function normalizeFlightNumber(value: string) {
   const digits = value.replace(/\D/g, '');
   return digits.startsWith('3') && digits.length === 5 ? digits.slice(1) : digits;
+}
+
+function getRosterFiles(formData: FormData) {
+  const multiFiles = formData.getAll('files').filter((value): value is File => value instanceof File);
+  const legacyFile = formData.get('file');
+
+  if (multiFiles.length > 0) return multiFiles;
+  return legacyFile instanceof File ? [legacyFile] : [];
+}
+
+function formatWarnings(warnings: string[]) {
+  return warnings.length > 0 ? ` Avisos: ${warnings.join(' ')}` : '';
 }
 
 async function fetchExistingKeys(supabase: any, table: string, keys: string[], userId?: string) {

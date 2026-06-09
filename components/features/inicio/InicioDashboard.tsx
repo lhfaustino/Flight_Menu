@@ -62,8 +62,8 @@ export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
   const totalMinutes = sum(filteredRows.map((row) => row.flightDurationMinutes));
   const totalHours = totalMinutes / 60;
   const topDestination = topByCount(filteredRows.map((row) => row.destination));
-  const knownEquipmentRows = filteredRows.filter((row) => isKnownEquipment(row.equipment));
-  const topEquipment = topByCount(knownEquipmentRows.map((row) => row.equipment), "Sem dados");
+  const rowsWithEquipment = filteredRows.filter((row) => hasEquipment(row.equipment));
+  const topEquipment = topByCount(rowsWithEquipment.map((row) => row.equipment), "Sem dados");
 
   const hoursByMonth = React.useMemo(() => {
     const buckets = new Map<string, number>();
@@ -98,8 +98,8 @@ export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
   }, [filteredRows]);
 
   const equipmentCounts = React.useMemo(
-    () => countBy(knownEquipmentRows.map((row) => row.equipment)).map(({ label, count }) => ({ equipamento: label, Voos: count })),
-    [knownEquipmentRows]
+    () => countBy(rowsWithEquipment.map((row) => row.equipment)).map(({ label, count }) => ({ equipamento: label, Voos: count })),
+    [rowsWithEquipment]
   );
 
   return (
@@ -256,7 +256,7 @@ export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
             />
           </ChartPanel>
 
-          <ChartPanel title="Voos por equipamento" description="Distribuição dos voos por B73G e B738 extraídos da escala.">
+          <ChartPanel title="Voos por equipamento" description="Distribuição dos voos por todos os equipamentos extraídos da escala.">
             {equipmentCounts.length > 0 ? (
               <>
                 <PieChart
@@ -351,7 +351,7 @@ function topByCount(values: string[], emptyValue = "-") {
   return countBy(values)[0]?.label ?? emptyValue;
 }
 
-function isKnownEquipment(value: string) {
+function hasEquipment(value: string) {
   return value !== "Não informado";
 }
 

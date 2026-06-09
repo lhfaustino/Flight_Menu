@@ -42,7 +42,7 @@ export function FlightMenuUploadWorkspace({
 }: FlightMenuUploadWorkspaceProps) {
   const router = useRouter();
   const { addToast } = useToast();
-  const [rosterFile, setRosterFile] = useState<File | null>(null);
+  const [rosterFiles, setRosterFiles] = useState<File[]>([]);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRefreshingMealPlan, setIsRefreshingMealPlan] = useState(false);
@@ -115,8 +115,8 @@ export function FlightMenuUploadWorkspace({
   }, []);
 
   const handleUpdate = async () => {
-    if (!rosterFile) {
-      setMessage({ type: 'error', text: 'Selecione o PDF da escala antes de atualizar.' });
+    if (rosterFiles.length === 0) {
+      setMessage({ type: 'error', text: 'Selecione um ou mais PDFs da escala antes de atualizar.' });
       return;
     }
 
@@ -125,7 +125,7 @@ export function FlightMenuUploadWorkspace({
 
     try {
       const formData = new FormData();
-      formData.append('file', rosterFile);
+      rosterFiles.forEach((file) => formData.append('files', file));
 
       const result = await uploadRoster(formData);
 
@@ -141,6 +141,7 @@ export function FlightMenuUploadWorkspace({
           setLatestMealPlanUpdatedAt(mealPlanVersion.mealPlanUpdatedAt);
         }
         setIsUploadOpen(false);
+        setRosterFiles([]);
         router.refresh();
       } else {
         setMessage({ type: 'error', text: result.error ?? 'Não foi possível atualizar a escala.' });
@@ -286,13 +287,13 @@ export function FlightMenuUploadWorkspace({
             <div className="border-b border-gray-200 px-6 py-4">
               <h2 className="text-lg font-semibold text-gray-900">Enviar Escala</h2>
               <p className="mt-1 text-sm text-gray-500">
-                Envie seu arquivo de escala. A planilha de alimentação fixa será aplicada automaticamente.
+                Envie um ou mais arquivos de escala. A planilha de alimentação fixa será aplicada automaticamente.
               </p>
             </div>
 
             <div className="max-h-[75vh] overflow-y-auto px-4 py-5 sm:px-6">
               <div className="grid grid-cols-1 gap-6">
-                <RosterUploadCard deferUpload onFileSelected={setRosterFile} />
+                <RosterUploadCard deferUpload onFilesSelected={setRosterFiles} />
               </div>
 
               {message && (
@@ -309,7 +310,10 @@ export function FlightMenuUploadWorkspace({
             <div className="flex flex-col-reverse gap-3 border-t border-gray-200 px-6 py-4 sm:flex-row sm:justify-end">
               <Button
                 variant="secondary"
-                onPress={() => setIsUploadOpen(false)}
+                onPress={() => {
+                  setIsUploadOpen(false);
+                  setRosterFiles([]);
+                }}
                 isDisabled={isUpdating}
                 className="w-full sm:w-auto"
               >
@@ -317,10 +321,10 @@ export function FlightMenuUploadWorkspace({
               </Button>
               <Button
                 onPress={handleUpdate}
-                isDisabled={!rosterFile || isUpdating}
+                isDisabled={rosterFiles.length === 0 || isUpdating}
                 className="w-full sm:w-auto"
               >
-                {isUpdating ? 'Enviando...' : 'Atualizar'}
+                {isUpdating ? 'Enviando...' : rosterFiles.length > 1 ? 'Atualizar escalas' : 'Atualizar escala'}
               </Button>
             </div>
           </Dialog>

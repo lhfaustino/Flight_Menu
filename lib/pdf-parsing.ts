@@ -8,6 +8,9 @@ const pdfWorkerSrc = pathToFileURL(
 
 PDFParse.setWorker(pdfWorkerSrc);
 
+const EQUIPMENT_CODE_PATTERN =
+  /\b(?:A\d{3}|A\d{2}N|B\d{3}[A-Z]?|B\d{2}[A-Z0-9]|B7M[78]|E\d{3}|E\d{2}S|AT\d{2}|CRJ\d{1,3}|ERJ\d{1,3}|7M[78]|73[78G9]|32[0-9N])\b/gi;
+
 export interface RosterEntry {
   flightNumber: string;
   origin: string;
@@ -172,8 +175,8 @@ function normalizeTime(value: string): string {
 }
 
 function extractEquipment(line: string): string | undefined {
-  const match = line.toUpperCase().match(/\b(B73G|B738)\b/);
-  return match?.[1];
+  const match = line.toUpperCase().match(EQUIPMENT_CODE_PATTERN);
+  return match?.[0];
 }
 
 function monthNameToNumber(month: string): number | undefined {

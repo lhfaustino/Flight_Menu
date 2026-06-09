@@ -32,6 +32,8 @@ type FlightLegUpsertRow = {
   destination: string;
   departure_time: string | null;
   arrival_time: string | null;
+  flight_duration_minutes: number | null;
+  equipment: string | null;
   service_type: string | null;
   meal_type: string | null;
 };
@@ -182,6 +184,8 @@ function buildFlightLegRows({
       destination: entry.destination,
       departure_time: departureTime.toISOString(),
       arrival_time: arrivalTime.toISOString(),
+      flight_duration_minutes: Math.max(0, Math.round((arrivalTime.getTime() - departureTime.getTime()) / 60000)),
+      equipment: entry.equipment || null,
       service_type: catering?.service_type || MEAL_PLAN_NOT_FOUND,
       meal_type: catering?.meal_type || MEAL_PLAN_NOT_FOUND,
     });
