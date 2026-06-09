@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { BarChart3, Clock3, MapPin, Plane, RotateCcw } from "lucide-react";
+import { BarChart3, Clock3, MapPin, Plane, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { BarChart } from "@/components/features/charts/BarChart";
 import { LineChart } from "@/components/features/charts/LineChart";
 import { PieChart } from "@/components/features/charts/PieChart";
@@ -35,6 +35,7 @@ const EMPTY_FILTERS: FilterState = {
 
 export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
   const [filters, setFilters] = React.useState<FilterState>(EMPTY_FILTERS);
+  const [isFilterOpen, setIsFilterOpen] = React.useState(false);
 
   const equipments = React.useMemo(() => uniqueOptions(rows.map((row) => row.equipment)), [rows]);
   const destinations = React.useMemo(() => uniqueOptions(rows.map((row) => row.destination)), [rows]);
@@ -50,6 +51,12 @@ export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
       }),
     [filters, rows]
   );
+  const activeFilterCount = [
+    filters.fromDate,
+    filters.toDate,
+    filters.equipment !== "all" ? filters.equipment : "",
+    filters.destination !== "all" ? filters.destination : "",
+  ].filter(Boolean).length;
 
   const totalFlights = filteredRows.length;
   const totalMinutes = sum(filteredRows.map((row) => row.flightDurationMinutes));
@@ -97,34 +104,71 @@ export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-5">
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
+      <section className="rounded-lg border border-gray-200 bg-white px-3 py-3 shadow-sm transition focus-within:border-brand-300 focus-within:ring-2 focus-within:ring-brand-500/10">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <Button
+              variant={isFilterOpen ? "secondary-color" : "secondary"}
+              size="sm"
+              iconLeading={SlidersHorizontal}
+              aria-expanded={isFilterOpen}
+              aria-controls="inicio-filter-panel"
+              onPress={() => setIsFilterOpen((current) => !current)}
+              className="h-9 px-3"
+            >
+              Filtros{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+            </Button>
+            <div className="min-w-0">
+              <p className="truncate text-xs text-gray-500">
+                {filteredRows.length} de {rows.length} voos
+              </p>
+            </div>
+          </div>
+
+          {activeFilterCount > 0 ? (
+            <Button
+              variant="tertiary"
+              size="sm"
+              iconLeading={RotateCcw}
+              onPress={() => setFilters(EMPTY_FILTERS)}
+              className="h-9 shrink-0 px-3"
+            >
+              Limpar
+            </Button>
+          ) : null}
+        </div>
+
+        {isFilterOpen ? (
+          <div
+            id="inicio-filter-panel"
+            className="mt-3 grid gap-2 border-t border-gray-100 pt-3 sm:grid-cols-2 xl:grid-cols-[minmax(130px,0.75fr)_minmax(130px,0.75fr)_minmax(150px,1fr)_minmax(150px,1fr)_auto]"
+          >
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             De
             <input
               type="date"
               value={filters.fromDate}
               onChange={(event) => setFilters((current) => ({ ...current, fromDate: event.target.value }))}
-              className="h-10 rounded-lg border border-gray-300 px-3 text-sm text-gray-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+              className="h-9 rounded-md border border-gray-300 px-2.5 text-sm text-gray-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
             />
           </label>
 
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Até
             <input
               type="date"
               value={filters.toDate}
               onChange={(event) => setFilters((current) => ({ ...current, toDate: event.target.value }))}
-              className="h-10 rounded-lg border border-gray-300 px-3 text-sm text-gray-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+              className="h-9 rounded-md border border-gray-300 px-2.5 text-sm text-gray-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
             />
           </label>
 
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Equipamento
             <select
               value={filters.equipment}
               onChange={(event) => setFilters((current) => ({ ...current, equipment: event.target.value }))}
-              className="h-10 rounded-lg border border-gray-300 px-3 text-sm text-gray-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+              className="h-9 rounded-md border border-gray-300 px-2.5 text-sm text-gray-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
             >
               <option value="all">Todos</option>
               {equipments.map((equipment) => (
@@ -135,12 +179,12 @@ export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Destino
             <select
               value={filters.destination}
               onChange={(event) => setFilters((current) => ({ ...current, destination: event.target.value }))}
-              className="h-10 rounded-lg border border-gray-300 px-3 text-sm text-gray-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+              className="h-9 rounded-md border border-gray-300 px-2.5 text-sm text-gray-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
             >
               <option value="all">Todos</option>
               {destinations.map((destination) => (
@@ -151,18 +195,19 @@ export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
             </select>
           </label>
 
-          <div className="flex items-end">
+          <div className="flex items-end sm:col-span-2 xl:col-span-1">
             <Button
               variant="secondary"
-              size="md"
+              size="sm"
               iconLeading={RotateCcw}
               onPress={() => setFilters(EMPTY_FILTERS)}
-              className="w-full"
+              className="h-9 w-full px-3 xl:w-auto"
             >
               Limpar
             </Button>
           </div>
-        </div>
+          </div>
+        ) : null}
       </section>
 
       <section className="grid gap-4 md:grid-cols-4">
