@@ -179,6 +179,15 @@ CREATE INDEX IF NOT EXISTS flight_leg_details_user_departure_time_idx
 CREATE INDEX IF NOT EXISTS flight_leg_details_user_equipment_idx
   ON public.flight_leg_details (user_id, equipment);
 
+UPDATE public.flight_leg_details
+SET flight_duration_minutes = GREATEST(
+  0,
+  ROUND(EXTRACT(EPOCH FROM (arrival_time - departure_time)) / 60)::INTEGER
+)
+WHERE flight_duration_minutes IS NULL
+  AND departure_time IS NOT NULL
+  AND arrival_time IS NOT NULL;
+
 CREATE UNIQUE INDEX IF NOT EXISTS catering_rules_user_unique_key_idx
   ON public.catering_rules (user_id, unique_key)
   WHERE unique_key IS NOT NULL;
