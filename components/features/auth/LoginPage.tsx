@@ -15,7 +15,7 @@ import { AUTH_CONFIG } from "@/lib/constants";
 export const LoginPage = () => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
-    const [socialProvider, setSocialProvider] = useState<"google" | "apple" | null>(null);
+    const [socialProvider, setSocialProvider] = useState<"google" | null>(null);
     const [error, setError] = useState<string | null>(null);
     const { addToast } = useToast();
     const [formData, setFormData] = useState({
@@ -68,7 +68,7 @@ export const LoginPage = () => {
         }
     };
 
-    const handleSocialLogin = async (provider: "google" | "apple") => {
+    const handleSocialLogin = async (provider: "google") => {
         setError(null);
         setSocialProvider(provider);
         const supabase = createClient();
@@ -77,12 +77,10 @@ export const LoginPage = () => {
             provider,
             options: {
                 redirectTo: `${window.location.origin}/auth/callback`,
-                queryParams: provider === "google"
-                    ? {
-                        access_type: "offline",
-                        prompt: "consent",
-                    }
-                    : undefined,
+                queryParams: {
+                    access_type: "offline",
+                    prompt: "consent",
+                },
             },
         });
 
@@ -181,7 +179,7 @@ export const LoginPage = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div className="mt-6 grid grid-cols-1 gap-3">
                                 <Button
                                     variant="secondary"
                                     className="w-full justify-center gap-2"
@@ -190,15 +188,6 @@ export const LoginPage = () => {
                                 >
                                     <SocialIcon type="google" className="h-5 w-5" />
                                     <span>{socialProvider === "google" ? "Conectando..." : "Google"}</span>
-                                </Button>
-                                <Button
-                                    variant="secondary"
-                                    className="w-full justify-center gap-2"
-                                    onClick={() => handleSocialLogin("apple")}
-                                    isDisabled={socialProvider !== null}
-                                >
-                                    <SocialIcon type="apple" className="h-5 w-5" />
-                                    <span>{socialProvider === "apple" ? "Conectando..." : "Apple"}</span>
                                 </Button>
                             </div>
                         </div>

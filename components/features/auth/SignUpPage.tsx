@@ -24,7 +24,7 @@ const USERNAME_REQUIRED_TEXT = "Escolha um nome de Usu\u00e1rio dispon\u00edvel 
 export const SignUpPage = () => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
-    const [socialProvider, setSocialProvider] = useState<"google" | "apple" | null>(null);
+    const [socialProvider, setSocialProvider] = useState<"google" | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>("idle");
     const { addToast } = useToast();
@@ -148,7 +148,7 @@ export const SignUpPage = () => {
         }
     };
 
-    const handleSocialLogin = async (provider: "google" | "apple") => {
+    const handleSocialLogin = async (provider: "google") => {
         setError(null);
         setSocialProvider(provider);
         const supabase = createClient();
@@ -156,12 +156,10 @@ export const SignUpPage = () => {
             provider,
             options: {
                 redirectTo: `${window.location.origin}/auth/callback`,
-                queryParams: provider === "google"
-                    ? {
-                        access_type: "offline",
-                        prompt: "consent",
-                    }
-                    : undefined,
+                queryParams: {
+                    access_type: "offline",
+                    prompt: "consent",
+                },
             },
         });
 
@@ -261,7 +259,7 @@ export const SignUpPage = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div className="mt-6 grid grid-cols-1 gap-3">
                                 <Button
                                     variant="secondary"
                                     className="w-full justify-center gap-2"
@@ -270,15 +268,6 @@ export const SignUpPage = () => {
                                 >
                                     <SocialIcon type="google" className="h-5 w-5" />
                                     <span>{socialProvider === "google" ? "Conectando..." : "Google"}</span>
-                                </Button>
-                                <Button
-                                    variant="secondary"
-                                    className="w-full justify-center gap-2"
-                                    onClick={() => handleSocialLogin("apple")}
-                                    isDisabled={socialProvider !== null}
-                                >
-                                    <SocialIcon type="apple" className="h-5 w-5" />
-                                    <span>{socialProvider === "apple" ? "Conectando..." : "Apple"}</span>
                                 </Button>
                             </div>
                         </div>
