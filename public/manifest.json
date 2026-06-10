@@ -1,7 +1,7 @@
 {
-  "name": "Meu App Next Offline",
-  "short_name": "NextApp",
-  "description": "Meu app com dados offline",
+  "name": "Trip Space",
+  "short_name": "Trip Space",
+  "description": "Trip Space com dados offline",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

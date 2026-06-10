@@ -8,7 +8,7 @@ import { ServiceWorkerRegister } from "@/components/ui/ServiceWorkerRegister";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "Meu App",
+    title: "Trip Space",
     description: "Aplicativo para escala, serviço de bordo e documentos rápidos.",
     manifest: "/manifest.json",
     icons: {
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     appleWebApp: {
         capable: true,
         statusBarStyle: "black-translucent",
-        title: "Meu App",
+        title: "Trip Space",
     },
 };
 
