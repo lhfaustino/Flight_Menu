@@ -135,6 +135,34 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.is_username_available(TEXT) TO anon, authenticated;
 
+CREATE OR REPLACE FUNCTION public.get_email_by_username(candidate TEXT)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  normalized TEXT;
+  matched_email TEXT;
+BEGIN
+  normalized := public.normalize_username(candidate);
+
+  IF normalized IS NULL OR length(normalized) < 3 OR length(normalized) > 24 THEN
+    RETURN NULL;
+  END IF;
+
+  SELECT email
+    INTO matched_email
+  FROM public.profiles
+  WHERE lower(username) = normalized
+  LIMIT 1;
+
+  RETURN matched_email;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_email_by_username(TEXT) TO anon, authenticated;
+
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN

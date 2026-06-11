@@ -19,7 +19,7 @@ export const LoginPage = () => {
     const [error, setError] = useState<string | null>(null);
     const { addToast } = useToast();
     const [formData, setFormData] = useState({
-        email: "",
+        identifier: "",
         password: "",
         remember: false,
     });
@@ -40,8 +40,10 @@ export const LoginPage = () => {
         const supabase = createClient();
 
         try {
+            const loginEmail = await resolveLoginEmail(supabase, formData.identifier);
+
             const { error: signInError } = await supabase.auth.signInWithPassword({
-                email: formData.email,
+                email: loginEmail,
                 password: formData.password,
             });
 
@@ -122,12 +124,13 @@ export const LoginPage = () => {
 
                             <form onSubmit={handleSubmit} method="POST" className="space-y-6">
                                 <Input
-                                    label="E-mail"
-                                    name="email"
-                                    type="email"
-                                    placeholder="Digite seu e-mail"
-                                    value={formData.email}
+                                    label="E-mail ou nome de usuario"
+                                    name="identifier"
+                                    type="text"
+                                    placeholder="Digite seu e-mail ou nome de usuario"
+                                    value={formData.identifier}
                                     onChange={handleChange}
+                                    autoComplete="username"
                                     required
                                 />
 
@@ -206,4 +209,37 @@ export const LoginPage = () => {
             </div>
         </div>
     );
+};
+
+const normalizeUsername = (value: string) =>
+    value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24);
+
+const resolveLoginEmail = async (
+    supabase: ReturnType<typeof createClient>,
+    identifier: string
+) => {
+    const trimmedIdentifier = identifier.trim();
+
+    if (trimmedIdentifier.includes("@")) {
+        return trimmedIdentifier.toLowerCase();
+    }
+
+    const username = normalizeUsername(trimmedIdentifier);
+    if (username.length < 3) {
+        throw new Error("Informe um e-mail ou nome de usuario valido.");
+    }
+
+    const { data, error } = await supabase.rpc("get_email_by_username", {
+        candidate: username,
+    });
+
+    if (error) {
+        throw new Error("Nao foi possivel verificar este nome de usuario agora.");
+    }
+
+    if (!data) {
+        throw new Error("E-mail, nome de usuario ou senha invalidos.");
+    }
+
+    return data as string;
 };
