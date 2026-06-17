@@ -1,5 +1,8 @@
 -- Social feed tables and photo storage.
 
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS last_meal_plan_refreshed_at TIMESTAMPTZ;
+
 CREATE TABLE IF NOT EXISTS public.social_posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,

@@ -10,9 +10,18 @@ export default async function RosterUploadPage() {
     data: { user },
   } = await supabase.auth.getUser();
   let currentMealPlanUpdatedAt: string | null = null;
+  let userMealPlanRefreshedAt: string | null = null;
 
   if (user) {
     const adminClient = createAdminClient();
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('last_meal_plan_refreshed_at')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    userMealPlanRefreshedAt = profile?.last_meal_plan_refreshed_at ?? null;
+
     const { data: adminProfile } = await adminClient
       .from('profiles')
       .select('id')
@@ -44,6 +53,7 @@ export default async function RosterUploadPage() {
         
         <FlightMenuUploadWorkspace
           currentMealPlanUpdatedAt={currentMealPlanUpdatedAt}
+          userMealPlanRefreshedAt={userMealPlanRefreshedAt}
           currentUserId={user?.id ?? null}
           initialRows={initialRows}
         />

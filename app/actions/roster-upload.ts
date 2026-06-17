@@ -165,7 +165,7 @@ export async function uploadRoster(formData: FormData) {
 
     let updateErrorMessage: string | null = null;
     for (const flightLeg of existingFlightLegs) {
-      const { error } = await adminClient
+        const { error } = await adminClient
         .from('flight_leg_details')
         .update({
           roster_id: flightLeg.roster_id,
@@ -200,11 +200,17 @@ export async function uploadRoster(formData: FormData) {
       };
     }
 
+    const mealPlanUpdatedAt = await fetchCurrentUserMealPlanUpdatedAt(adminClient);
+    if (mealPlanUpdatedAt) {
+      await markUserMealPlanRefreshed(adminClient, user.id, mealPlanUpdatedAt);
+    }
+
     return {
       success: true,
       flightsAdded: newFlightLegs.length,
       flights: rosterEntries,
       rows: await fetchFlightMenuRows(supabase, user.id),
+      mealPlanUpdatedAt,
       message:
         `Escala importada. ${files.length} arquivo${files.length === 1 ? '' : 's'} processado${files.length === 1 ? '' : 's'}, ` +
         `${newFlightLegs.length} novos voos adicionados e ${existingFlightLegs.length} voos existentes atualizados. ` +
@@ -253,6 +259,9 @@ export async function refreshCurrentUserMealPlan() {
     const result = await refreshUserFlightLegMealsFromCurrentMealPlan(adminClient, user.id, adminProfile.id);
     const rows = await fetchFlightMenuRows(supabase, user.id);
     const mealPlanUpdatedAt = await fetchCurrentMealPlanUpdatedAt(adminClient, adminProfile.id);
+    if (mealPlanUpdatedAt) {
+      await markUserMealPlanRefreshed(adminClient, user.id, mealPlanUpdatedAt);
+    }
 
     return {
       success: true,
@@ -385,6 +394,27 @@ async function fetchCateringByKey(keys: string[]) {
   }
 
   return cateringByKey;
+}
+
+async function fetchCurrentUserMealPlanUpdatedAt(supabase: any) {
+  const { data: adminProfile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('email', ADMIN_EMAIL)
+    .maybeSingle();
+
+  if (!adminProfile?.id) return null;
+  return fetchCurrentMealPlanUpdatedAt(supabase, adminProfile.id);
+}
+
+async function markUserMealPlanRefreshed(supabase: any, userId: string, mealPlanUpdatedAt: string) {
+  await supabase
+    .from('profiles')
+    .update({
+      last_meal_plan_refreshed_at: mealPlanUpdatedAt,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', userId);
 }
 
 async function fetchCurrentMealPlanUpdatedAt(supabase: any, adminUserId: string) {

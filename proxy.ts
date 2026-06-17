@@ -1,5 +1,6 @@
 import { createMiddlewareClient } from "@/lib/supabase/middleware";
 import { AUTH_CONFIG } from "@/lib/constants";
+import { isRememberLoginActive, REMEMBER_LOGIN_COOKIE } from "@/lib/auth-remember";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function proxy(request: NextRequest) {
@@ -13,6 +14,18 @@ export async function proxy(request: NextRequest) {
     const {
         data: { user },
     } = await supabase.auth.getUser();
+
+    const rememberedLogin = request.cookies.get(REMEMBER_LOGIN_COOKIE)?.value;
+    const isLoginEntryPath =
+        pathname === "/" ||
+        pathname === AUTH_CONFIG.authPath ||
+        pathname === AUTH_CONFIG.loginPath;
+
+    if (user && isLoginEntryPath && isRememberLoginActive(rememberedLogin, user.id)) {
+        const url = request.nextUrl.clone();
+        url.pathname = AUTH_CONFIG.rememberedLoginPath;
+        return NextResponse.redirect(url);
+    }
 
     if (
         !user &&

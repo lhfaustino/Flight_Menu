@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { clearRememberLogin, getStoredRememberLogin, isRememberLoginActive } from "@/lib/auth-remember";
 
 interface AuthContextType {
     user: User | null;
@@ -29,6 +30,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const getInitialSession = async () => {
             const { data: { session } } = await supabase.auth.getSession();
+
+            if (session?.user) {
+                const rememberedLogin = getStoredRememberLogin();
+
+                if (rememberedLogin && !isRememberLoginActive(rememberedLogin, session.user.id)) {
+                    clearRememberLogin();
+                    await supabase.auth.signOut();
+                    setSession(null);
+                    setUser(null);
+                    setIsLoading(false);
+                    return;
+                }
+            }
+
             setSession(session);
             setUser(session?.user ?? null);
             setIsLoading(false);
@@ -44,7 +59,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                 // Optionally refresh the page on logic/logout to clear sensitive state
                 if (_event === "SIGNED_IN") router.refresh();
-                if (_event === "SIGNED_OUT") router.push("/login");
+                if (_event === "SIGNED_OUT") {
+                    clearRememberLogin();
+                    router.push("/login");
+                }
             }
         );
 
@@ -54,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [supabase, router]);
 
     const signOut = async () => {
+        clearRememberLogin();
         await supabase.auth.signOut();
         router.push("/login");
     };

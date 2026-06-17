@@ -99,7 +99,8 @@ ALTER TABLE public.catering_rules
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS telegram_chat_id TEXT,
   ADD COLUMN IF NOT EXISTS timezone TEXT DEFAULT 'America/Sao_Paulo',
-  ADD COLUMN IF NOT EXISTS username TEXT;
+  ADD COLUMN IF NOT EXISTS username TEXT,
+  ADD COLUMN IF NOT EXISTS last_meal_plan_refreshed_at TIMESTAMPTZ;
 
 CREATE OR REPLACE FUNCTION public.normalize_username(input TEXT)
 RETURNS TEXT AS $$

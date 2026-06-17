@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -11,6 +11,12 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { AUTH_CONFIG } from "@/lib/constants";
+import {
+    clearRememberLogin,
+    getStoredRememberLogin,
+    isRememberLoginActive,
+    setRememberLogin,
+} from "@/lib/auth-remember";
 
 export const LoginPage = () => {
     const router = useRouter();
@@ -23,6 +29,34 @@ export const LoginPage = () => {
         password: "",
         remember: false,
     });
+
+    useEffect(() => {
+        let isMounted = true;
+        const supabase = createClient();
+
+        const forwardRememberedUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!isMounted || !session?.user) return;
+
+            const rememberedLogin = getStoredRememberLogin();
+
+            if (isRememberLoginActive(rememberedLogin, session.user.id)) {
+                router.replace(AUTH_CONFIG.rememberedLoginPath);
+                return;
+            }
+
+            if (rememberedLogin) {
+                clearRememberLogin();
+                await supabase.auth.signOut();
+            }
+        };
+
+        forwardRememberedUser();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [router]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
@@ -42,12 +76,17 @@ export const LoginPage = () => {
         try {
             const loginEmail = await resolveLoginEmail(supabase, formData.identifier);
 
-            const { error: signInError } = await supabase.auth.signInWithPassword({
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
                 email: loginEmail,
                 password: formData.password,
             });
 
             if (signInError) throw signInError;
+            if (formData.remember && signInData.user?.id) {
+                setRememberLogin(signInData.user.id);
+            } else {
+                clearRememberLogin();
+            }
 
             addToast({
                 title: "Bem-vindo de volta!",
@@ -55,7 +94,7 @@ export const LoginPage = () => {
                 type: "success",
             });
 
-            router.push(AUTH_CONFIG.afterLoginPath);
+            router.push(formData.remember ? AUTH_CONFIG.rememberedLoginPath : AUTH_CONFIG.afterLoginPath);
             router.refresh();
         } catch (err: any) {
             const errorMessage = err.message || "E-mail ou senha inválidos.";

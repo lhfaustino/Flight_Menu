@@ -31,12 +31,14 @@ type FlightMenuRow = {
 
 interface FlightMenuUploadWorkspaceProps {
   currentMealPlanUpdatedAt?: string | null;
+  userMealPlanRefreshedAt?: string | null;
   currentUserId?: string | null;
   initialRows?: FlightMenuRow[];
 }
 
 export function FlightMenuUploadWorkspace({
   currentMealPlanUpdatedAt = null,
+  userMealPlanRefreshedAt = null,
   currentUserId = null,
   initialRows = [],
 }: FlightMenuUploadWorkspaceProps) {
@@ -48,6 +50,7 @@ export function FlightMenuUploadWorkspace({
   const [isRefreshingMealPlan, setIsRefreshingMealPlan] = useState(false);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [latestMealPlanUpdatedAt, setLatestMealPlanUpdatedAt] = useState<string | null>(currentMealPlanUpdatedAt);
+  const [lastAppliedMealPlanUpdatedAt, setLastAppliedMealPlanUpdatedAt] = useState<string | null>(userMealPlanRefreshedAt);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [rows, setRows] = useState<FlightMenuRow[]>(initialRows);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
@@ -75,6 +78,10 @@ export function FlightMenuUploadWorkspace({
   }, [currentMealPlanUpdatedAt]);
 
   useEffect(() => {
+    setLastAppliedMealPlanUpdatedAt(userMealPlanRefreshedAt);
+  }, [userMealPlanRefreshedAt]);
+
+  useEffect(() => {
     setTodayIso(getTodayIsoDate());
   }, []);
 
@@ -83,7 +90,7 @@ export function FlightMenuUploadWorkspace({
       return;
     }
 
-    const lastAppliedMealPlan = window.localStorage.getItem(mealPlanStorageKey);
+    const lastAppliedMealPlan = lastAppliedMealPlanUpdatedAt ?? window.localStorage.getItem(mealPlanStorageKey);
     if (lastAppliedMealPlan === latestMealPlanUpdatedAt) {
       return;
     }
@@ -101,7 +108,7 @@ export function FlightMenuUploadWorkspace({
       duration: 0,
       dedupeKey: `meal-plan-refresh:${currentUserId}:${latestMealPlanUpdatedAt}`,
     });
-  }, [addToast, latestMealPlanUpdatedAt, mealPlanStorageKey, mealPlanToastStorageKey]);
+  }, [addToast, latestMealPlanUpdatedAt, lastAppliedMealPlanUpdatedAt, mealPlanStorageKey, mealPlanToastStorageKey]);
 
   useEffect(() => {
     const intervalId = window.setInterval(async () => {
@@ -135,6 +142,7 @@ export function FlightMenuUploadWorkspace({
         const mealPlanVersion = await getCurrentMealPlanVersion();
         if (mealPlanStorageKey && mealPlanVersion.success && mealPlanVersion.mealPlanUpdatedAt) {
           window.localStorage.setItem(mealPlanStorageKey, mealPlanVersion.mealPlanUpdatedAt);
+          setLastAppliedMealPlanUpdatedAt(mealPlanVersion.mealPlanUpdatedAt);
           if (mealPlanToastStorageKey) {
             window.sessionStorage.setItem(mealPlanToastStorageKey, mealPlanVersion.mealPlanUpdatedAt);
           }
@@ -217,6 +225,7 @@ export function FlightMenuUploadWorkspace({
         setMessage({ type: 'success', text: result.message ?? 'Servicos atualizados.' });
         if (mealPlanStorageKey && result.mealPlanUpdatedAt) {
           window.localStorage.setItem(mealPlanStorageKey, result.mealPlanUpdatedAt);
+          setLastAppliedMealPlanUpdatedAt(result.mealPlanUpdatedAt);
           if (mealPlanToastStorageKey) {
             window.sessionStorage.setItem(mealPlanToastStorageKey, result.mealPlanUpdatedAt);
           }
