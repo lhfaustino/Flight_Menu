@@ -13,6 +13,9 @@ export function ServiceWorkerRegister() {
             .register("/sw.js", { scope: "/" })
             .then((registration) => {
                 console.log("Service Worker registered successfully:", registration);
+                registration.update().catch(() => {
+                    // Update checks can fail offline; the next page load will retry.
+                });
             })
             .catch((error) => {
                 console.error("Service Worker registration failed:", error);
