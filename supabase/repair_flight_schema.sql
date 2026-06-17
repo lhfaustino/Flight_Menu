@@ -544,6 +544,15 @@ BEGIN
         bucket_id = 'social-posts'
         AND auth.uid()::text = (storage.foldername(name))[1]
       );
+
+    DROP POLICY IF EXISTS "Users can delete own social post photos" ON storage.objects;
+    CREATE POLICY "Users can delete own social post photos"
+      ON storage.objects FOR DELETE
+      TO authenticated
+      USING (
+        bucket_id = 'social-posts'
+        AND auth.uid()::text = (storage.foldername(name))[1]
+      );
   END IF;
 END $$;
 

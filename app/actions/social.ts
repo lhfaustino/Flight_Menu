@@ -128,6 +128,96 @@ export async function toggleSocialPostLike(postId: string): Promise<SocialAction
   }
 }
 
+export async function updateSocialPost(postId: string, formData: FormData): Promise<SocialActionResult> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) return { success: false, error: "Faca login para editar." };
+
+    const caption = String(formData.get("caption") ?? "").trim();
+    const location = String(formData.get("location") ?? "").trim();
+    const brazilianState = String(formData.get("brazilianState") ?? "").trim().toUpperCase();
+    const tag = String(formData.get("tag") ?? "").trim();
+
+    if (!location) return { success: false, error: "Informe o local da foto." };
+    if (!BRAZILIAN_STATES.some((state) => state.value === brazilianState)) {
+      return { success: false, error: "Selecione um estado brasileiro." };
+    }
+    if (!SOCIAL_TAGS.includes(tag as any)) return { success: false, error: "Selecione uma tag." };
+
+    const { data, error } = await supabase
+      .from("social_posts")
+      .update({
+        caption,
+        location,
+        brazilian_state: brazilianState,
+        tag,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", postId)
+      .eq("user_id", user.id)
+      .select("id")
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return { success: false, error: "Voce so pode editar publicacoes criadas por voce." };
+
+    revalidatePath("/social");
+    return { success: true };
+  } catch (error) {
+    console.error("Could not update social post:", error);
+    return { success: false, error: getErrorMessage(error, "Nao foi possivel editar a publicacao.") };
+  }
+}
+
+export async function deleteSocialPost(postId: string): Promise<SocialActionResult> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) return { success: false, error: "Faca login para excluir." };
+
+    const { data: post, error: postError } = await supabase
+      .from("social_posts")
+      .select("id")
+      .eq("id", postId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (postError) throw postError;
+    if (!post) return { success: false, error: "Voce so pode excluir publicacoes criadas por voce." };
+
+    const { data: photos, error: photosError } = await supabase
+      .from("social_post_photos")
+      .select("storage_path")
+      .eq("post_id", postId);
+
+    if (photosError) throw photosError;
+
+    const paths = photos?.map((photo) => photo.storage_path).filter(Boolean) ?? [];
+    if (paths.length > 0) {
+      const { error: storageError } = await supabase.storage.from(SOCIAL_PHOTO_BUCKET).remove(paths);
+      if (storageError) throw storageError;
+    }
+
+    const { error: deleteError } = await supabase.from("social_posts").delete().eq("id", postId).eq("user_id", user.id);
+    if (deleteError) throw deleteError;
+
+    revalidatePath("/social");
+    return { success: true };
+  } catch (error) {
+    console.error("Could not delete social post:", error);
+    return { success: false, error: getErrorMessage(error, "Nao foi possivel excluir a publicacao.") };
+  }
+}
+
 export async function createSocialComment(postId: string, content: string): Promise<SocialActionResult> {
   try {
     const supabase = await createClient();

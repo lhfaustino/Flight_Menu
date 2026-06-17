@@ -29,7 +29,7 @@ export default async function SocialPage() {
           <p className="mt-2 text-gray-600">Compartilhe fotos, lugares e descobertas com a comunidade Trip Space.</p>
         </div>
 
-        <SocialFeed posts={posts} isAuthenticated={Boolean(user)} />
+        <SocialFeed posts={posts} isAuthenticated={Boolean(user)} currentUserId={user?.id ?? null} />
       </div>
     </div>
   );
@@ -71,6 +71,7 @@ async function fetchSocialFeed(
 
     return {
       id: post.id,
+      authorId: post.user_id,
       authorName: post.author_name ?? "Tripulante",
       authorAvatarUrl: post.author_avatar_url,
       caption: post.caption ?? "",
@@ -95,4 +96,3 @@ async function fetchSocialFeed(
     };
   });
 }
-

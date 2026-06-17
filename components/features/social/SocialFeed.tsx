@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Heart, ImagePlus, MapPin, MessageCircle, RotateCcw, Send, UsersRound, X } from "lucide-react";
-import { createSocialComment, createSocialPost, toggleSocialPostLike } from "@/app/actions/social";
+import { EllipsisVertical, Heart, ImagePlus, MapPin, MessageCircle, Pencil, RotateCcw, Send, Trash2, UsersRound, X } from "lucide-react";
+import { createSocialComment, createSocialPost, deleteSocialPost, toggleSocialPostLike, updateSocialPost } from "@/app/actions/social";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 
 export type SocialFeedPost = {
   id: string;
+  authorId: string;
   authorName: string;
   authorAvatarUrl: string | null;
   caption: string;
@@ -34,9 +35,10 @@ export type SocialFeedPost = {
 type SocialFeedProps = {
   posts: SocialFeedPost[];
   isAuthenticated: boolean;
+  currentUserId: string | null;
 };
 
-export function SocialFeed({ posts, isAuthenticated }: SocialFeedProps) {
+export function SocialFeed({ posts, isAuthenticated, currentUserId }: SocialFeedProps) {
   const [stateFilter, setStateFilter] = React.useState("all");
   const [tagFilter, setTagFilter] = React.useState("all");
   const [message, setMessage] = React.useState<string | null>(null);
@@ -163,7 +165,7 @@ export function SocialFeed({ posts, isAuthenticated }: SocialFeedProps) {
 
       <section className="grid gap-5">
         {filteredPosts.length > 0 ? (
-          filteredPosts.map((post) => <SocialPostCard key={post.id} post={post} isAuthenticated={isAuthenticated} />)
+          filteredPosts.map((post) => <SocialPostCard key={post.id} post={post} isAuthenticated={isAuthenticated} currentUserId={currentUserId} />)
         ) : (
           <div className="rounded-lg border border-dashed border-gray-300 bg-white px-6 py-12 text-center">
             <UsersRound className="mx-auto mb-3 size-8 text-gray-300" />
@@ -320,14 +322,135 @@ function PostComposerModal({
   );
 }
 
-function SocialPostCard({ post, isAuthenticated }: { post: SocialFeedPost; isAuthenticated: boolean }) {
+function EditPostModal({
+  post,
+  isOpen,
+  isPending,
+  onOpenChange,
+  onMessage,
+  startTransition,
+}: {
+  post: SocialFeedPost;
+  isOpen: boolean;
+  isPending: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  onMessage: (message: string | null) => void;
+  startTransition: React.TransitionStartFunction;
+}) {
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onMessage(null);
+    const formData = new FormData(event.currentTarget);
+
+    startTransition(async () => {
+      const result = await updateSocialPost(post.id, formData);
+      if (result.success) {
+        onOpenChange(false);
+      } else {
+        onMessage(result.error);
+      }
+    });
+  }
+
+  return (
+    <ModalOverlay isOpen={isOpen} onOpenChange={onOpenChange} isDismissable={!isPending} className="items-end sm:items-center">
+      <Modal className="max-h-[90dvh] overflow-hidden bg-white sm:max-w-2xl">
+        <Dialog className="flex max-h-[90dvh] flex-col outline-hidden">
+          <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-gray-200 px-4 sm:px-6">
+            <div className="min-w-0">
+              <h2 className="truncate text-lg font-semibold text-gray-900">Editar post</h2>
+              <p className="truncate text-sm text-gray-500">Atualize legenda, local, estado e tag.</p>
+            </div>
+            <Button
+              type="button"
+              variant="tertiary"
+              iconLeading={X}
+              onPress={() => onOpenChange(false)}
+              isDisabled={isPending}
+              aria-label="Fechar"
+              className="size-10 shrink-0 px-0"
+            />
+          </header>
+
+          <form className="flex-1 overflow-y-auto px-4 py-5 sm:px-6" onSubmit={handleSubmit}>
+            <div className="grid gap-4">
+              <label className="grid gap-1.5 text-sm font-semibold text-gray-700">
+                Legenda
+                <textarea
+                  name="caption"
+                  rows={4}
+                  defaultValue={post.caption}
+                  placeholder="Conte o que vale a pena saber..."
+                  disabled={isPending}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-3 text-sm text-gray-900 shadow-xs outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10 disabled:cursor-not-allowed disabled:bg-gray-50"
+                />
+              </label>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Input name="location" label="Local" defaultValue={post.location} required disabled={isPending} />
+                <label className="grid gap-1.5 text-sm font-semibold text-gray-700">
+                  Estado
+                  <select
+                    name="brazilianState"
+                    required
+                    defaultValue={post.brazilianState}
+                    disabled={isPending}
+                    className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-xs outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10 disabled:cursor-not-allowed disabled:bg-gray-50"
+                  >
+                    {BRAZILIAN_STATES.map((state) => (
+                      <option key={state.value} value={state.value}>
+                        {state.value} - {state.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="grid gap-1.5 text-sm font-semibold text-gray-700">
+                  Tag
+                  <select
+                    name="tag"
+                    required
+                    defaultValue={post.tag}
+                    disabled={isPending}
+                    className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 shadow-xs outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10 disabled:cursor-not-allowed disabled:bg-gray-50"
+                  >
+                    {SOCIAL_TAGS.map((tag) => (
+                      <option key={tag} value={tag}>
+                        {tag}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 -mx-4 mt-5 border-t border-gray-200 bg-white px-4 py-4 sm:-mx-6 sm:px-6">
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button type="button" variant="secondary" onPress={() => onOpenChange(false)} isDisabled={isPending} className="w-full sm:w-auto">
+                  Cancelar
+                </Button>
+                <Button type="submit" iconLeading={Pencil} isDisabled={isPending} className="w-full sm:w-auto">
+                  {isPending ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </Dialog>
+      </Modal>
+    </ModalOverlay>
+  );
+}
+
+function SocialPostCard({ post, isAuthenticated, currentUserId }: { post: SocialFeedPost; isAuthenticated: boolean; currentUserId: string | null }) {
   const [photoIndex, setPhotoIndex] = React.useState(0);
   const [comment, setComment] = React.useState("");
   const [actionMessage, setActionMessage] = React.useState<string | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [dragOffset, setDragOffset] = React.useState(0);
   const touchStartX = React.useRef<number | null>(null);
   const [isPending, startTransition] = React.useTransition();
   const hasMultiplePhotos = post.photos.length > 1;
+  const canManagePost = Boolean(currentUserId && post.authorId === currentUserId);
 
   function handleLike() {
     setActionMessage(null);
@@ -348,6 +471,18 @@ function SocialPostCard({ post, isAuthenticated }: { post: SocialFeedPost; isAut
       } else {
         setActionMessage(result.error);
       }
+    });
+  }
+
+  function handleDeletePost() {
+    setIsMenuOpen(false);
+    setActionMessage(null);
+
+    if (!window.confirm("Excluir esta publicacao?")) return;
+
+    startTransition(async () => {
+      const result = await deleteSocialPost(post.id);
+      if (!result.success) setActionMessage(result.error);
     });
   }
 
@@ -397,11 +532,57 @@ function SocialPostCard({ post, isAuthenticated }: { post: SocialFeedPost; isAut
             </p>
           </div>
         </div>
-        <div className="shrink-0 text-right">
-          <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">{post.tag}</span>
-          <p className="mt-1 text-xs text-gray-500">{formatDateTime(post.createdAt)}</p>
+        <div className="flex shrink-0 items-start gap-2">
+          <div className="text-right">
+            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">{post.tag}</span>
+            <p className="mt-1 text-xs text-gray-500">{formatDateTime(post.createdAt)}</p>
+          </div>
+          {canManagePost ? (
+            <div className="relative">
+              <Button
+                type="button"
+                variant="tertiary"
+                iconLeading={EllipsisVertical}
+                aria-label="Opcoes da publicacao"
+                onPress={() => setIsMenuOpen((current) => !current)}
+                className="size-8 px-0"
+              />
+              {isMenuOpen ? (
+                <div className="absolute right-0 top-9 z-20 w-40 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setIsEditOpen(true);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    <Pencil className="size-4" />
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeletePost}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-error-700 hover:bg-error-50"
+                  >
+                    <Trash2 className="size-4" />
+                    Excluir
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </header>
+
+      <EditPostModal
+        post={post}
+        isOpen={isEditOpen}
+        isPending={isPending}
+        onOpenChange={setIsEditOpen}
+        onMessage={setActionMessage}
+        startTransition={startTransition}
+      />
 
       <div
         className={cn("relative aspect-square overflow-hidden bg-gray-100", hasMultiplePhotos && "touch-pan-y select-none")}
