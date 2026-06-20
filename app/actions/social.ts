@@ -24,8 +24,10 @@ export async function createSocialPost(formData: FormData): Promise<SocialAction
     const location = String(formData.get("location") ?? "").trim();
     const brazilianState = String(formData.get("brazilianState") ?? "").trim().toUpperCase();
     const tag = String(formData.get("tag") ?? "").trim();
+    const coordinates = parseCoordinates(formData);
     const photos = formData.getAll("photos").filter((item): item is File => item instanceof File && item.size > 0);
 
+    if ("error" in coordinates) return { success: false, error: coordinates.error };
     if (photos.length === 0) return { success: false, error: "Envie pelo menos uma foto." };
     if (!location) return { success: false, error: "Informe o local da foto." };
     if (!BRAZILIAN_STATES.some((state) => state.value === brazilianState)) {
@@ -54,6 +56,8 @@ export async function createSocialPost(formData: FormData): Promise<SocialAction
         author_avatar_url: authorAvatarUrl,
         caption,
         location,
+        latitude: coordinates.value?.latitude ?? null,
+        longitude: coordinates.value?.longitude ?? null,
         brazilian_state: brazilianState,
         tag,
       })
@@ -142,7 +146,9 @@ export async function updateSocialPost(postId: string, formData: FormData): Prom
     const location = String(formData.get("location") ?? "").trim();
     const brazilianState = String(formData.get("brazilianState") ?? "").trim().toUpperCase();
     const tag = String(formData.get("tag") ?? "").trim();
+    const coordinates = parseCoordinates(formData);
 
+    if ("error" in coordinates) return { success: false, error: coordinates.error };
     if (!location) return { success: false, error: "Informe o local da foto." };
     if (!BRAZILIAN_STATES.some((state) => state.value === brazilianState)) {
       return { success: false, error: "Selecione um estado brasileiro." };
@@ -154,6 +160,8 @@ export async function updateSocialPost(postId: string, formData: FormData): Prom
       .update({
         caption,
         location,
+        latitude: coordinates.value?.latitude ?? null,
+        longitude: coordinates.value?.longitude ?? null,
         brazilian_state: brazilianState,
         tag,
         updated_at: new Date().toISOString(),
@@ -201,14 +209,16 @@ export async function deleteSocialPost(postId: string): Promise<SocialActionResu
 
     if (photosError) throw photosError;
 
+    const { error: deleteError } = await supabase.from("social_posts").delete().eq("id", postId).eq("user_id", user.id);
+    if (deleteError) throw deleteError;
+
     const paths = photos?.map((photo) => photo.storage_path).filter(Boolean) ?? [];
     if (paths.length > 0) {
       const { error: storageError } = await supabase.storage.from(SOCIAL_PHOTO_BUCKET).remove(paths);
-      if (storageError) throw storageError;
+      if (storageError) {
+        console.warn("Social post deleted, but photo storage cleanup failed:", storageError);
+      }
     }
-
-    const { error: deleteError } = await supabase.from("social_posts").delete().eq("id", postId).eq("user_id", user.id);
-    if (deleteError) throw deleteError;
 
     revalidatePath("/social");
     return { success: true };
@@ -262,4 +272,32 @@ function getErrorMessage(error: unknown, fallback: string) {
   }
 
   return fallback;
+}
+
+function parseCoordinates(
+  formData: FormData,
+): { value: { latitude: number; longitude: number } | null } | { error: string } {
+  const rawLatitude = String(formData.get("latitude") ?? "").trim();
+  const rawLongitude = String(formData.get("longitude") ?? "").trim();
+
+  if (!rawLatitude && !rawLongitude) return { value: null };
+  if (!rawLatitude || !rawLongitude) return { error: "Informe latitude e longitude validas." };
+
+  const latitude = Number(rawLatitude);
+  const longitude = Number(rawLongitude);
+
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return { error: "Informe latitude e longitude validas." };
+  }
+
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    return { error: "As coordenadas informadas estao fora do intervalo permitido." };
+  }
+
+  return {
+    value: {
+      latitude: Number(latitude.toFixed(6)),
+      longitude: Number(longitude.toFixed(6)),
+    },
+  };
 }

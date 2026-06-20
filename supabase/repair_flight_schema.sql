@@ -374,6 +374,8 @@ CREATE TABLE IF NOT EXISTS public.social_posts (
   author_avatar_url TEXT,
   caption TEXT,
   location TEXT NOT NULL,
+  latitude NUMERIC(9,6),
+  longitude NUMERIC(9,6),
   brazilian_state TEXT NOT NULL,
   tag TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -383,8 +385,57 @@ CREATE TABLE IF NOT EXISTS public.social_posts (
   ),
   CONSTRAINT social_posts_tag_check CHECK (
     tag IN ('Comida','Fitness','Turismo','Saúde','Compras')
+  ),
+  CONSTRAINT social_posts_latitude_check CHECK (
+    latitude IS NULL OR (latitude >= -90 AND latitude <= 90)
+  ),
+  CONSTRAINT social_posts_longitude_check CHECK (
+    longitude IS NULL OR (longitude >= -180 AND longitude <= 180)
+  ),
+  CONSTRAINT social_posts_coordinates_pair_check CHECK (
+    (latitude IS NULL AND longitude IS NULL) OR (latitude IS NOT NULL AND longitude IS NOT NULL)
   )
 );
+
+ALTER TABLE public.social_posts
+  ADD COLUMN IF NOT EXISTS latitude NUMERIC(9,6),
+  ADD COLUMN IF NOT EXISTS longitude NUMERIC(9,6);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'social_posts_latitude_check'
+      AND conrelid = 'public.social_posts'::regclass
+  ) THEN
+    ALTER TABLE public.social_posts
+      ADD CONSTRAINT social_posts_latitude_check
+      CHECK (latitude IS NULL OR (latitude >= -90 AND latitude <= 90));
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'social_posts_longitude_check'
+      AND conrelid = 'public.social_posts'::regclass
+  ) THEN
+    ALTER TABLE public.social_posts
+      ADD CONSTRAINT social_posts_longitude_check
+      CHECK (longitude IS NULL OR (longitude >= -180 AND longitude <= 180));
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'social_posts_coordinates_pair_check'
+      AND conrelid = 'public.social_posts'::regclass
+  ) THEN
+    ALTER TABLE public.social_posts
+      ADD CONSTRAINT social_posts_coordinates_pair_check
+      CHECK ((latitude IS NULL AND longitude IS NULL) OR (latitude IS NOT NULL AND longitude IS NOT NULL));
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.social_post_photos (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

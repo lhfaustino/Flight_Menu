@@ -1,6 +1,9 @@
 import { SocialFeed, type SocialFeedPost } from "@/components/features/social/SocialFeed";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type SocialPostRow = {
   id: string;
   user_id: string;
@@ -8,6 +11,8 @@ type SocialPostRow = {
   author_avatar_url: string | null;
   caption: string | null;
   location: string | null;
+  latitude: number | null;
+  longitude: number | null;
   brazilian_state: string;
   tag: string;
   created_at: string;
@@ -41,7 +46,7 @@ async function fetchSocialFeed(
 ): Promise<SocialFeedPost[]> {
   const { data: postRows, error: postsError } = await supabase
     .from("social_posts")
-    .select("id, user_id, author_name, author_avatar_url, caption, location, brazilian_state, tag, created_at")
+    .select("id, user_id, author_name, author_avatar_url, caption, location, latitude, longitude, brazilian_state, tag, created_at")
     .order("created_at", { ascending: false })
     .limit(50);
 
@@ -76,6 +81,8 @@ async function fetchSocialFeed(
       authorAvatarUrl: post.author_avatar_url,
       caption: post.caption ?? "",
       location: post.location ?? "",
+      latitude: post.latitude,
+      longitude: post.longitude,
       brazilianState: post.brazilian_state,
       tag: post.tag,
       createdAt: post.created_at,

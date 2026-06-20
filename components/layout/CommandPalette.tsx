@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArrowRight, ClipboardList, HelpCircle, Home, Link2, Megaphone, Search, Settings, UsersRound } from "lucide-react";
+import { ArrowRight, ClipboardList, HelpCircle, Home, Link2, Megaphone, Radar, Search, Settings, UsersRound } from "lucide-react";
 import { Dialog, Modal, ModalOverlay } from "@/components/ui/Modal";
 
 interface CommandItem {
@@ -66,6 +66,14 @@ export const CommandPalette = ({ onNavigate }: CommandPaletteProps) => {
             icon: Settings,
             category: "Páginas",
             onClick: () => onNavigate?.("settings"),
+        },
+        {
+            id: "radar-pernoite",
+            title: "Radar do Pernoite",
+            description: "Encontrar tripulantes com pernoite em comum",
+            icon: Radar,
+            category: "Páginas",
+            onClick: () => onNavigate?.("radar-pernoite"),
         },
         {
             id: "social",

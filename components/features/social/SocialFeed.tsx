@@ -1,7 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { EllipsisVertical, Heart, ImagePlus, MapPin, MessageCircle, Pencil, RotateCcw, Send, Trash2, UsersRound, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  EllipsisVertical,
+  Heart,
+  ImagePlus,
+  MapPin,
+  MessageCircle,
+  Navigation,
+  Pencil,
+  RotateCcw,
+  Send,
+  Trash2,
+  UsersRound,
+  X,
+} from "lucide-react";
 import { createSocialComment, createSocialPost, deleteSocialPost, toggleSocialPostLike, updateSocialPost } from "@/app/actions/social";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -17,6 +31,8 @@ export type SocialFeedPost = {
   authorAvatarUrl: string | null;
   caption: string;
   location: string;
+  latitude: number | null;
+  longitude: number | null;
   brazilianState: string;
   tag: string;
   createdAt: string;
@@ -39,10 +55,12 @@ type SocialFeedProps = {
 };
 
 export function SocialFeed({ posts, isAuthenticated, currentUserId }: SocialFeedProps) {
+  const router = useRouter();
   const [stateFilter, setStateFilter] = React.useState("all");
   const [tagFilter, setTagFilter] = React.useState("all");
   const [message, setMessage] = React.useState<string | null>(null);
   const [isComposerOpen, setIsComposerOpen] = React.useState(false);
+  const [composerResetKey, setComposerResetKey] = React.useState(0);
   const [isPosting, startPostTransition] = React.useTransition();
 
   const filteredPosts = React.useMemo(
@@ -67,8 +85,10 @@ export function SocialFeed({ posts, isAuthenticated, currentUserId }: SocialFeed
       const result = await createSocialPost(formData);
       if (result.success) {
         form.reset();
+        setComposerResetKey((key) => key + 1);
         setMessage("Publicacao criada.");
         setIsComposerOpen(false);
+        router.refresh();
       } else {
         setMessage(result.error);
       }
@@ -108,6 +128,7 @@ export function SocialFeed({ posts, isAuthenticated, currentUserId }: SocialFeed
         isPosting={isPosting}
         isAuthenticated={isAuthenticated}
         message={message}
+        resetKey={composerResetKey}
         onOpenChange={setIsComposerOpen}
         onSubmit={handleCreatePost}
       />
@@ -183,6 +204,7 @@ function PostComposerModal({
   isPosting,
   isAuthenticated,
   message,
+  resetKey,
   onOpenChange,
   onSubmit,
 }: {
@@ -190,6 +212,7 @@ function PostComposerModal({
   isPosting: boolean;
   isAuthenticated: boolean;
   message: string | null;
+  resetKey: number;
   onOpenChange: (isOpen: boolean) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 }) {
@@ -296,6 +319,8 @@ function PostComposerModal({
                 </label>
               </div>
 
+              <LocationCaptureFields disabled={!isAuthenticated || isPosting} resetKey={resetKey} />
+
               {message && !message.includes("criada") ? <p className="text-sm text-error-600">{message}</p> : null}
 
               <div className="sticky bottom-0 -mx-4 mt-2 border-t border-gray-200 bg-white px-4 py-4 sm:-mx-6 sm:px-6">
@@ -329,6 +354,7 @@ function EditPostModal({
   onOpenChange,
   onMessage,
   startTransition,
+  onRefresh,
 }: {
   post: SocialFeedPost;
   isOpen: boolean;
@@ -336,6 +362,7 @@ function EditPostModal({
   onOpenChange: (isOpen: boolean) => void;
   onMessage: (message: string | null) => void;
   startTransition: React.TransitionStartFunction;
+  onRefresh: () => void;
 }) {
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -346,6 +373,7 @@ function EditPostModal({
       const result = await updateSocialPost(post.id, formData);
       if (result.success) {
         onOpenChange(false);
+        onRefresh();
       } else {
         onMessage(result.error);
       }
@@ -421,6 +449,13 @@ function EditPostModal({
                   </select>
                 </label>
               </div>
+
+              <LocationCaptureFields
+                disabled={isPending}
+                initialLatitude={post.latitude}
+                initialLongitude={post.longitude}
+                resetKey={`${post.id}:${post.latitude ?? ""}:${post.longitude ?? ""}`}
+              />
             </div>
 
             <div className="sticky bottom-0 -mx-4 mt-5 border-t border-gray-200 bg-white px-4 py-4 sm:-mx-6 sm:px-6">
@@ -441,6 +476,7 @@ function EditPostModal({
 }
 
 function SocialPostCard({ post, isAuthenticated, currentUserId }: { post: SocialFeedPost; isAuthenticated: boolean; currentUserId: string | null }) {
+  const router = useRouter();
   const [photoIndex, setPhotoIndex] = React.useState(0);
   const [comment, setComment] = React.useState("");
   const [actionMessage, setActionMessage] = React.useState<string | null>(null);
@@ -451,12 +487,14 @@ function SocialPostCard({ post, isAuthenticated, currentUserId }: { post: Social
   const [isPending, startTransition] = React.useTransition();
   const hasMultiplePhotos = post.photos.length > 1;
   const canManagePost = Boolean(currentUserId && post.authorId === currentUserId);
+  const mapUrl = getMapNavigationUrl(post.latitude, post.longitude);
 
   function handleLike() {
     setActionMessage(null);
     startTransition(async () => {
       const result = await toggleSocialPostLike(post.id);
-      if (!result.success) setActionMessage(result.error);
+      if (result.success) router.refresh();
+      else setActionMessage(result.error);
     });
   }
 
@@ -468,6 +506,7 @@ function SocialPostCard({ post, isAuthenticated, currentUserId }: { post: Social
       const result = await createSocialComment(post.id, value);
       if (result.success) {
         setComment("");
+        router.refresh();
       } else {
         setActionMessage(result.error);
       }
@@ -482,7 +521,8 @@ function SocialPostCard({ post, isAuthenticated, currentUserId }: { post: Social
 
     startTransition(async () => {
       const result = await deleteSocialPost(post.id);
-      if (!result.success) setActionMessage(result.error);
+      if (result.success) router.refresh();
+      else setActionMessage(result.error);
     });
   }
 
@@ -530,6 +570,17 @@ function SocialPostCard({ post, isAuthenticated, currentUserId }: { post: Social
                 {post.location}, {post.brazilianState}
               </span>
             </p>
+            {mapUrl ? (
+              <a
+                href={mapUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-brand-700 hover:text-brand-800"
+              >
+                <Navigation className="size-3" />
+                Abrir rota
+              </a>
+            ) : null}
           </div>
         </div>
         <div className="flex shrink-0 items-start gap-2">
@@ -582,6 +633,7 @@ function SocialPostCard({ post, isAuthenticated, currentUserId }: { post: Social
         onOpenChange={setIsEditOpen}
         onMessage={setActionMessage}
         startTransition={startTransition}
+        onRefresh={() => router.refresh()}
       />
 
       <div
@@ -679,6 +731,96 @@ function SocialPostCard({ post, isAuthenticated, currentUserId }: { post: Social
   );
 }
 
+function LocationCaptureFields({
+  disabled,
+  initialLatitude = null,
+  initialLongitude = null,
+  resetKey,
+}: {
+  disabled: boolean;
+  initialLatitude?: number | null;
+  initialLongitude?: number | null;
+  resetKey: React.Key;
+}) {
+  const [latitude, setLatitude] = React.useState(() => formatCoordinateInput(initialLatitude));
+  const [longitude, setLongitude] = React.useState(() => formatCoordinateInput(initialLongitude));
+  const [status, setStatus] = React.useState<string | null>(hasCoordinates(initialLatitude, initialLongitude) ? "Coordenadas adicionadas." : null);
+  const [isLocating, setIsLocating] = React.useState(false);
+  const hasLocation = Boolean(latitude && longitude);
+
+  React.useEffect(() => {
+    setLatitude(formatCoordinateInput(initialLatitude));
+    setLongitude(formatCoordinateInput(initialLongitude));
+    setStatus(hasCoordinates(initialLatitude, initialLongitude) ? "Coordenadas adicionadas." : null);
+    setIsLocating(false);
+  }, [initialLatitude, initialLongitude, resetKey]);
+
+  function handleUseCurrentLocation() {
+    setStatus(null);
+
+    if (!("geolocation" in navigator)) {
+      setStatus("Localizacao indisponivel neste navegador.");
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(position.coords.latitude.toFixed(6));
+        setLongitude(position.coords.longitude.toFixed(6));
+        setStatus("Local atual adicionado.");
+        setIsLocating(false);
+      },
+      () => {
+        setStatus("Nao foi possivel obter sua localizacao.");
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: true, maximumAge: 60_000, timeout: 10_000 },
+    );
+  }
+
+  return (
+    <div className="grid gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
+      <input type="hidden" name="latitude" value={latitude} />
+      <input type="hidden" name="longitude" value={longitude} />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-gray-900">Coordenadas</p>
+          <p className="truncate text-xs text-gray-500">{hasLocation ? `${latitude}, ${longitude}` : "Nenhuma coordenada adicionada."}</p>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          {hasLocation ? (
+            <Button
+              type="button"
+              variant="tertiary"
+              size="sm"
+              onPress={() => {
+                setLatitude("");
+                setLongitude("");
+                setStatus(null);
+              }}
+              isDisabled={disabled || isLocating}
+            >
+              Remover
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            iconLeading={MapPin}
+            onPress={handleUseCurrentLocation}
+            isDisabled={disabled || isLocating}
+          >
+            {isLocating ? "Localizando..." : "Usar local atual"}
+          </Button>
+        </div>
+      </div>
+      {status ? <p className={cn("text-xs", status.includes("adicionado") || status.includes("adicionadas") ? "text-success-700" : "text-error-600")}>{status}</p> : null}
+    </div>
+  );
+}
+
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -686,6 +828,19 @@ function getInitials(name: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join("");
+}
+
+function formatCoordinateInput(value: number | null | undefined) {
+  return typeof value === "number" && Number.isFinite(value) ? value.toFixed(6) : "";
+}
+
+function hasCoordinates(latitude: number | null | undefined, longitude: number | null | undefined) {
+  return typeof latitude === "number" && Number.isFinite(latitude) && typeof longitude === "number" && Number.isFinite(longitude);
+}
+
+function getMapNavigationUrl(latitude: number | null, longitude: number | null) {
+  if (!hasCoordinates(latitude, longitude)) return null;
+  return `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
 }
 
 function formatDateTime(value: string) {
