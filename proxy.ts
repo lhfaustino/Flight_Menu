@@ -16,8 +16,18 @@ export async function proxy(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     const rememberedLogin = request.cookies.get(REMEMBER_LOGIN_COOKIE)?.value;
+    if (pathname === "/") {
+        const url = request.nextUrl.clone();
+        url.pathname =
+            user && isRememberLoginActive(rememberedLogin, user.id)
+                ? AUTH_CONFIG.rememberedLoginPath
+                : user
+                    ? AUTH_CONFIG.afterLoginPath
+                    : AUTH_CONFIG.authPath;
+        return NextResponse.redirect(url);
+    }
+
     const isLoginEntryPath =
-        pathname === "/" ||
         pathname === AUTH_CONFIG.authPath ||
         pathname === AUTH_CONFIG.loginPath;
 

@@ -438,13 +438,19 @@ async function fetchFlightMenuRows(supabase: Awaited<ReturnType<typeof createCli
 
   return data?.map((flightLeg: any, index: number) => ({
     id: flightLeg.unique_key ?? `${flightLeg.flight_number}-${flightLeg.departure_time}-${index}`,
-    date: flightLeg.departure_time ? String(flightLeg.departure_time).slice(0, 10) : '',
+    date: getFlightLegDate(flightLeg.unique_key, flightLeg.departure_time),
     flightNumber: flightLeg.flight_number ?? '-',
     origin: flightLeg.origin ?? '-',
     destination: flightLeg.destination ?? '-',
     crewService: flightLeg.service_type ?? '-',
     paxService: flightLeg.meal_type ?? '-',
   })) ?? [];
+}
+
+function getFlightLegDate(uniqueKey: string | null, departureTime: string | null) {
+  const uniqueKeyDate = uniqueKey?.match(/^(\d{4}-\d{2}-\d{2})-/);
+  if (uniqueKeyDate) return uniqueKeyDate[1];
+  return departureTime ? String(departureTime).slice(0, 10) : '';
 }
 
 function chunkArray<T>(items: T[], size: number) {

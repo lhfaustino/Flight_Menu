@@ -416,9 +416,10 @@ async function fetchExistingKeys(supabase: SupabaseLike, table: string, userId: 
 }
 
 function getFlightLegDate(uniqueKey: string | null, departureTime: string | null) {
-    if (departureTime) return departureTime.slice(0, 10);
     const uniqueKeyDate = uniqueKey?.match(/^(\d{4}-\d{2}-\d{2})-/);
-    return uniqueKeyDate?.[1] ?? "";
+    if (uniqueKeyDate) return uniqueKeyDate[1];
+    if (departureTime) return departureTime.slice(0, 10);
+    return "";
 }
 
 function chunkArray<T>(items: T[], size: number) {

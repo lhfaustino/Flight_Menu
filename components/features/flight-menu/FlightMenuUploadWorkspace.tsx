@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { type ChangeEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCurrentMealPlanVersion, refreshCurrentUserMealPlan, uploadRoster } from '@/app/actions/roster-upload';
 import { sendTodayFlightInformation } from '@/app/actions/telegram';
@@ -54,9 +54,10 @@ export function FlightMenuUploadWorkspace({
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [rows, setRows] = useState<FlightMenuRow[]>(initialRows);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState('all');
   const [todayIso, setTodayIso] = useState('');
-  const currentMonthIso = todayIso.slice(0, 7);
-  const visibleRows = currentMonthIso ? rows.filter((row) => isCurrentMonth(row.date, currentMonthIso)) : rows;
+  const monthOptions = getMonthOptions(rows);
+  const visibleRows = selectedMonth === 'all' ? rows : rows.filter((row) => isCurrentMonth(row.date, selectedMonth));
   const visibleRowIds = visibleRows.map((row) => row.id);
   const selectedVisibleRowCount = visibleRowIds.filter((id) => selectedRowIds.includes(id)).length;
   const areAllVisibleRowsSelected = visibleRows.length > 0 && selectedVisibleRowCount === visibleRows.length;
@@ -213,6 +214,11 @@ export function FlightMenuUploadWorkspace({
     });
   };
 
+  const handleMonthChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setSelectedMonth(event.target.value);
+    setSelectedRowIds([]);
+  };
+
   const handleRefreshMealPlan = async () => {
     setIsRefreshingMealPlan(true);
     setMessage(null);
@@ -341,13 +347,29 @@ export function FlightMenuUploadWorkspace({
       </ModalOverlay>
 
       <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="border-b border-gray-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">Serviços</h2>
-          <p className="mt-1 text-sm text-gray-500">
-            {visibleRows.length === 0
-              ? 'Envie sua escala para carregar seus voos e aplicar os serviços de bordo disponíveis.'
-              : `${visibleRows.length} ${visibleRows.length === 1 ? 'voo' : 'voos'}${selectedRowIds.length > 0 ? `, ${selectedRowIds.length} selecionado${selectedRowIds.length === 1 ? '' : 's'}.` : '.'}`}
-          </p>
+        <div className="flex flex-col gap-4 border-b border-gray-200 px-6 py-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Serviços</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              {getFlightTableSummary({ rows, selectedRowIds, visibleRows })}
+            </p>
+          </div>
+
+          <label className="flex w-full flex-col gap-1.5 text-sm font-medium text-gray-700 sm:w-56">
+            Mês
+            <select
+              value={selectedMonth}
+              onChange={handleMonthChange}
+              className="h-10 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+            >
+              <option value="all">Todos os meses</option>
+              {monthOptions.map((month) => (
+                <option key={month} value={month}>
+                  {formatMonth(month)}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         {visibleRows.length > 0 ? (
@@ -426,6 +448,47 @@ function isCurrentMonth(value: string, monthIso: string) {
   const rowDate = normalizeDate(value);
 
   return Boolean(rowDate) && rowDate.startsWith(`${monthIso}-`);
+}
+
+function getMonthOptions(rows: FlightMenuRow[]) {
+  const months = rows
+    .map((row) => normalizeDate(row.date).slice(0, 7))
+    .filter((month) => /^\d{4}-\d{2}$/.test(month));
+
+  return [...new Set(months)].sort((left, right) => right.localeCompare(left));
+}
+
+function formatMonth(monthIso: string) {
+  const [year, month] = monthIso.split('-').map(Number);
+  if (!year || !month) return monthIso;
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year, month - 1, 1)));
+}
+
+function getFlightTableSummary({
+  rows,
+  selectedRowIds,
+  visibleRows,
+}: {
+  rows: FlightMenuRow[];
+  selectedRowIds: string[];
+  visibleRows: FlightMenuRow[];
+}) {
+  if (visibleRows.length === 0) {
+    return rows.length === 0
+      ? 'Envie sua escala para carregar seus voos e aplicar os serviços de bordo disponíveis.'
+      : 'Nenhum voo encontrado para o mês selecionado.';
+  }
+
+  return `${visibleRows.length} ${visibleRows.length === 1 ? 'voo' : 'voos'}${
+    selectedRowIds.length > 0
+      ? `, ${selectedRowIds.length} selecionado${selectedRowIds.length === 1 ? '' : 's'}.`
+      : '.'
+  }`;
 }
 
 function isToday(value: string, today: string) {

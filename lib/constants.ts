@@ -40,5 +40,6 @@ export const AUTH_CONFIG = {
     loginPath: "/login",
     signupPath: "/signup",
     afterLoginPath: "/roster-upload",
+    afterSignupPath: "/dashboard",
     rememberedLoginPath: "/inicio",
 };

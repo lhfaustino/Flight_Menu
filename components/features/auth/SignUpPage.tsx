@@ -101,7 +101,7 @@ export const SignUpPage = () => {
                         full_name: formData.fullName,
                         username: normalizedUsername,
                     },
-                    emailRedirectTo: `${window.location.origin}/auth/callback`,
+                    emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(AUTH_CONFIG.afterSignupPath)}`,
                 },
             });
 
@@ -133,7 +133,7 @@ export const SignUpPage = () => {
                     type: "success",
                 });
 
-                router.push(AUTH_CONFIG.afterLoginPath);
+                router.push(AUTH_CONFIG.afterSignupPath);
             }
         } catch (err: any) {
             const errorMessage = err.message || "Algo deu errado. Tente novamente.";
@@ -155,7 +155,7 @@ export const SignUpPage = () => {
         const { error: oauthError } = await supabase.auth.signInWithOAuth({
             provider,
             options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
+                redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(AUTH_CONFIG.afterSignupPath)}`,
                 queryParams: {
                     access_type: "offline",
                     prompt: "consent",
