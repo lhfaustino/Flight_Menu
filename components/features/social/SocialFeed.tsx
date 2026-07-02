@@ -21,6 +21,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Dialog, Modal, ModalOverlay } from "@/components/ui/Modal";
+import { clearAppRuntimeCaches } from "@/lib/app-cache";
 import { BRAZILIAN_STATES, SOCIAL_TAGS } from "@/lib/social-options";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +57,7 @@ type SocialFeedProps = {
 
 export function SocialFeed({ posts, isAuthenticated, currentUserId }: SocialFeedProps) {
   const router = useRouter();
+  const [visiblePosts, setVisiblePosts] = React.useState(posts);
   const [stateFilter, setStateFilter] = React.useState("all");
   const [tagFilter, setTagFilter] = React.useState("all");
   const [message, setMessage] = React.useState<string | null>(null);
@@ -63,14 +65,18 @@ export function SocialFeed({ posts, isAuthenticated, currentUserId }: SocialFeed
   const [composerResetKey, setComposerResetKey] = React.useState(0);
   const [isPosting, startPostTransition] = React.useTransition();
 
+  React.useEffect(() => {
+    setVisiblePosts(posts);
+  }, [posts]);
+
   const filteredPosts = React.useMemo(
     () =>
-      posts.filter((post) => {
+      visiblePosts.filter((post) => {
         if (stateFilter !== "all" && post.brazilianState !== stateFilter) return false;
         if (tagFilter !== "all" && post.tag !== tagFilter) return false;
         return true;
       }),
-    [posts, stateFilter, tagFilter],
+    [visiblePosts, stateFilter, tagFilter],
   );
 
   const activeFilters = [stateFilter !== "all", tagFilter !== "all"].filter(Boolean).length;
@@ -180,13 +186,21 @@ export function SocialFeed({ posts, isAuthenticated, currentUserId }: SocialFeed
           </Button>
         </div>
         <p className="mt-3 text-sm text-gray-500">
-          {filteredPosts.length} de {posts.length} publicacoes
+          {filteredPosts.length} de {visiblePosts.length} publicacoes
         </p>
       </section>
 
       <section className="grid gap-5">
         {filteredPosts.length > 0 ? (
-          filteredPosts.map((post) => <SocialPostCard key={post.id} post={post} isAuthenticated={isAuthenticated} currentUserId={currentUserId} />)
+          filteredPosts.map((post) => (
+            <SocialPostCard
+              key={post.id}
+              post={post}
+              isAuthenticated={isAuthenticated}
+              currentUserId={currentUserId}
+              onDeleted={(postId) => setVisiblePosts((current) => current.filter((item) => item.id !== postId))}
+            />
+          ))
         ) : (
           <div className="rounded-lg border border-dashed border-gray-300 bg-white px-6 py-12 text-center">
             <UsersRound className="mx-auto mb-3 size-8 text-gray-300" />
@@ -475,7 +489,17 @@ function EditPostModal({
   );
 }
 
-function SocialPostCard({ post, isAuthenticated, currentUserId }: { post: SocialFeedPost; isAuthenticated: boolean; currentUserId: string | null }) {
+function SocialPostCard({
+  post,
+  isAuthenticated,
+  currentUserId,
+  onDeleted,
+}: {
+  post: SocialFeedPost;
+  isAuthenticated: boolean;
+  currentUserId: string | null;
+  onDeleted: (postId: string) => void;
+}) {
   const router = useRouter();
   const [photoIndex, setPhotoIndex] = React.useState(0);
   const [comment, setComment] = React.useState("");
@@ -521,8 +545,13 @@ function SocialPostCard({ post, isAuthenticated, currentUserId }: { post: Social
 
     startTransition(async () => {
       const result = await deleteSocialPost(post.id);
-      if (result.success) router.refresh();
-      else setActionMessage(result.error);
+      if (result.success) {
+        onDeleted(post.id);
+        await clearAppRuntimeCaches();
+        router.refresh();
+      } else {
+        setActionMessage(result.error);
+      }
     });
   }
 

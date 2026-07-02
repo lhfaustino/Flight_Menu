@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { AUTH_CONFIG } from "@/lib/constants";
 import { clearRememberLogin, getStoredRememberLogin, isRememberLoginActive } from "@/lib/auth-remember";
 
 interface AuthContextType {
@@ -28,25 +29,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
+        let isMounted = true;
+
         const getInitialSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
+            try {
+                const { data: { session } } = await withTimeout(
+                    supabase.auth.getSession(),
+                    8000,
+                    "Supabase session check timed out",
+                );
 
-            if (session?.user) {
-                const rememberedLogin = getStoredRememberLogin();
+                if (!isMounted) return;
 
-                if (rememberedLogin && !isRememberLoginActive(rememberedLogin, session.user.id)) {
-                    clearRememberLogin();
-                    await supabase.auth.signOut();
-                    setSession(null);
-                    setUser(null);
-                    setIsLoading(false);
-                    return;
+                if (session?.user) {
+                    const rememberedLogin = getStoredRememberLogin();
+
+                    if (rememberedLogin && !isRememberLoginActive(rememberedLogin, session.user.id)) {
+                        clearRememberLogin();
+                        await supabase.auth.signOut();
+                        if (!isMounted) return;
+                        setSession(null);
+                        setUser(null);
+                        setIsLoading(false);
+                        return;
+                    }
                 }
-            }
 
-            setSession(session);
-            setUser(session?.user ?? null);
-            setIsLoading(false);
+                setSession(session);
+                setUser(session?.user ?? null);
+            } catch (error) {
+                console.error("Could not restore auth session:", error);
+                setSession(null);
+                setUser(null);
+            } finally {
+                if (isMounted) setIsLoading(false);
+            }
         };
 
         getInitialSession();
@@ -61,12 +78,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 if (_event === "SIGNED_IN") router.refresh();
                 if (_event === "SIGNED_OUT") {
                     clearRememberLogin();
-                    router.push("/login");
+                    router.push(AUTH_CONFIG.authPath);
                 }
             }
         );
 
         return () => {
+            isMounted = false;
             subscription.unsubscribe();
         };
     }, [supabase, router]);
@@ -74,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const signOut = async () => {
         clearRememberLogin();
         await supabase.auth.signOut();
-        router.push("/login");
+        router.push(AUTH_CONFIG.authPath);
     };
 
     return (
@@ -82,6 +100,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             {children}
         </AuthContext.Provider>
     );
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+    return new Promise((resolve, reject) => {
+        const timeoutId = window.setTimeout(() => reject(new Error(message)), timeoutMs);
+
+        promise
+            .then(resolve)
+            .catch(reject)
+            .finally(() => window.clearTimeout(timeoutId));
+    });
 }
 
 /**

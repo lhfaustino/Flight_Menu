@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trip-space-v2';
+const CACHE_NAME = 'trip-space-v3';
 const urlsToCache = [
   '/offline.html',
 ];
@@ -32,6 +32,17 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
+  }
+
+  if (event.data?.type === 'CLEAR_APP_CACHES') {
+    event.waitUntil(clearAppCaches());
+  }
+});
+
 // Fetch Event
 self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
@@ -46,6 +57,9 @@ self.addEventListener('fetch', (event) => {
   if (
     event.request.mode === 'navigate' ||
     event.request.destination === 'document' ||
+    event.request.headers.get('accept')?.includes('text/x-component') ||
+    event.request.headers.has('next-action') ||
+    requestUrl.searchParams.has('_rsc') ||
     requestUrl.pathname.startsWith('/api/') ||
     (requestUrl.pathname.startsWith('/_next/') && !requestUrl.pathname.startsWith('/_next/static/'))
   ) {
@@ -84,3 +98,13 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+function clearAppCaches() {
+  return caches.keys().then((cacheNames) =>
+    Promise.all(
+      cacheNames
+        .filter((cacheName) => cacheName.startsWith('trip-space-') || cacheName.startsWith('workbox-') || cacheName.startsWith('next-pwa-'))
+        .map((cacheName) => caches.delete(cacheName))
+    )
+  );
+}

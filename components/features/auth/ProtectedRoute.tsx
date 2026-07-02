@@ -3,6 +3,7 @@
 import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { AUTH_CONFIG } from "@/lib/constants";
 
 /**
  * ProtectedRoute Component
@@ -16,7 +17,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (!isLoading && !user) {
-            router.push("/login");
+            router.push(AUTH_CONFIG.authPath);
         }
     }, [user, isLoading, router]);
 

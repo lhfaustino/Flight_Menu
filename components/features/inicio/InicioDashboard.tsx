@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { BarChart3, Clock3, MapPin, Plane, RotateCcw, Route, SlidersHorizontal } from "lucide-react";
+import { BarChart3, Clock3, Download, Expand, MapPin, Plane, RotateCcw, Route, Share2, SlidersHorizontal, X } from "lucide-react";
 import { BarChart } from "@/components/features/charts/BarChart";
 import { LineChart } from "@/components/features/charts/LineChart";
 import { PieChart } from "@/components/features/charts/PieChart";
@@ -325,6 +325,54 @@ function RouteMapPanel({
 }) {
   const mapData = React.useMemo(() => buildRouteMapData(rows), [rows]);
   const maxCount = Math.max(1, ...mapData.routes.map((route) => route.count));
+  const mapRef = React.useRef<SVGSVGElement | null>(null);
+  const [isFullscreenOpen, setIsFullscreenOpen] = React.useState(false);
+  const [mapActionMessage, setMapActionMessage] = React.useState<string | null>(null);
+  const exportName = `mapa-de-rotas-${selectedMonth === "all" ? "todos-os-meses" : selectedMonth}.png`;
+
+  function handleFullscreenMap() {
+    setMapActionMessage(null);
+    setIsFullscreenOpen(true);
+  }
+
+  async function handleSaveMap() {
+    setMapActionMessage(null);
+
+    try {
+      const blob = await renderRouteMapPng(mapRef.current);
+      downloadBlob(blob, exportName);
+      setMapActionMessage("Imagem salva.");
+    } catch (error) {
+      console.error("Could not save route map image:", error);
+      setMapActionMessage("Nao foi possivel salvar a imagem.");
+    }
+  }
+
+  async function handleShareMap() {
+    setMapActionMessage(null);
+
+    try {
+      const blob = await renderRouteMapPng(mapRef.current);
+      const file = new File([blob], exportName, { type: "image/png" });
+      const shareData = {
+        title: "Mapa de rotas",
+        text: "Mapa de rotas do Trip Space",
+        files: [file],
+      };
+
+      if (navigator.canShare?.(shareData)) {
+        await navigator.share(shareData);
+        return;
+      }
+
+      downloadBlob(blob, exportName);
+      setMapActionMessage("Compartilhamento indisponivel neste navegador. A imagem foi salva.");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      console.error("Could not share route map image:", error);
+      setMapActionMessage("Nao foi possivel compartilhar a imagem.");
+    }
+  }
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm xl:col-span-2">
@@ -360,10 +408,52 @@ function RouteMapPanel({
         </label>
       </div>
 
+      <RouteMapActions
+        onFullscreen={handleFullscreenMap}
+        onSave={handleSaveMap}
+        onShare={handleShareMap}
+      />
+
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-        <svg className="h-auto w-full" viewBox={`0 0 ${ROUTE_MAP.width} ${ROUTE_MAP.height}`} role="img" aria-label="Mapa de rotas de voo">
+        <RouteMapSvg ref={mapRef} mapData={mapData} maxCount={maxCount} />
+      </div>
+
+      {mapActionMessage ? <p className="mt-3 text-xs text-gray-500">{mapActionMessage}</p> : null}
+
+      {mapData.missingAirports.length > 0 ? (
+        <p className="mt-3 text-xs text-gray-500">
+          Sem coordenada: {mapData.missingAirports.join(", ")}.
+        </p>
+      ) : null}
+
+      {isFullscreenOpen ? (
+        <RouteMapFullscreenPopup
+          rowsCount={rows.length}
+          mapData={mapData}
+          maxCount={maxCount}
+          onClose={() => setIsFullscreenOpen(false)}
+          onSave={handleSaveMap}
+          onShare={handleShareMap}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+const RouteMapSvg = React.forwardRef<SVGSVGElement, { mapData: RouteMapData; maxCount: number }>(
+  ({ mapData, maxCount }, ref) => (
+        <svg ref={ref} className="h-auto w-full" viewBox={`0 0 ${ROUTE_MAP.width} ${ROUTE_MAP.height}`} role="img" aria-label="Mapa de rotas de voo">
           <rect width={ROUTE_MAP.width} height={ROUTE_MAP.height} fill="#ffffff" />
           <image href="/images/brazil-states-map.svg" x="0" y="0" width={ROUTE_MAP.width} height={ROUTE_MAP.height} preserveAspectRatio="xMidYMid meet" />
+          <image
+            href="/logo.png"
+            x={ROUTE_MAP.width - 118}
+            y={ROUTE_MAP.height - 118}
+            width="88"
+            height="88"
+            opacity="0.14"
+            preserveAspectRatio="xMidYMid meet"
+          />
 
           {mapData.routes.map((route, index) => {
             const origin = projectAirport(route.origin);
@@ -403,13 +493,133 @@ function RouteMapPanel({
             </foreignObject>
           ) : null}
         </svg>
-      </div>
+  ),
+);
+RouteMapSvg.displayName = "RouteMapSvg";
 
-      {mapData.missingAirports.length > 0 ? (
-        <p className="mt-3 text-xs text-gray-500">
-          Sem coordenada: {mapData.missingAirports.join(", ")}.
-        </p>
-      ) : null}
+function RouteMapFullscreenPopup({
+  rowsCount,
+  mapData,
+  maxCount,
+  onClose,
+  onSave,
+  onShare,
+}: {
+  rowsCount: number;
+  mapData: RouteMapData;
+  maxCount: number;
+  onClose: () => void;
+  onSave: () => void;
+  onShare: () => void;
+}) {
+  React.useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-white">
+      <header className="flex min-h-16 items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 sm:px-6">
+        <div className="min-w-0">
+          <h2 className="truncate text-base font-semibold text-gray-900">Mapa de rotas</h2>
+          <p className="truncate text-sm text-gray-500">
+            {mapData.routes.length} rotas, {mapData.airports.length} aeroportos, {rowsCount} voos
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            type="button"
+            variant="tertiary"
+            size="sm"
+            iconLeading={Share2}
+            aria-label="Compartilhar mapa"
+            onPress={onShare}
+            className="size-9 px-0"
+          />
+          <Button
+            type="button"
+            variant="tertiary"
+            size="sm"
+            iconLeading={Download}
+            aria-label="Salvar mapa como imagem"
+            onPress={onSave}
+            className="size-9 px-0"
+          />
+          <Button
+            type="button"
+            variant="tertiary"
+            size="sm"
+            iconLeading={X}
+            aria-label="Fechar tela cheia"
+            onPress={onClose}
+            className="size-9 px-0"
+          />
+        </div>
+      </header>
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-gray-50 p-3 sm:p-6">
+        <div className="w-full max-w-6xl overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          <RouteMapSvg mapData={mapData} maxCount={maxCount} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RouteMapActions({
+  onFullscreen,
+  onSave,
+  onShare,
+}: {
+  onFullscreen: () => void;
+  onSave: () => void;
+  onShare: () => void;
+}) {
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-2">
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        iconLeading={Expand}
+        aria-label="Ver mapa em tela cheia"
+        onPress={onFullscreen}
+        className="h-9 px-3"
+      >
+        Tela cheia
+      </Button>
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        iconLeading={Share2}
+        aria-label="Compartilhar mapa"
+        onPress={onShare}
+        className="h-9 px-3"
+      >
+        Compartilhar
+      </Button>
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        iconLeading={Download}
+        aria-label="Salvar mapa como imagem"
+        onPress={onSave}
+        className="h-9 px-3"
+      >
+        Salvar imagem
+      </Button>
     </div>
   );
 }
@@ -498,6 +708,70 @@ function formatMonth(value: string) {
   return `${match[2]}/${match[1]}`;
 }
 
+async function renderRouteMapPng(svg: SVGSVGElement | null) {
+  if (!svg) throw new Error("Route map is not ready.");
+
+  const clone = svg.cloneNode(true) as SVGSVGElement;
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  clone.setAttribute("width", String(ROUTE_MAP.width));
+  clone.setAttribute("height", String(ROUTE_MAP.height));
+
+  const imageElements = Array.from(clone.querySelectorAll("image"));
+  for (const imageElement of imageElements) {
+    const href = imageElement.getAttribute("href");
+    if (!href?.startsWith("/")) continue;
+
+    const response = await fetch(href);
+    if (!response.ok) throw new Error(`Could not load map asset: ${href}`);
+
+    imageElement.setAttribute("href", await blobToDataUrl(await response.blob()));
+  }
+
+  const serializedSvg = new XMLSerializer().serializeToString(clone);
+  const image = new Image();
+  image.decoding = "async";
+  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(serializedSvg)}`;
+  await image.decode();
+
+  const canvas = document.createElement("canvas");
+  canvas.width = ROUTE_MAP.width * 2;
+  canvas.height = ROUTE_MAP.height * 2;
+
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Canvas is unavailable.");
+
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("Could not create route map image."));
+    }, "image/png");
+  });
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function blobToDataUrl(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(String(reader.result)));
+    reader.addEventListener("error", () => reject(reader.error ?? new Error("Could not read map asset.")));
+    reader.readAsDataURL(blob);
+  });
+}
+
 type AirportPoint = {
   code: string;
   lat: number;
@@ -510,6 +784,8 @@ type RouteSegment = {
   destination: string;
   count: number;
 };
+
+type RouteMapData = ReturnType<typeof buildRouteMapData>;
 
 const ROUTE_MAP = {
   width: 760,
