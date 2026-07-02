@@ -143,9 +143,17 @@ export async function uploadRoster(formData: FormData) {
       });
     });
 
+    const todayIsoDate = getCurrentDateInSaoPaulo();
     const flightLegs = Array.from(flightLegsByKey.values());
-    const newFlightLegs = flightLegs.filter((flightLeg) => !existingKeys.has(flightLeg.unique_key));
-    const existingFlightLegs = flightLegs.filter((flightLeg) => existingKeys.has(flightLeg.unique_key));
+    const currentAndFutureFlightLegs = flightLegs.filter((flightLeg) =>
+      isCurrentOrFutureFlightLeg(flightLeg, todayIsoDate)
+    );
+    const pastFlightLegsCount = flightLegs.length - currentAndFutureFlightLegs.length;
+    const newFlightLegs = currentAndFutureFlightLegs.filter((flightLeg) => !existingKeys.has(flightLeg.unique_key));
+    const existingFlightLegs = currentAndFutureFlightLegs.filter((flightLeg) => existingKeys.has(flightLeg.unique_key));
+    const currentAndFutureKeys = new Set(currentAndFutureFlightLegs.map((flightLeg) => flightLeg.unique_key));
+    const existingCurrentAndFutureKeys = await fetchCurrentAndFutureFlightLegKeys(adminClient, user.id, todayIsoDate);
+    const removedFlightKeys = existingCurrentAndFutureKeys.filter((uniqueKey) => !currentAndFutureKeys.has(uniqueKey));
 
     const { error: insertError } = newFlightLegs.length > 0
       ? await adminClient
@@ -159,7 +167,7 @@ export async function uploadRoster(formData: FormData) {
         flightsAdded: 0,
         flights: rosterEntries,
         rows: await fetchFlightMenuRows(supabase, user.id),
-        message: `Parsed ${rosterEntries.length} flight legs, but could not save new flight legs: ${insertError.message}.${formatWarnings(warnings)}`,
+        message: `Parsed ${rosterEntries.length} flight legs, but could not save new current/future flight legs: ${insertError.message}.${formatWarnings(warnings)}`,
       };
     }
 
@@ -196,7 +204,21 @@ export async function uploadRoster(formData: FormData) {
         flightsAdded: newFlightLegs.length,
         flights: rosterEntries,
         rows: await fetchFlightMenuRows(supabase, user.id),
-        message: `Imported ${newFlightLegs.length} new flight legs, but could not update some existing flight legs: ${updateErrorMessage}.${formatWarnings(warnings)}`,
+        message: `Imported ${newFlightLegs.length} new current/future flight legs, but could not update some existing current/future flight legs: ${updateErrorMessage}.${formatWarnings(warnings)}`,
+      };
+    }
+
+    const { error: deleteError } = removedFlightKeys.length > 0
+      ? await deleteFlightLegsByKeys(adminClient, user.id, removedFlightKeys)
+      : { error: null };
+
+    if (deleteError) {
+      return {
+        success: true,
+        flightsAdded: newFlightLegs.length,
+        flights: rosterEntries,
+        rows: await fetchFlightMenuRows(supabase, user.id),
+        message: `Escala atualizada, mas alguns voos atuais/futuros antigos nao foram removidos: ${deleteError.message}.${formatWarnings(warnings)}`,
       };
     }
 
@@ -213,8 +235,8 @@ export async function uploadRoster(formData: FormData) {
       mealPlanUpdatedAt,
       message:
         `Escala importada. ${files.length} arquivo${files.length === 1 ? '' : 's'} processado${files.length === 1 ? '' : 's'}, ` +
-        `${newFlightLegs.length} novos voos adicionados e ${existingFlightLegs.length} voos existentes atualizados. ` +
-        `Voos antigos foram mantidos.${formatWarnings(warnings)}`,
+        `${newFlightLegs.length} novos voos adicionados, ${existingFlightLegs.length} voos existentes atualizados e ${removedFlightKeys.length} voos removidos da escala atual. ` +
+        `${pastFlightLegsCount} voo${pastFlightLegsCount === 1 ? '' : 's'} antigo${pastFlightLegsCount === 1 ? '' : 's'} mantido${pastFlightLegsCount === 1 ? '' : 's'} sem alteracao.${formatWarnings(warnings)}`,
     };
   } catch (error) {
     return {
@@ -340,6 +362,29 @@ function getRosterFiles(formData: FormData) {
   return legacyFile instanceof File ? [legacyFile] : [];
 }
 
+function getCurrentDateInSaoPaulo() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function isCurrentOrFutureFlightLeg(
+  flightLeg: Pick<{
+    unique_key: string | null;
+    departure_time: string | null;
+  }, 'unique_key' | 'departure_time'>,
+  todayIsoDate: string
+) {
+  const flightDate = getFlightLegDate(flightLeg.unique_key, flightLeg.departure_time);
+  return !flightDate || flightDate >= todayIsoDate;
+}
+
 function formatWarnings(warnings: string[]) {
   return warnings.length > 0 ? ` Avisos: ${warnings.join(' ')}` : '';
 }
@@ -365,6 +410,48 @@ async function fetchExistingKeys(supabase: any, table: string, keys: string[], u
   }
 
   return existing;
+}
+
+async function fetchCurrentAndFutureFlightLegKeys(supabase: any, userId: string, todayIsoDate: string) {
+  const keys: string[] = [];
+  const pageSize = 1000;
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('flight_leg_details')
+      .select('unique_key, departure_time')
+      .eq('user_id', userId)
+      .range(from, from + pageSize - 1);
+
+    if (error) throw new Error(`Could not load current roster flights: ${error.message}`);
+    if (!data?.length) break;
+
+    data.forEach((flightLeg: { unique_key: string | null; departure_time: string | null }) => {
+      if (flightLeg.unique_key && isCurrentOrFutureFlightLeg(flightLeg, todayIsoDate)) {
+        keys.push(flightLeg.unique_key);
+      }
+    });
+
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+
+  return keys;
+}
+
+async function deleteFlightLegsByKeys(supabase: any, userId: string, keys: string[]) {
+  for (const chunk of chunkArray([...new Set(keys)], 250)) {
+    const { error } = await supabase
+      .from('flight_leg_details')
+      .delete()
+      .eq('user_id', userId)
+      .in('unique_key', chunk);
+
+    if (error) return { error };
+  }
+
+  return { error: null };
 }
 
 async function fetchCateringByKey(keys: string[]) {

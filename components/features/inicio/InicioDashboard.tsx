@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { BarChart3, Clock3, MapPin, Plane, RotateCcw, SlidersHorizontal } from "lucide-react";
+import { BarChart3, Clock3, MapPin, Plane, RotateCcw, Route, SlidersHorizontal } from "lucide-react";
 import { BarChart } from "@/components/features/charts/BarChart";
 import { LineChart } from "@/components/features/charts/LineChart";
 import { PieChart } from "@/components/features/charts/PieChart";
@@ -12,6 +12,7 @@ export type InicioFlightRow = {
   date: string;
   year: string;
   flightNumber: string;
+  origin: string;
   destination: string;
   departureTime: string | null;
   arrivalTime: string | null;
@@ -24,6 +25,7 @@ type FilterState = {
   toDate: string;
   equipment: string;
   destination: string;
+  routeMonth: string;
 };
 
 const EMPTY_FILTERS: FilterState = {
@@ -31,6 +33,7 @@ const EMPTY_FILTERS: FilterState = {
   toDate: "",
   equipment: "all",
   destination: "all",
+  routeMonth: "all",
 };
 
 export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
@@ -56,6 +59,7 @@ export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
     filters.toDate,
     filters.equipment !== "all" ? filters.equipment : "",
     filters.destination !== "all" ? filters.destination : "",
+    filters.routeMonth !== "all" ? filters.routeMonth : "",
   ].filter(Boolean).length;
 
   const totalFlights = filteredRows.length;
@@ -100,6 +104,18 @@ export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
   const equipmentCounts = React.useMemo(
     () => countBy(rowsWithEquipment.map((row) => row.equipment)).map(({ label, count }) => ({ equipamento: label, Voos: count })),
     [rowsWithEquipment]
+  );
+  const routeMonths = React.useMemo(() => {
+    const months = uniqueOptions(filteredRows.map((row) => (row.date ? row.date.slice(0, 7) : "")));
+    return months.map((month) => ({ value: month, label: formatMonth(month) }));
+  }, [filteredRows]);
+  const routeRows = React.useMemo(
+    () =>
+      filteredRows.filter((row) => {
+        if (filters.routeMonth !== "all" && row.date.slice(0, 7) !== filters.routeMonth) return false;
+        return true;
+      }),
+    [filteredRows, filters.routeMonth]
   );
 
   return (
@@ -219,6 +235,13 @@ export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
 
       {filteredRows.length > 0 ? (
         <section className="grid gap-6 xl:grid-cols-2">
+          <RouteMapPanel
+            rows={routeRows}
+            months={routeMonths}
+            selectedMonth={filters.routeMonth}
+            onMonthChange={(routeMonth) => setFilters((current) => ({ ...current, routeMonth }))}
+          />
+
           <ChartPanel title="Horas voadas por mês" description="Soma das horas calculadas entre partida e chegada.">
             <BarChart data={hoursByMonth} categories={["Horas"]} index="month" valueFormatter={formatChartHours} showLegend={false} />
             <MobileChartLabels
@@ -285,6 +308,108 @@ export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
           Nenhum voo encontrado para os filtros selecionados.
         </section>
       )}
+    </div>
+  );
+}
+
+function RouteMapPanel({
+  rows,
+  months,
+  selectedMonth,
+  onMonthChange,
+}: {
+  rows: InicioFlightRow[];
+  months: { value: string; label: string }[];
+  selectedMonth: string;
+  onMonthChange: (value: string) => void;
+}) {
+  const mapData = React.useMemo(() => buildRouteMapData(rows), [rows]);
+  const maxCount = Math.max(1, ...mapData.routes.map((route) => route.count));
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm xl:col-span-2">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-red-50 text-red-700">
+              <Route className="size-5" />
+            </span>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Mapa de rotas</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                {mapData.routes.length} rotas, {mapData.airports.length} aeroportos, {rows.length} voos
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <label className="flex min-w-44 flex-col gap-1 text-xs font-semibold text-gray-600">
+          Mês
+          <select
+            value={selectedMonth}
+            onChange={(event) => onMonthChange(event.target.value)}
+            className="h-9 rounded-md border border-gray-300 px-2.5 text-sm text-gray-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+          >
+            <option value="all">Todos os meses</option>
+            {months.map((month) => (
+              <option key={month.value} value={month.value}>
+                {month.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <svg className="h-auto w-full" viewBox={`0 0 ${ROUTE_MAP.width} ${ROUTE_MAP.height}`} role="img" aria-label="Mapa de rotas de voo">
+          <rect width={ROUTE_MAP.width} height={ROUTE_MAP.height} fill="#ffffff" />
+          <image href="/images/brazil-states-map.svg" x="0" y="0" width={ROUTE_MAP.width} height={ROUTE_MAP.height} preserveAspectRatio="xMidYMid meet" />
+
+          {mapData.routes.map((route, index) => {
+            const origin = projectAirport(route.origin);
+            const destination = projectAirport(route.destination);
+            const strokeWidth = 0.8 + (route.count / maxCount) * 1.6;
+            const curve = createRouteCurve(origin, destination, route, index);
+
+            return (
+              <g key={route.key}>
+                <path
+                  d={curve.path}
+                  fill="none"
+                  stroke="#dc2626"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeOpacity="0.82"
+                  strokeWidth={strokeWidth}
+                />
+              </g>
+            );
+          })}
+
+          {mapData.airports.map((airport) => {
+            const point = projectAirport(airport.code);
+            return (
+              <g key={airport.code}>
+                <circle cx={point.x} cy={point.y} r="4.2" fill="#991b1b" stroke="#ffffff" strokeWidth="1.5" />
+              </g>
+            );
+          })}
+
+          {mapData.routes.length === 0 ? (
+            <foreignObject x="0" y="0" width={ROUTE_MAP.width} height={ROUTE_MAP.height}>
+              <div className="flex h-full items-center justify-center px-6 text-center text-sm font-medium text-gray-500">
+                Nenhuma rota com origem e destino reconhecidos para este período.
+              </div>
+            </foreignObject>
+          ) : null}
+        </svg>
+      </div>
+
+      {mapData.missingAirports.length > 0 ? (
+        <p className="mt-3 text-xs text-gray-500">
+          Sem coordenada: {mapData.missingAirports.join(", ")}.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -371,4 +496,171 @@ function formatMonth(value: string) {
   const match = value.match(/^(\d{4})-(\d{2})$/);
   if (!match) return value;
   return `${match[2]}/${match[1]}`;
+}
+
+type AirportPoint = {
+  code: string;
+  lat: number;
+  lon: number;
+};
+
+type RouteSegment = {
+  key: string;
+  origin: string;
+  destination: string;
+  count: number;
+};
+
+const ROUTE_MAP = {
+  width: 760,
+  height: 620,
+  padding: 46,
+  minLat: -35,
+  maxLat: 6,
+  minLon: -75,
+  maxLon: -33,
+};
+
+const AIRPORT_COORDINATES: Record<string, AirportPoint> = {
+  AJU: { code: "AJU", lat: -10.99, lon: -37.07 },
+  BEL: { code: "BEL", lat: -1.38, lon: -48.48 },
+  BPS: { code: "BPS", lat: -16.44, lon: -39.08 },
+  BSB: { code: "BSB", lat: -15.87, lon: -47.92 },
+  BVB: { code: "BVB", lat: 2.85, lon: -60.69 },
+  CGB: { code: "CGB", lat: -15.65, lon: -56.12 },
+  CGH: { code: "CGH", lat: -23.63, lon: -46.66 },
+  CGR: { code: "CGR", lat: -20.47, lon: -54.67 },
+  CNF: { code: "CNF", lat: -19.62, lon: -43.97 },
+  CWB: { code: "CWB", lat: -25.53, lon: -49.17 },
+  CXJ: { code: "CXJ", lat: -29.2, lon: -51.19 },
+  FLN: { code: "FLN", lat: -27.67, lon: -48.55 },
+  FOR: { code: "FOR", lat: -3.78, lon: -38.53 },
+  GIG: { code: "GIG", lat: -22.81, lon: -43.25 },
+  GRU: { code: "GRU", lat: -23.43, lon: -46.47 },
+  GYN: { code: "GYN", lat: -16.63, lon: -49.22 },
+  IGU: { code: "IGU", lat: -25.6, lon: -54.49 },
+  IOS: { code: "IOS", lat: -14.82, lon: -39.03 },
+  JDO: { code: "JDO", lat: -7.22, lon: -39.27 },
+  JPA: { code: "JPA", lat: -7.15, lon: -34.95 },
+  JTC: { code: "JTC", lat: -22.16, lon: -49.07 },
+  LDB: { code: "LDB", lat: -23.33, lon: -51.13 },
+  MAB: { code: "MAB", lat: -5.37, lon: -49.14 },
+  MAO: { code: "MAO", lat: -3.04, lon: -60.05 },
+  MCO: { code: "MCO", lat: 28.43, lon: -81.31 },
+  MCZ: { code: "MCZ", lat: -9.51, lon: -35.79 },
+  MGF: { code: "MGF", lat: -23.48, lon: -52.02 },
+  MIA: { code: "MIA", lat: 25.79, lon: -80.29 },
+  NAT: { code: "NAT", lat: -5.77, lon: -35.37 },
+  NVT: { code: "NVT", lat: -26.88, lon: -48.65 },
+  PFB: { code: "PFB", lat: -28.24, lon: -52.33 },
+  PMW: { code: "PMW", lat: -10.29, lon: -48.36 },
+  POA: { code: "POA", lat: -29.99, lon: -51.17 },
+  PVH: { code: "PVH", lat: -8.71, lon: -63.9 },
+  RAO: { code: "RAO", lat: -21.13, lon: -47.77 },
+  RBR: { code: "RBR", lat: -9.87, lon: -67.9 },
+  REC: { code: "REC", lat: -8.13, lon: -34.92 },
+  SDU: { code: "SDU", lat: -22.91, lon: -43.16 },
+  SLZ: { code: "SLZ", lat: -2.58, lon: -44.23 },
+  SSA: { code: "SSA", lat: -12.91, lon: -38.33 },
+  THE: { code: "THE", lat: -5.06, lon: -42.82 },
+  UDI: { code: "UDI", lat: -18.88, lon: -48.23 },
+  VCP: { code: "VCP", lat: -23.01, lon: -47.13 },
+  VDC: { code: "VDC", lat: -14.86, lon: -40.86 },
+  VIX: { code: "VIX", lat: -20.26, lon: -40.29 },
+  XAP: { code: "XAP", lat: -27.13, lon: -52.66 },
+};
+
+function buildRouteMapData(rows: InicioFlightRow[]) {
+  const routeBuckets = new Map<string, RouteSegment>();
+  const airportCodes = new Set<string>();
+  const missingAirports = new Set<string>();
+
+  for (const row of rows) {
+    const origin = normalizeAirportCode(row.origin);
+    const destination = normalizeAirportCode(row.destination);
+    if (!origin || !destination || origin === destination) continue;
+
+    if (!AIRPORT_COORDINATES[origin]) missingAirports.add(origin);
+    if (!AIRPORT_COORDINATES[destination]) missingAirports.add(destination);
+    if (!AIRPORT_COORDINATES[origin] || !AIRPORT_COORDINATES[destination]) continue;
+
+    airportCodes.add(origin);
+    airportCodes.add(destination);
+
+    const key = `${origin}-${destination}`;
+    const current = routeBuckets.get(key);
+    if (current) {
+      current.count += 1;
+    } else {
+      routeBuckets.set(key, { key, origin, destination, count: 1 });
+    }
+  }
+
+  return {
+    routes: [...routeBuckets.values()].sort((left, right) => right.count - left.count || left.key.localeCompare(right.key)),
+    airports: [...airportCodes].sort().map((code) => AIRPORT_COORDINATES[code]),
+    missingAirports: [...missingAirports].sort(),
+  };
+}
+
+function normalizeAirportCode(value: string) {
+  const code = value.trim().toUpperCase();
+  if (!code || code === "-" || code === "N/A") return "";
+  return code;
+}
+
+function projectAirport(code: string) {
+  const airport = AIRPORT_COORDINATES[code];
+  return projectGeo(airport.lon, airport.lat);
+}
+
+function projectGeo(lon: number, lat: number) {
+  const x =
+    ROUTE_MAP.padding +
+    ((lon - ROUTE_MAP.minLon) / (ROUTE_MAP.maxLon - ROUTE_MAP.minLon)) * (ROUTE_MAP.width - ROUTE_MAP.padding * 2);
+  const y =
+    ROUTE_MAP.padding +
+    ((ROUTE_MAP.maxLat - lat) / (ROUTE_MAP.maxLat - ROUTE_MAP.minLat)) * (ROUTE_MAP.height - ROUTE_MAP.padding * 2);
+
+  return { x: clamp(x, ROUTE_MAP.padding, ROUTE_MAP.width - ROUTE_MAP.padding), y: clamp(y, ROUTE_MAP.padding, ROUTE_MAP.height - ROUTE_MAP.padding) };
+}
+
+function createRouteCurve(
+  origin: { x: number; y: number },
+  destination: { x: number; y: number },
+  route: RouteSegment,
+  index: number
+) {
+  const dx = destination.x - origin.x;
+  const dy = destination.y - origin.y;
+  const distance = Math.hypot(dx, dy);
+  if (distance < 1) {
+    return { path: `M ${origin.x.toFixed(1)} ${origin.y.toFixed(1)} L ${destination.x.toFixed(1)} ${destination.y.toFixed(1)}` };
+  }
+
+  const midpointX = (origin.x + destination.x) / 2;
+  const midpointY = (origin.y + destination.y) / 2;
+  const perpendicularX = -dy / distance;
+  const perpendicularY = dx / distance;
+  const direction = route.origin.localeCompare(route.destination) <= 0 ? 1 : -1;
+  const spread = ((stableHash(route.key) % 7) - 3) * 6 + (index % 5) * 2;
+  const bend = direction * clamp(distance * 0.2 + spread, 22, 96);
+  const controlX = clamp(midpointX + perpendicularX * bend, ROUTE_MAP.padding, ROUTE_MAP.width - ROUTE_MAP.padding);
+  const controlY = clamp(midpointY + perpendicularY * bend, ROUTE_MAP.padding, ROUTE_MAP.height - ROUTE_MAP.padding);
+
+  return {
+    path: `M ${origin.x.toFixed(1)} ${origin.y.toFixed(1)} Q ${controlX.toFixed(1)} ${controlY.toFixed(1)} ${destination.x.toFixed(1)} ${destination.y.toFixed(1)}`,
+  };
+}
+
+function stableHash(value: string) {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  }
+  return hash;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }

@@ -32,7 +32,7 @@ async function fetchInicioRows(
   const { data } = await supabase
     .from("flight_leg_details")
     .select(
-      "id, unique_key, flight_number, destination, departure_time, arrival_time, flight_duration_minutes, equipment"
+      "id, unique_key, flight_number, origin, destination, departure_time, arrival_time, flight_duration_minutes, equipment"
     )
     .eq("user_id", userId)
     .order("departure_time", { ascending: true, nullsFirst: false });
@@ -48,6 +48,7 @@ async function fetchInicioRows(
         date,
         year: date.slice(0, 4),
         flightNumber: row.flight_number ?? "-",
+        origin: row.origin ?? "-",
         destination: row.destination ?? "-",
         departureTime,
         arrivalTime,

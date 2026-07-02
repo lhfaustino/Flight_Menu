@@ -8,7 +8,6 @@ import { BrandLogo } from "@/components/ui/BrandLogo";
 import { SocialIcon } from "@/components/ui/social-icons";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { createOrganization } from "@/app/actions/organizations";
 import { useToast } from "@/components/ui/Toast";
 import { AUTH_CONFIG } from "@/lib/constants";
 
@@ -105,7 +104,21 @@ export const SignUpPage = () => {
                 },
             });
 
-            if (signUpError) throw signUpError;
+            if (signUpError) {
+                if (isAlreadyRegisteredError(signUpError)) {
+                    await signInExistingUser(supabase, formData.email, formData.password);
+                    addToast({
+                        title: "Conta encontrada",
+                        description: "Entramos com sua conta existente.",
+                        type: "success",
+                    });
+                    router.push(AUTH_CONFIG.afterSignupPath);
+                    router.refresh();
+                    return;
+                }
+
+                throw signUpError;
+            }
 
             if (authData.user) {
                 if (!authData.session) {
@@ -121,12 +134,6 @@ export const SignUpPage = () => {
                     }
                 }
 
-                const orgName = `Equipe de ${formData.fullName}`;
-                const orgSlug = `${normalizedUsername}-${Math.random().toString(36).substring(2, 7)}`;
-
-                const orgResult = await createOrganization(orgName, orgSlug);
-                if (!orgResult.success) throw new Error(orgResult.error);
-
                 addToast({
                     title: "Conta criada!",
                     description: "Sua conta está pronta.",
@@ -134,6 +141,7 @@ export const SignUpPage = () => {
                 });
 
                 router.push(AUTH_CONFIG.afterSignupPath);
+                router.refresh();
             }
         } catch (err: any) {
             const errorMessage = err.message || "Algo deu errado. Tente novamente.";
@@ -289,6 +297,26 @@ export const SignUpPage = () => {
 
 const normalizeUsername = (value: string) =>
     value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24);
+
+const isAlreadyRegisteredError = (error: { message?: string; code?: string }) => {
+    const message = error.message?.toLowerCase() ?? "";
+    return error.code === "user_already_exists" || message.includes("already registered") || message.includes("already exists");
+};
+
+const signInExistingUser = async (
+    supabase: ReturnType<typeof createClient>,
+    email: string,
+    password: string
+) => {
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+    });
+
+    if (signInError) {
+        throw new Error("Este e-mail já tem conta. Confirme a senha e tente entrar novamente.");
+    }
+};
 
 const getUsernameHelperText = (status: UsernameStatus) => {
     switch (status) {

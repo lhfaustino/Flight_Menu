@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { AUTH_CONFIG } from "@/lib/constants";
+import { resolveUsernameLoginEmail } from "@/app/actions/auth";
 import {
     clearRememberLogin,
     getStoredRememberLogin,
@@ -268,17 +269,27 @@ const resolveLoginEmail = async (
         throw new Error("Informe um e-mail ou nome de usuario valido.");
     }
 
-    const { data, error } = await supabase.rpc("get_email_by_username", {
-        candidate: username,
-    });
+    const response = await resolveUsernameLoginEmail(username);
 
-    if (error) {
-        throw new Error("Nao foi possivel verificar este nome de usuario agora.");
+    if (!response.success) {
+        const { data, error } = await supabase.rpc("get_email_by_username", {
+            candidate: username,
+        });
+
+        if (error) {
+            throw new Error("Nao foi possivel verificar este nome de usuario agora.");
+        }
+
+        if (!data) {
+            throw new Error("E-mail, nome de usuario ou senha invalidos.");
+        }
+
+        return data as string;
     }
 
-    if (!data) {
+    if (!response.data) {
         throw new Error("E-mail, nome de usuario ou senha invalidos.");
     }
 
-    return data as string;
+    return response.data;
 };
