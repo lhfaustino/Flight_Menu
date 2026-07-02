@@ -54,9 +54,9 @@ export function FlightMenuUploadWorkspace({
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [rows, setRows] = useState<FlightMenuRow[]>(initialRows);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState('all');
+  const [selectedMonth, setSelectedMonth] = useState(() => getCurrentMonthIso());
   const [todayIso, setTodayIso] = useState('');
-  const monthOptions = getMonthOptions(rows);
+  const monthOptions = getMonthOptions(rows, selectedMonth);
   const visibleRows = selectedMonth === 'all' ? rows : rows.filter((row) => isCurrentMonth(row.date, selectedMonth));
   const visibleRowIds = visibleRows.map((row) => row.id);
   const selectedVisibleRowCount = visibleRowIds.filter((id) => selectedRowIds.includes(id)).length;
@@ -450,10 +450,14 @@ function isCurrentMonth(value: string, monthIso: string) {
   return Boolean(rowDate) && rowDate.startsWith(`${monthIso}-`);
 }
 
-function getMonthOptions(rows: FlightMenuRow[]) {
+function getMonthOptions(rows: FlightMenuRow[], selectedMonth: string) {
   const months = rows
     .map((row) => normalizeDate(row.date).slice(0, 7))
     .filter((month) => /^\d{4}-\d{2}$/.test(month));
+
+  if (/^\d{4}-\d{2}$/.test(selectedMonth)) {
+    months.push(selectedMonth);
+  }
 
   return [...new Set(months)].sort((left, right) => right.localeCompare(left));
 }
@@ -497,4 +501,12 @@ function isToday(value: string, today: string) {
 
 function getTodayIsoDate() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function getCurrentMonthIso() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+
+  return `${year}-${month}`;
 }
