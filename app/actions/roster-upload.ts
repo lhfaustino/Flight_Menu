@@ -5,7 +5,12 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { ADMIN_EMAIL } from '@/lib/admin-access';
 import { extractPdfText, parseRosterText } from '@/lib/pdf-parsing';
 import type { RosterEntry } from '@/lib/pdf-parsing';
-import { MEAL_PLAN_NOT_FOUND, refreshUserFlightLegMealsFromCurrentMealPlan } from '@/lib/flight-menu-processing';
+import {
+  MEAL_PLAN_NOT_FOUND,
+  getCurrentDateInSaoPaulo,
+  isCurrentOrFutureFlightLeg,
+  refreshUserFlightLegMealsFromCurrentMealPlan,
+} from '@/lib/flight-menu-processing';
 
 type CateringRuleRow = {
   unique_key: string;
@@ -360,29 +365,6 @@ function getRosterFiles(formData: FormData) {
 
   if (multiFiles.length > 0) return multiFiles;
   return legacyFile instanceof File ? [legacyFile] : [];
-}
-
-function getCurrentDateInSaoPaulo() {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Sao_Paulo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(new Date());
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-
-  return `${values.year}-${values.month}-${values.day}`;
-}
-
-function isCurrentOrFutureFlightLeg(
-  flightLeg: Pick<{
-    unique_key: string | null;
-    departure_time: string | null;
-  }, 'unique_key' | 'departure_time'>,
-  todayIsoDate: string
-) {
-  const flightDate = getFlightLegDate(flightLeg.unique_key, flightLeg.departure_time);
-  return !flightDate || flightDate >= todayIsoDate;
 }
 
 function formatWarnings(warnings: string[]) {

@@ -249,6 +249,26 @@ export function normalizeFlightNumber(value: string) {
     return digits.startsWith("3") && digits.length === 5 ? digits.slice(1) : digits;
 }
 
+export function getCurrentDateInSaoPaulo() {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Sao_Paulo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    }).formatToParts(new Date());
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+
+    return `${values.year}-${values.month}-${values.day}`;
+}
+
+export function isCurrentOrFutureFlightLeg(
+    flightLeg: Pick<FlightLegMealRefreshRow, "unique_key" | "departure_time">,
+    todayIsoDate = getCurrentDateInSaoPaulo()
+) {
+    const flightDate = getFlightLegDate(flightLeg.unique_key, flightLeg.departure_time);
+    return !flightDate || flightDate >= todayIsoDate;
+}
+
 async function refreshExistingFlightLegMeals(
     supabase: SupabaseLike,
     userId: string | undefined,
@@ -264,7 +284,8 @@ async function refreshExistingFlightLegMeals(
         }
     }
 
-    const flightLegs = await fetchFlightLegRowsForMealRefresh(supabase, userId);
+    const todayIsoDate = getCurrentDateInSaoPaulo();
+    const flightLegs = await fetchFlightLegRowsForMealRefresh(supabase, userId, todayIsoDate);
     let updated = 0;
     let matched = 0;
     let notFound = 0;
@@ -295,7 +316,11 @@ async function refreshExistingFlightLegMeals(
     return { updated, matched, notFound, error: null };
 }
 
-async function fetchFlightLegRowsForMealRefresh(supabase: SupabaseLike, userId?: string) {
+async function fetchFlightLegRowsForMealRefresh(
+    supabase: SupabaseLike,
+    userId: string | undefined,
+    todayIsoDate: string
+) {
     const rows: FlightLegMealRefreshRow[] = [];
     const pageSize = 1000;
     let from = 0;
@@ -314,7 +339,11 @@ async function fetchFlightLegRowsForMealRefresh(supabase: SupabaseLike, userId?:
         if (error) throw new Error(`Could not load previous roster flights: ${error.message}`);
         if (!data?.length) break;
 
-        rows.push(...data);
+        rows.push(
+            ...data.filter((flightLeg: FlightLegMealRefreshRow) =>
+                isCurrentOrFutureFlightLeg(flightLeg, todayIsoDate)
+            )
+        );
         if (data.length < pageSize) break;
         from += pageSize;
     }
