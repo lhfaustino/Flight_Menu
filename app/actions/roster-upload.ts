@@ -150,6 +150,7 @@ export async function uploadRoster(formData: FormData) {
 
     const todayIsoDate = getCurrentDateInSaoPaulo();
     const flightLegs = Array.from(flightLegsByKey.values());
+    const submittedRosterMonths = getSubmittedRosterMonths(flightLegs);
     const currentAndFutureFlightLegs = flightLegs.filter((flightLeg) =>
       isCurrentOrFutureFlightLeg(flightLeg, todayIsoDate)
     );
@@ -157,8 +158,13 @@ export async function uploadRoster(formData: FormData) {
     const newFlightLegs = currentAndFutureFlightLegs.filter((flightLeg) => !existingKeys.has(flightLeg.unique_key));
     const existingFlightLegs = currentAndFutureFlightLegs.filter((flightLeg) => existingKeys.has(flightLeg.unique_key));
     const currentAndFutureKeys = new Set(currentAndFutureFlightLegs.map((flightLeg) => flightLeg.unique_key));
-    const existingCurrentAndFutureKeys = await fetchCurrentAndFutureFlightLegKeys(adminClient, user.id, todayIsoDate);
-    const removedFlightKeys = existingCurrentAndFutureKeys.filter((uniqueKey) => !currentAndFutureKeys.has(uniqueKey));
+    const replaceableExistingKeys = await fetchReplaceableFlightLegKeys(
+      adminClient,
+      user.id,
+      todayIsoDate,
+      submittedRosterMonths
+    );
+    const removedFlightKeys = replaceableExistingKeys.filter((uniqueKey) => !currentAndFutureKeys.has(uniqueKey));
 
     const { error: insertError } = newFlightLegs.length > 0
       ? await adminClient
@@ -371,6 +377,19 @@ function formatWarnings(warnings: string[]) {
   return warnings.length > 0 ? ` Avisos: ${warnings.join(' ')}` : '';
 }
 
+function getSubmittedRosterMonths(
+  flightLegs: Array<{
+    unique_key: string | null;
+    departure_time: string | null;
+  }>
+) {
+  return new Set(
+    flightLegs
+      .map((flightLeg) => getFlightLegDate(flightLeg.unique_key, flightLeg.departure_time).slice(0, 7))
+      .filter((month) => /^\d{4}-\d{2}$/.test(month))
+  );
+}
+
 async function fetchExistingKeys(supabase: any, table: string, keys: string[], userId?: string) {
   const existing = new Set<string>();
 
@@ -394,10 +413,19 @@ async function fetchExistingKeys(supabase: any, table: string, keys: string[], u
   return existing;
 }
 
-async function fetchCurrentAndFutureFlightLegKeys(supabase: any, userId: string, todayIsoDate: string) {
+async function fetchReplaceableFlightLegKeys(
+  supabase: any,
+  userId: string,
+  todayIsoDate: string,
+  submittedRosterMonths: Set<string>
+) {
   const keys: string[] = [];
   const pageSize = 1000;
   let from = 0;
+
+  if (submittedRosterMonths.size === 0) {
+    return keys;
+  }
 
   while (true) {
     const { data, error } = await supabase
@@ -410,7 +438,14 @@ async function fetchCurrentAndFutureFlightLegKeys(supabase: any, userId: string,
     if (!data?.length) break;
 
     data.forEach((flightLeg: { unique_key: string | null; departure_time: string | null }) => {
-      if (flightLeg.unique_key && isCurrentOrFutureFlightLeg(flightLeg, todayIsoDate)) {
+      const flightDate = getFlightLegDate(flightLeg.unique_key, flightLeg.departure_time);
+      const flightMonth = flightDate.slice(0, 7);
+
+      if (
+        flightLeg.unique_key &&
+        submittedRosterMonths.has(flightMonth) &&
+        isCurrentOrFutureFlightLeg(flightLeg, todayIsoDate)
+      ) {
         keys.push(flightLeg.unique_key);
       }
     });
