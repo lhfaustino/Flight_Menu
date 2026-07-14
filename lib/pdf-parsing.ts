@@ -51,6 +51,7 @@ export async function extractPdfText(pdfBuffer: Buffer): Promise<string> {
 /**
  * Parses flight roster text
  * Looks for pattern: G3[number] [origin] [departure] [arrival] [destination]
+ * Deadhead roster lines can prefix the flight with DH, DH/, or DHG3.
  * Example: G3 123 JFK 14:30 18:45 LHR
  */
 export function parseRosterText(text: string): RosterEntry[] {
@@ -65,12 +66,12 @@ export function parseRosterText(text: string): RosterEntry[] {
     const line = rawLine.trim();
     if (!line) continue;
 
-    const dayMatch = line.match(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)(\d{2})\b/);
-    if (dayMatch && periodMonth) {
-      currentDate = `${periodYear}-${String(periodMonth).padStart(2, '0')}-${dayMatch[1]}`;
+    const rosterDay = parseRosterDayHeader(line);
+    if (rosterDay && periodMonth) {
+      currentDate = `${periodYear}-${String(periodMonth).padStart(2, '0')}-${rosterDay}`;
     }
 
-    const flightMatch = line.match(/^(?:DH\/)?G3\s+(\d+)\s+([A-Z]{3})\s+!?(\d{3,4})\s+!?(\d{3,4})\s+([A-Z]{3})\b/i);
+    const flightMatch = line.match(/^(?:D\/?H\s*\/?\s*)?G3\s+(\d+)\s+([A-Z]{3})\s+!?(\d{3,4})\s+!?(\d{3,4})\s+([A-Z]{3})\b/i);
     if (!flightMatch) continue;
 
     entries.push({
@@ -80,12 +81,30 @@ export function parseRosterText(text: string): RosterEntry[] {
       departureTime: normalizeTime(flightMatch[3]),
       arrivalTime: normalizeTime(flightMatch[4]),
       date: currentDate,
-      crewPosition: line.startsWith('DH/') ? 'DH' : undefined,
+      crewPosition: hasDeadheadCode(line) ? 'DH' : undefined,
       equipment: extractEquipment(line),
     });
   }
 
   return entries;
+}
+
+function hasDeadheadCode(line: string) {
+  return /\bD\/?H\b/i.test(line) || /^D\/?H\s*\/?\s*G3\b/i.test(line);
+}
+
+function parseRosterDayHeader(line: string) {
+  const normalMatch = line.match(/^([A-Za-z]{2,3})(\d{2})\b/);
+  const ocrMatch = line.match(/^([A-Za-z]{2})1(\d{2})\b/);
+  const match = normalMatch ?? ocrMatch;
+
+  if (!match) return undefined;
+
+  const weekday = match[1].toLowerCase();
+  const normalizedWeekday = weekday.length === 2 ? weekday : weekday.slice(0, 3);
+  const validWeekdays = new Set(['mo', 'tu', 'we', 'th', 'fr', 'sa', 'su', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
+
+  return validWeekdays.has(normalizedWeekday) ? match[2] : undefined;
 }
 
 /**

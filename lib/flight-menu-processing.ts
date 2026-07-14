@@ -266,7 +266,7 @@ export function isCurrentOrFutureFlightLeg(
     todayIsoDate = getCurrentDateInSaoPaulo()
 ) {
     const flightDate = getFlightLegDate(flightLeg.unique_key, flightLeg.departure_time);
-    return !flightDate || flightDate >= todayIsoDate;
+    return Boolean(flightDate) && flightDate >= todayIsoDate;
 }
 
 async function refreshExistingFlightLegMeals(

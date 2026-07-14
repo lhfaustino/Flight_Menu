@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { extractPdfText, parseRosterText } from '@/lib/pdf-parsing';
 import type { RosterEntry } from '@/lib/pdf-parsing';
 import {
@@ -10,7 +11,6 @@ import {
   processCateringPdfBuffer,
   toIsoDate,
   uploadPdfBestEffort,
-  upsertByUniqueKey,
 } from '@/lib/flight-menu-processing';
 
 type FlightMenuRow = {
@@ -28,6 +28,7 @@ type FlightLegUpsertRow = {
   roster_id: string;
   user_id: string;
   flight_number: string;
+  crew_position: string | null;
   origin: string;
   destination: string;
   departure_time: string | null;
@@ -114,17 +115,28 @@ export async function updateFlightMenu(formData: FormData) {
       cateringByKey,
     });
 
-    const {
-      inserted: flightLegsInserted,
-      updated: flightLegsUpdated,
-      error: flightLegUpsertError,
-    } = await upsertByUniqueKey(supabase, 'flight_leg_details', flightLegRows);
+    const adminClient = createAdminClient();
+    const { error: deleteError } = await adminClient
+      .from('flight_leg_details')
+      .delete()
+      .eq('user_id', user.id);
 
-    if (flightLegUpsertError) {
+    if (deleteError) {
+      return {
+        success: false,
+        error: `Could not remove the previous roster flights: ${deleteError.message}.`,
+      };
+    }
+
+    const { error: insertError } = flightLegRows.length > 0
+      ? await adminClient.from('flight_leg_details').insert(flightLegRows)
+      : { error: null };
+
+    if (insertError) {
       return {
         success: false,
         error:
-          `Could not save flight legs to Supabase: ${flightLegUpsertError.message}. ` +
+          `Could not save the new roster flight legs: ${insertError.message}. ` +
           'Run supabase/repair_flight_schema.sql in Supabase SQL Editor, then try Atualizar again.',
       };
     }
@@ -136,11 +148,10 @@ export async function updateFlightMenu(formData: FormData) {
       flights: rosterEntries,
       rules: cateringResult.entries,
       rows: savedRows,
-      flightsAdded: flightLegsInserted,
+      flightsAdded: flightLegRows.length,
       rulesAdded: cateringResult.rulesInserted,
       message:
-        `Atualizado: ${flightLegsInserted} flight legs inserted, ` +
-        `${flightLegsUpdated} flight legs updated, ` +
+        `Atualizado: ${flightLegRows.length} flight legs saved, ` +
         `${cateringResult.entries.length} catering rows parsed.`,
     };
   } catch (error) {
@@ -180,6 +191,7 @@ function buildFlightLegRows({
       roster_id: rosterId,
       user_id: userId,
       flight_number: entry.flightNumber,
+      crew_position: entry.crewPosition || null,
       origin: entry.origin,
       destination: entry.destination,
       departure_time: departureTime.toISOString(),

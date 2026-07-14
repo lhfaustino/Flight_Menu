@@ -7,8 +7,6 @@ import { extractPdfText, parseRosterText } from '@/lib/pdf-parsing';
 import type { RosterEntry } from '@/lib/pdf-parsing';
 import {
   MEAL_PLAN_NOT_FOUND,
-  getCurrentDateInSaoPaulo,
-  isCurrentOrFutureFlightLeg,
   refreshUserFlightLegMealsFromCurrentMealPlan,
 } from '@/lib/flight-menu-processing';
 
@@ -97,10 +95,7 @@ export async function uploadRoster(formData: FormData) {
     const rosterKeys = rosterEntries.map((entry) =>
       buildUniqueKey(entry.date || new Date().toISOString().split('T')[0], entry.flightNumber, entry.origin)
     );
-    const [existingKeys, cateringByKey] = await Promise.all([
-      fetchExistingKeys(adminClient, 'flight_leg_details', rosterKeys, user.id),
-      fetchCateringByKey(rosterKeys),
-    ]);
+    const cateringByKey = await fetchCateringByKey(rosterKeys);
 
     // 6. Sync parsed flight legs into database
     const flightLegsByKey = new Map<string, {
@@ -148,88 +143,29 @@ export async function uploadRoster(formData: FormData) {
       });
     });
 
-    const todayIsoDate = getCurrentDateInSaoPaulo();
     const flightLegs = Array.from(flightLegsByKey.values());
-    const submittedRosterMonths = getSubmittedRosterMonths(flightLegs);
-    const currentAndFutureFlightLegs = flightLegs.filter((flightLeg) =>
-      isCurrentOrFutureFlightLeg(flightLeg, todayIsoDate)
-    );
-    const pastFlightLegsCount = flightLegs.length - currentAndFutureFlightLegs.length;
-    const newFlightLegs = currentAndFutureFlightLegs.filter((flightLeg) => !existingKeys.has(flightLeg.unique_key));
-    const existingFlightLegs = currentAndFutureFlightLegs.filter((flightLeg) => existingKeys.has(flightLeg.unique_key));
-    const currentAndFutureKeys = new Set(currentAndFutureFlightLegs.map((flightLeg) => flightLeg.unique_key));
-    const replaceableExistingKeys = await fetchReplaceableFlightLegKeys(
-      adminClient,
-      user.id,
-      todayIsoDate,
-      submittedRosterMonths
-    );
-    const removedFlightKeys = replaceableExistingKeys.filter((uniqueKey) => !currentAndFutureKeys.has(uniqueKey));
 
-    const { error: insertError } = newFlightLegs.length > 0
+    const { deleted: deletedFlightLegs, error: deleteError } = await deleteUserFlightLegs(adminClient, user.id);
+    if (deleteError) {
+      return {
+        success: false,
+        error: `A nova escala foi interpretada, mas a escala anterior nao foi removida: ${deleteError.message}.${formatWarnings(warnings)}`,
+      };
+    }
+
+    const { error: insertError } = flightLegs.length > 0
       ? await adminClient
           .from('flight_leg_details')
-          .insert(newFlightLegs)
+          .insert(flightLegs)
       : { error: null };
     
     if (insertError) {
       return {
-        success: true,
+        success: false,
         flightsAdded: 0,
         flights: rosterEntries,
         rows: await fetchFlightMenuRows(supabase, user.id),
-        message: `Parsed ${rosterEntries.length} flight legs, but could not save new current/future flight legs: ${insertError.message}.${formatWarnings(warnings)}`,
-      };
-    }
-
-    let updateErrorMessage: string | null = null;
-    for (const flightLeg of existingFlightLegs) {
-        const { error } = await adminClient
-        .from('flight_leg_details')
-        .update({
-          roster_id: flightLeg.roster_id,
-          flight_number: flightLeg.flight_number,
-          crew_position: flightLeg.crew_position,
-          origin: flightLeg.origin,
-          destination: flightLeg.destination,
-          departure_time: flightLeg.departure_time,
-          arrival_time: flightLeg.arrival_time,
-          flight_duration_minutes: flightLeg.flight_duration_minutes,
-          equipment: flightLeg.equipment,
-          service_type: flightLeg.service_type,
-          meal_type: flightLeg.meal_type,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', user.id)
-        .eq('unique_key', flightLeg.unique_key);
-
-      if (error) {
-        updateErrorMessage = error.message;
-        break;
-      }
-    }
-
-    if (updateErrorMessage) {
-      return {
-        success: true,
-        flightsAdded: newFlightLegs.length,
-        flights: rosterEntries,
-        rows: await fetchFlightMenuRows(supabase, user.id),
-        message: `Imported ${newFlightLegs.length} new current/future flight legs, but could not update some existing current/future flight legs: ${updateErrorMessage}.${formatWarnings(warnings)}`,
-      };
-    }
-
-    const { error: deleteError } = removedFlightKeys.length > 0
-      ? await deleteFlightLegsByKeys(adminClient, user.id, removedFlightKeys)
-      : { error: null };
-
-    if (deleteError) {
-      return {
-        success: true,
-        flightsAdded: newFlightLegs.length,
-        flights: rosterEntries,
-        rows: await fetchFlightMenuRows(supabase, user.id),
-        message: `Escala atualizada, mas alguns voos atuais/futuros antigos nao foram removidos: ${deleteError.message}.${formatWarnings(warnings)}`,
+        error: `A escala anterior foi removida, mas a nova escala nao foi salva: ${insertError.message}.${formatWarnings(warnings)}`,
       };
     }
 
@@ -240,14 +176,14 @@ export async function uploadRoster(formData: FormData) {
 
     return {
       success: true,
-      flightsAdded: newFlightLegs.length,
+      flightsAdded: flightLegs.length,
       flights: rosterEntries,
       rows: await fetchFlightMenuRows(supabase, user.id),
       mealPlanUpdatedAt,
       message:
         `Escala importada. ${files.length} arquivo${files.length === 1 ? '' : 's'} processado${files.length === 1 ? '' : 's'}, ` +
-        `${newFlightLegs.length} novos voos adicionados, ${existingFlightLegs.length} voos existentes atualizados e ${removedFlightKeys.length} voos removidos da escala atual. ` +
-        `${pastFlightLegsCount} voo${pastFlightLegsCount === 1 ? '' : 's'} antigo${pastFlightLegsCount === 1 ? '' : 's'} mantido${pastFlightLegsCount === 1 ? '' : 's'} sem alteracao.${formatWarnings(warnings)}`,
+        `${deletedFlightLegs} voo${deletedFlightLegs === 1 ? '' : 's'} anterior${deletedFlightLegs === 1 ? '' : 'es'} removido${deletedFlightLegs === 1 ? '' : 's'} e ` +
+        `${flightLegs.length} voo${flightLegs.length === 1 ? '' : 's'} da nova escala salvo${flightLegs.length === 1 ? '' : 's'}.${formatWarnings(warnings)}`,
     };
   } catch (error) {
     return {
@@ -377,98 +313,13 @@ function formatWarnings(warnings: string[]) {
   return warnings.length > 0 ? ` Avisos: ${warnings.join(' ')}` : '';
 }
 
-function getSubmittedRosterMonths(
-  flightLegs: Array<{
-    unique_key: string | null;
-    departure_time: string | null;
-  }>
-) {
-  return new Set(
-    flightLegs
-      .map((flightLeg) => getFlightLegDate(flightLeg.unique_key, flightLeg.departure_time).slice(0, 7))
-      .filter((month) => /^\d{4}-\d{2}$/.test(month))
-  );
-}
+async function deleteUserFlightLegs(supabase: any, userId: string) {
+  const { count, error } = await supabase
+    .from('flight_leg_details')
+    .delete({ count: 'exact' })
+    .eq('user_id', userId);
 
-async function fetchExistingKeys(supabase: any, table: string, keys: string[], userId?: string) {
-  const existing = new Set<string>();
-
-  for (const chunk of chunkArray([...new Set(keys)], 250)) {
-    let query = supabase
-      .from(table)
-      .select('unique_key')
-      .in('unique_key', chunk);
-
-    if (userId) {
-      query = query.eq('user_id', userId);
-    }
-
-    const { data } = await query;
-
-    data?.forEach((row: { unique_key: string | null }) => {
-      if (row.unique_key) existing.add(row.unique_key);
-    });
-  }
-
-  return existing;
-}
-
-async function fetchReplaceableFlightLegKeys(
-  supabase: any,
-  userId: string,
-  todayIsoDate: string,
-  submittedRosterMonths: Set<string>
-) {
-  const keys: string[] = [];
-  const pageSize = 1000;
-  let from = 0;
-
-  if (submittedRosterMonths.size === 0) {
-    return keys;
-  }
-
-  while (true) {
-    const { data, error } = await supabase
-      .from('flight_leg_details')
-      .select('unique_key, departure_time')
-      .eq('user_id', userId)
-      .range(from, from + pageSize - 1);
-
-    if (error) throw new Error(`Could not load current roster flights: ${error.message}`);
-    if (!data?.length) break;
-
-    data.forEach((flightLeg: { unique_key: string | null; departure_time: string | null }) => {
-      const flightDate = getFlightLegDate(flightLeg.unique_key, flightLeg.departure_time);
-      const flightMonth = flightDate.slice(0, 7);
-
-      if (
-        flightLeg.unique_key &&
-        submittedRosterMonths.has(flightMonth) &&
-        isCurrentOrFutureFlightLeg(flightLeg, todayIsoDate)
-      ) {
-        keys.push(flightLeg.unique_key);
-      }
-    });
-
-    if (data.length < pageSize) break;
-    from += pageSize;
-  }
-
-  return keys;
-}
-
-async function deleteFlightLegsByKeys(supabase: any, userId: string, keys: string[]) {
-  for (const chunk of chunkArray([...new Set(keys)], 250)) {
-    const { error } = await supabase
-      .from('flight_leg_details')
-      .delete()
-      .eq('user_id', userId)
-      .in('unique_key', chunk);
-
-    if (error) return { error };
-  }
-
-  return { error: null };
+  return { deleted: count ?? 0, error };
 }
 
 async function fetchCateringByKey(keys: string[]) {
