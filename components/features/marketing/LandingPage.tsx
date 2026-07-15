@@ -36,7 +36,7 @@ export const LandingPage = () => {
 
                 {/* Decorative Background Element */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] opacity-[0.03] pointer-events-none">
-                    <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+                    <svg aria-hidden="true" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
                         <path d="M500,1000 C223.857625,1000 0,776.142375 0,500 C0,223.857625 223.857625,0 500,0 C776.142375,0 1000,223.857625 1000,500 C1000,776.142375 776.142375,1000 500,1000 Z M500,900 C720.9139,900 900,720.9139 900,500 C900,279.0861 720.9139,100 500,100 C279.0861,100 100,279.0861 100,500 C100,720.9139 279.0861,900 500,900 Z" fill="currentColor" />
                     </svg>
                 </div>

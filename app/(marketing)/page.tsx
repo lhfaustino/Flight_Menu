@@ -1,8 +1,8 @@
-import { redirect } from "next/navigation";
+import { LandingPage } from "@/components/features/marketing/LandingPage";
 
 /**
  * Root entry
  */
 export default function Home() {
-    redirect("/auth");
+    return <LandingPage />;
 }
