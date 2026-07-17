@@ -8,6 +8,7 @@ import type { RosterEntry } from '@/lib/pdf-parsing';
 import {
   MEAL_PLAN_NOT_FOUND,
   refreshUserFlightLegMealsFromCurrentMealPlan,
+  upsertByUniqueKey,
 } from '@/lib/flight-menu-processing';
 
 type CateringRuleRow = {
@@ -145,27 +146,17 @@ export async function uploadRoster(formData: FormData) {
 
     const flightLegs = Array.from(flightLegsByKey.values());
 
-    const { deleted: deletedFlightLegs, error: deleteError } = await deleteUserFlightLegs(adminClient, user.id);
-    if (deleteError) {
-      return {
-        success: false,
-        error: `A nova escala foi interpretada, mas a escala anterior nao foi removida: ${deleteError.message}.${formatWarnings(warnings)}`,
-      };
-    }
+    const { inserted, updated, error: syncError } = flightLegs.length > 0
+      ? await upsertByUniqueKey(adminClient, 'flight_leg_details', flightLegs)
+      : { inserted: 0, updated: 0, error: null };
 
-    const { error: insertError } = flightLegs.length > 0
-      ? await adminClient
-          .from('flight_leg_details')
-          .insert(flightLegs)
-      : { error: null };
-    
-    if (insertError) {
+    if (syncError) {
       return {
         success: false,
         flightsAdded: 0,
         flights: rosterEntries,
         rows: await fetchFlightMenuRows(supabase, user.id),
-        error: `A escala anterior foi removida, mas a nova escala nao foi salva: ${insertError.message}.${formatWarnings(warnings)}`,
+        error: `A nova escala foi interpretada, mas os voos nao foram atualizados: ${syncError.message}.${formatWarnings(warnings)}`,
       };
     }
 
@@ -182,8 +173,8 @@ export async function uploadRoster(formData: FormData) {
       mealPlanUpdatedAt,
       message:
         `Escala importada. ${files.length} arquivo${files.length === 1 ? '' : 's'} processado${files.length === 1 ? '' : 's'}, ` +
-        `${deletedFlightLegs} voo${deletedFlightLegs === 1 ? '' : 's'} anterior${deletedFlightLegs === 1 ? '' : 'es'} removido${deletedFlightLegs === 1 ? '' : 's'} e ` +
-        `${flightLegs.length} voo${flightLegs.length === 1 ? '' : 's'} da nova escala salvo${flightLegs.length === 1 ? '' : 's'}.${formatWarnings(warnings)}`,
+        `${inserted} voo${inserted === 1 ? '' : 's'} novo${inserted === 1 ? '' : 's'} salvo${inserted === 1 ? '' : 's'} e ` +
+        `${updated} voo${updated === 1 ? '' : 's'} existente${updated === 1 ? '' : 's'} atualizado${updated === 1 ? '' : 's'}.${formatWarnings(warnings)}`,
     };
   } catch (error) {
     return {
@@ -311,15 +302,6 @@ function getRosterFiles(formData: FormData) {
 
 function formatWarnings(warnings: string[]) {
   return warnings.length > 0 ? ` Avisos: ${warnings.join(' ')}` : '';
-}
-
-async function deleteUserFlightLegs(supabase: any, userId: string) {
-  const { count, error } = await supabase
-    .from('flight_leg_details')
-    .delete({ count: 'exact' })
-    .eq('user_id', userId);
-
-  return { deleted: count ?? 0, error };
 }
 
 async function fetchCateringByKey(keys: string[]) {

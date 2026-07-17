@@ -11,6 +11,7 @@ import {
   processCateringPdfBuffer,
   toIsoDate,
   uploadPdfBestEffort,
+  upsertByUniqueKey,
 } from '@/lib/flight-menu-processing';
 
 type FlightMenuRow = {
@@ -116,27 +117,15 @@ export async function updateFlightMenu(formData: FormData) {
     });
 
     const adminClient = createAdminClient();
-    const { error: deleteError } = await adminClient
-      .from('flight_leg_details')
-      .delete()
-      .eq('user_id', user.id);
+    const { inserted, updated, error: syncError } = flightLegRows.length > 0
+      ? await upsertByUniqueKey(adminClient, 'flight_leg_details', flightLegRows)
+      : { inserted: 0, updated: 0, error: null };
 
-    if (deleteError) {
-      return {
-        success: false,
-        error: `Could not remove the previous roster flights: ${deleteError.message}.`,
-      };
-    }
-
-    const { error: insertError } = flightLegRows.length > 0
-      ? await adminClient.from('flight_leg_details').insert(flightLegRows)
-      : { error: null };
-
-    if (insertError) {
+    if (syncError) {
       return {
         success: false,
         error:
-          `Could not save the new roster flight legs: ${insertError.message}. ` +
+          `Could not update the roster flight legs: ${syncError.message}. ` +
           'Run supabase/repair_flight_schema.sql in Supabase SQL Editor, then try Atualizar again.',
       };
     }
@@ -151,7 +140,7 @@ export async function updateFlightMenu(formData: FormData) {
       flightsAdded: flightLegRows.length,
       rulesAdded: cateringResult.rulesInserted,
       message:
-        `Atualizado: ${flightLegRows.length} flight legs saved, ` +
+        `Atualizado: ${inserted} flight legs saved, ${updated} existing flight legs updated, ` +
         `${cateringResult.entries.length} catering rows parsed.`,
     };
   } catch (error) {
