@@ -20,6 +20,7 @@ type FlightMenuRow = {
   flightNumber: string;
   origin: string;
   destination: string;
+  period: string;
   crewService: string;
   paxService: string;
 };
@@ -166,10 +167,13 @@ function buildFlightLegRows({
 
   for (const entry of rosterEntries) {
     const flightDate = toIsoDate(entry.date || new Date().toISOString().split('T')[0]);
-    const uniqueKey = buildUniqueKey(flightDate, entry.flightNumber, entry.origin);
+    const isActivity = entry.entryType === 'FR' || entry.entryType === 'FP';
+    const uniqueKey = isActivity
+      ? `${flightDate}-${entry.flightNumber}-${entry.departureTime.replace(':', '')}`
+      : buildUniqueKey(flightDate, entry.flightNumber, entry.origin);
     const departureTime = new Date(`${flightDate}T${entry.departureTime}:00Z`);
     const arrivalTime = new Date(`${flightDate}T${entry.arrivalTime}:00Z`);
-    const catering = cateringByKey.get(uniqueKey);
+    const catering = isActivity ? undefined : cateringByKey.get(uniqueKey);
 
     if (arrivalTime < departureTime) {
       arrivalTime.setDate(arrivalTime.getDate() + 1);
@@ -180,15 +184,15 @@ function buildFlightLegRows({
       roster_id: rosterId,
       user_id: userId,
       flight_number: entry.flightNumber,
-      crew_position: entry.crewPosition || null,
+      crew_position: isActivity ? 'ROSTER_ACTIVITY' : entry.crewPosition || null,
       origin: entry.origin,
       destination: entry.destination,
       departure_time: departureTime.toISOString(),
       arrival_time: arrivalTime.toISOString(),
       flight_duration_minutes: Math.max(0, Math.round((arrivalTime.getTime() - departureTime.getTime()) / 60000)),
       equipment: entry.equipment || null,
-      service_type: catering?.service_type || MEAL_PLAN_NOT_FOUND,
-      meal_type: catering?.meal_type || MEAL_PLAN_NOT_FOUND,
+      service_type: isActivity ? '-' : catering?.service_type || MEAL_PLAN_NOT_FOUND,
+      meal_type: isActivity ? '-' : catering?.meal_type || MEAL_PLAN_NOT_FOUND,
     });
   }
 

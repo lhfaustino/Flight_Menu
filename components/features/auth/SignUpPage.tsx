@@ -188,7 +188,7 @@ export const SignUpPage = () => {
             <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
                 <div className="mx-auto w-full max-w-sm lg:w-96">
                     <div>
-                        <BrandLogo href="/" size="md" />
+                        <BrandLogo size="md" />
                         <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">Criar conta</h2>
                         <p className="mt-2 text-sm text-gray-600">
                             Já tem uma conta?{" "}

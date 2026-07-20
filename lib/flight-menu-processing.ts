@@ -107,7 +107,7 @@ export async function processCateringPdfBuffer({
 export async function fetchFlightMenuRows(supabase: SupabaseLike, userId: string) {
     const { data } = await supabase
         .from("flight_leg_details")
-        .select("unique_key, flight_number, origin, destination, departure_time, service_type, meal_type")
+        .select("unique_key, flight_number, origin, destination, departure_time, arrival_time, service_type, meal_type")
         .eq("user_id", userId)
         .order("departure_time", { ascending: true, nullsFirst: false });
 
@@ -118,10 +118,18 @@ export async function fetchFlightMenuRows(supabase: SupabaseLike, userId: string
             flightNumber: flightLeg.flight_number ?? "-",
             origin: flightLeg.origin ?? "-",
             destination: flightLeg.destination ?? "-",
+            period: formatRosterPeriod(flightLeg.departure_time, flightLeg.arrival_time),
             crewService: flightLeg.service_type ?? "-",
             paxService: flightLeg.meal_type ?? "-",
         })) ?? []
     );
+}
+
+function formatRosterPeriod(departureTime: string | null, arrivalTime: string | null) {
+    const formatTime = (value: string | null) => value ? String(value).slice(11, 16) : "";
+    const start = formatTime(departureTime);
+    const end = formatTime(arrivalTime);
+    return start && end ? `${start} - ${end}` : start || end || "-";
 }
 
 export async function refreshUserFlightLegMealsFromCurrentMealPlan(
@@ -341,6 +349,7 @@ async function fetchFlightLegRowsForMealRefresh(
 
         rows.push(
             ...data.filter((flightLeg: FlightLegMealRefreshRow) =>
+                !/^(FR|FP)$/i.test(flightLeg.flight_number ?? "") &&
                 isCurrentOrFutureFlightLeg(flightLeg, todayIsoDate)
             )
         );

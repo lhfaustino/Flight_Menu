@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { BRAND_CONFIG } from "@/lib/constants";
 import { cx } from "@/lib/utils";
 
@@ -8,7 +7,6 @@ interface BrandLogoProps {
     className?: string;
     showText?: boolean;
     size?: "sm" | "md" | "lg";
-    href?: string | null;
     variant?: "default" | "light" | "dark";
 }
 
@@ -16,7 +14,6 @@ export const BrandLogo = ({
     className,
     showText = true,
     size = "md",
-    href = "/",
     variant = "default",
 }: BrandLogoProps) => {
     const { name, logo, name_logo } = BRAND_CONFIG;
@@ -31,7 +28,7 @@ export const BrandLogo = ({
 
     const shouldShowText = typeof name_logo !== 'undefined' ? name_logo && showText : showText;
 
-    const content = (
+    return (
         <div className={cx("flex items-center gap-2.5 font-bold tracking-tight shrink-0", className)}>
             <div className={cx(sizes[size], "flex items-center justify-center")}>
                 <img
@@ -50,10 +47,4 @@ export const BrandLogo = ({
             )}
         </div>
     );
-
-    if (href) {
-        return <Link href={href} prefetch={false}>{content}</Link>;
-    }
-
-    return content;
 };
