@@ -23,9 +23,7 @@ export const MarketingShell = ({ children, currentView, onViewChange }: Marketin
             <header className="sticky top-0 z-40 w-full border-b border-gray-100 bg-white/80 backdrop-blur-md">
                 <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center gap-8">
-                        <button onClick={() => onViewChange("landing")} className="flex items-center gap-2">
-                            <BrandLogo size="md" href={null} />
-                        </button>
+                        <BrandLogo size="md" />
                         <nav className="hidden md:flex items-center gap-6">
                             {navItems.map((item) => (
                                 <button
@@ -64,7 +62,7 @@ export const MarketingShell = ({ children, currentView, onViewChange }: Marketin
             <footer className="border-t border-gray-100 bg-gray-50 py-8">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex flex-col items-center justify-between gap-6 text-sm text-gray-500 md:flex-row">
-                        <BrandLogo size="md" href={null} />
+                        <BrandLogo size="md" />
                         <span>© 2026 Trip Space. Todos os direitos reservados.</span>
                     </div>
                 </div>
