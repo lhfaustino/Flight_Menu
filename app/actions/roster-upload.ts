@@ -119,8 +119,11 @@ export async function uploadRoster(formData: FormData) {
       const flightDate = entry.date || new Date().toISOString().split('T')[0];
       const departureTime = new Date(`${flightDate}T${entry.departureTime}:00Z`);
       const arrivalTime = new Date(`${flightDate}T${entry.arrivalTime}:00Z`);
-      const uniqueKey = buildUniqueKey(flightDate, entry.flightNumber, entry.origin);
-      const catering = cateringByKey.get(uniqueKey);
+      const isActivity = entry.entryType === 'FR' || entry.entryType === 'FP';
+      const uniqueKey = isActivity
+        ? `${flightDate}-${entry.flightNumber}-${entry.departureTime.replace(':', '')}`
+        : buildUniqueKey(flightDate, entry.flightNumber, entry.origin);
+      const catering = isActivity ? undefined : cateringByKey.get(uniqueKey);
       
       // Handle overnight flights
       if (arrivalTime < departureTime) {
@@ -132,15 +135,15 @@ export async function uploadRoster(formData: FormData) {
         roster_id: entry.rosterId,
         user_id: user.id,
         flight_number: entry.flightNumber,
-        crew_position: entry.crewPosition || null,
+        crew_position: isActivity ? 'ROSTER_ACTIVITY' : entry.crewPosition || null,
         origin: entry.origin,
         destination: entry.destination,
         departure_time: departureTime.toISOString(),
         arrival_time: arrivalTime.toISOString(),
         flight_duration_minutes: Math.max(0, Math.round((arrivalTime.getTime() - departureTime.getTime()) / 60000)),
         equipment: entry.equipment || null,
-        service_type: catering?.service_type || MEAL_PLAN_NOT_FOUND,
-        meal_type: catering?.meal_type || MEAL_PLAN_NOT_FOUND,
+        service_type: isActivity ? '-' : catering?.service_type || MEAL_PLAN_NOT_FOUND,
+        meal_type: isActivity ? '-' : catering?.meal_type || MEAL_PLAN_NOT_FOUND,
       });
     });
 
@@ -369,7 +372,7 @@ async function fetchCurrentMealPlanUpdatedAt(supabase: any, adminUserId: string)
 async function fetchFlightMenuRows(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const { data } = await supabase
     .from('flight_leg_details')
-    .select('unique_key, flight_number, origin, destination, departure_time, service_type, meal_type')
+    .select('unique_key, flight_number, origin, destination, departure_time, arrival_time, service_type, meal_type')
     .eq('user_id', userId)
     .order('departure_time', { ascending: true });
 
@@ -379,9 +382,17 @@ async function fetchFlightMenuRows(supabase: Awaited<ReturnType<typeof createCli
     flightNumber: flightLeg.flight_number ?? '-',
     origin: flightLeg.origin ?? '-',
     destination: flightLeg.destination ?? '-',
+    period: formatRosterPeriod(flightLeg.departure_time, flightLeg.arrival_time),
     crewService: flightLeg.service_type ?? '-',
     paxService: flightLeg.meal_type ?? '-',
   })) ?? [];
+}
+
+function formatRosterPeriod(departureTime: string | null, arrivalTime: string | null) {
+  const formatTime = (value: string | null) => value ? String(value).slice(11, 16) : '';
+  const start = formatTime(departureTime);
+  const end = formatTime(arrivalTime);
+  return start && end ? `${start} - ${end}` : start || end || '-';
 }
 
 function getFlightLegDate(uniqueKey: string | null, departureTime: string | null) {

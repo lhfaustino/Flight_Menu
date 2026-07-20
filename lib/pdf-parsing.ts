@@ -20,6 +20,7 @@ export interface RosterEntry {
   date?: string;
   crewPosition?: string;
   equipment?: string;
+  entryType?: 'flight' | 'FR' | 'FP';
 }
 
 export interface CateringEntry {
@@ -61,6 +62,7 @@ export function parseRosterText(text: string): RosterEntry[] {
   const periodYear = periodMatch ? 2000 + Number(periodMatch[3]) : new Date().getFullYear();
   const periodMonth = periodMatch ? monthNameToNumber(periodMatch[2]) : new Date().getMonth() + 1;
   let currentDate: string | undefined;
+  let pendingActivityDate: string | undefined;
 
   for (const rawLine of text.split('\n')) {
     const line = rawLine.trim();
@@ -72,7 +74,19 @@ export function parseRosterText(text: string): RosterEntry[] {
     }
 
     const flightMatch = line.match(/^(?:D\/?H\s*\/?\s*)?G3\s+(\d+)\s+([A-Z]{3})\s+!?(\d{3,4})\s+!?(\d{3,4})\s+([A-Z]{3})\b/i);
-    if (!flightMatch) continue;
+    if (!flightMatch) {
+      const activityDate = rosterDay ? currentDate : pendingActivityDate;
+      const activity = activityDate ? parseRosterActivity(line, activityDate) : null;
+      if (activity) {
+        entries.push(activity);
+        pendingActivityDate = undefined;
+      } else {
+        pendingActivityDate = rosterDay ? currentDate : undefined;
+      }
+      continue;
+    }
+
+    pendingActivityDate = undefined;
 
     entries.push({
       flightNumber: `G3${flightMatch[1]}`,
@@ -83,10 +97,38 @@ export function parseRosterText(text: string): RosterEntry[] {
       date: currentDate,
       crewPosition: hasDeadheadCode(line) ? 'DH' : undefined,
       equipment: extractEquipment(line),
+      entryType: 'flight',
     });
   }
 
   return entries;
+}
+
+function parseRosterActivity(line: string, date?: string): RosterEntry | null {
+  const codeMatch = line.match(/(?:^|\s)(FR|FP)(?=\s|$)/i);
+  if (!codeMatch) return null;
+
+  const textAfterCode = line.slice((codeMatch.index ?? 0) + codeMatch[0].length);
+  const times = [...textAfterCode.matchAll(/!?(\d{1,2}):?(\d{2})\b/g)]
+    .map((match) => `${match[1].padStart(2, '0')}:${match[2]}`)
+    .filter(isRosterTime);
+
+  const code = codeMatch[1].toUpperCase() as 'FR' | 'FP';
+
+  return {
+    flightNumber: code,
+    origin: '-',
+    destination: '-',
+    departureTime: times[0] ?? '00:00',
+    arrivalTime: times[1] ?? times[0] ?? '23:59',
+    date,
+    entryType: code,
+  };
+}
+
+function isRosterTime(value: string) {
+  const [hours, minutes] = value.split(':').map(Number);
+  return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
 }
 
 function hasDeadheadCode(line: string) {

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Image from "next/image";
 import { X as CloseIcon, Menu as Menu02 } from "lucide-react";
 import {
     Button as AriaButton,
@@ -9,8 +10,12 @@ import {
     Modal as AriaModal,
     ModalOverlay as AriaModalOverlay,
 } from "react-aria-components";
-// import { UntitledLogo } from "@/components@/components/ui/logo/untitledui-logo";
-const UntitledLogo = () => <div className="font-bold text-xl">Untitled UI</div>;
+const TripSpaceLogo = () => (
+    <div className="flex items-center gap-2.5">
+        <Image src="/logo_tripspace.png" alt="Trip Space logo" width={32} height={32} priority />
+        <span className="text-xl font-bold text-gray-900">Trip Space</span>
+    </div>
+);
 
 import { cx } from "@/lib/utils";
 
@@ -52,7 +57,7 @@ export const MobileNavigationHeader = ({ children }: MobileNavigationHeaderProps
                         {({ close }) => (
                             <>
                                 <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                                    <UntitledLogo />
+                                    <TripSpaceLogo />
                                     <AriaButton
                                         aria-label="Close navigation menu"
                                         onPress={close}

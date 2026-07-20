@@ -25,6 +25,7 @@ type FlightMenuRow = {
   flightNumber: string;
   origin: string;
   destination: string;
+  period: string;
   crewService: string;
   paxService: string;
 };
@@ -389,6 +390,7 @@ export function FlightMenuUploadWorkspace({
                   <TableHead className="h-9 px-3">Voo</TableHead>
                   <TableHead className="h-9 px-3">Origem</TableHead>
                   <TableHead className="h-9 px-3">Destino</TableHead>
+                  <TableHead className="h-9 px-3">Período</TableHead>
                   <TableHead className="h-9 px-3">Serviço crew</TableHead>
                   <TableHead className="h-9 px-3">Serviço pax</TableHead>
                 </TableRow>
@@ -410,6 +412,7 @@ export function FlightMenuUploadWorkspace({
                   <TableCell className="px-3 py-2">{row.flightNumber}</TableCell>
                   <TableCell className="px-3 py-2">{row.origin}</TableCell>
                   <TableCell className="px-3 py-2">{row.destination}</TableCell>
+                  <TableCell className="px-3 py-2 whitespace-nowrap">{row.period}</TableCell>
                   <TableCell className="px-3 py-2">{row.crewService}</TableCell>
                   <TableCell className="px-3 py-2">{row.paxService}</TableCell>
                 </TableRow>

@@ -15,7 +15,7 @@ export default async function InicioPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Início</h1>
           <p className="mt-2 text-gray-600">
-            Acompanhe horas voadas, destinos de chegada e equipamentos da sua escala.
+            Acompanhe horas voadas, destinos, equipamentos e folgas da sua escala.
           </p>
         </div>
 
@@ -32,7 +32,7 @@ async function fetchInicioRows(
   const { data } = await supabase
     .from("flight_leg_details")
     .select(
-      "id, unique_key, flight_number, origin, destination, departure_time, arrival_time, flight_duration_minutes, equipment"
+      "id, unique_key, flight_number, crew_position, origin, destination, departure_time, arrival_time, flight_duration_minutes, equipment"
     )
     .eq("user_id", userId)
     .order("departure_time", { ascending: true, nullsFirst: false });
@@ -48,6 +48,7 @@ async function fetchInicioRows(
         date,
         year: date.slice(0, 4),
         flightNumber: row.flight_number ?? "-",
+        isRosterActivity: row.crew_position === "ROSTER_ACTIVITY",
         origin: row.origin ?? "-",
         destination: row.destination ?? "-",
         departureTime,

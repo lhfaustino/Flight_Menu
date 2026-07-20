@@ -12,6 +12,7 @@ export type InicioFlightRow = {
   date: string;
   year: string;
   flightNumber: string;
+  isRosterActivity: boolean;
   origin: string;
   destination: string;
   departureTime: string | null;
@@ -39,20 +40,22 @@ const EMPTY_FILTERS: FilterState = {
 export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
   const [filters, setFilters] = React.useState<FilterState>(EMPTY_FILTERS);
   const [isFilterOpen, setIsFilterOpen] = React.useState(false);
+  const flightRows = React.useMemo(() => rows.filter((row) => !isRestRow(row)), [rows]);
+  const restRows = React.useMemo(() => rows.filter(isRestRow), [rows]);
 
-  const equipments = React.useMemo(() => uniqueOptions(rows.map((row) => row.equipment)), [rows]);
-  const destinations = React.useMemo(() => uniqueOptions(rows.map((row) => row.destination)), [rows]);
+  const equipments = React.useMemo(() => uniqueOptions(flightRows.map((row) => row.equipment)), [flightRows]);
+  const destinations = React.useMemo(() => uniqueOptions(flightRows.map((row) => row.destination)), [flightRows]);
 
   const filteredRows = React.useMemo(
     () =>
-      rows.filter((row) => {
+      flightRows.filter((row) => {
         if (filters.fromDate && row.date < filters.fromDate) return false;
         if (filters.toDate && row.date > filters.toDate) return false;
         if (filters.equipment !== "all" && row.equipment !== filters.equipment) return false;
         if (filters.destination !== "all" && row.destination !== filters.destination) return false;
         return true;
       }),
-    [filters, rows]
+    [filters, flightRows]
   );
   const activeFilterCount = [
     filters.fromDate,
@@ -136,7 +139,7 @@ export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
             </Button>
             <div className="min-w-0">
               <p className="truncate text-xs text-gray-500">
-                {filteredRows.length} de {rows.length} voos
+                {filteredRows.length} de {flightRows.length} voos
               </p>
             </div>
           </div>
@@ -231,6 +234,12 @@ export function InicioDashboard({ rows }: { rows: InicioFlightRow[] }) {
         <Metric icon={Plane} label="Voos" value={String(totalFlights)} />
         <Metric icon={MapPin} label="Destino mais frequente" value={topDestination} />
         <Metric icon={BarChart3} label="Equipamento mais usado" value={topEquipment} />
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-3">
+        <RestKpiPanel title="Folgas Regulamentares" rows={restRows} restTypes={["FR"]} />
+        <RestKpiPanel title="Folgas Pedidas" rows={restRows} restTypes={["FP"]} />
+        <RestKpiPanel title="Total de Folgas" rows={restRows} restTypes={["FR", "FP"]} />
       </section>
 
       {filteredRows.length > 0 ? (
@@ -446,7 +455,7 @@ const RouteMapSvg = React.forwardRef<SVGSVGElement, { mapData: RouteMapData; max
           <rect width={ROUTE_MAP.width} height={ROUTE_MAP.height} fill="#ffffff" />
           <image href="/images/brazil-states-map.svg" x="0" y="0" width={ROUTE_MAP.width} height={ROUTE_MAP.height} preserveAspectRatio="xMidYMid meet" />
           <image
-            href="/logo.png"
+            href="/logo_tripspace.png"
             x={ROUTE_MAP.width - 118}
             y={ROUTE_MAP.height - 118}
             width="88"
@@ -647,6 +656,76 @@ function ChartPanel({ title, description, children }: { title: string; descripti
     </div>
   );
 }
+
+function RestKpiPanel({
+  title,
+  rows,
+  restTypes,
+}: {
+  title: string;
+  rows: InicioFlightRow[];
+  restTypes: Array<"FR" | "FP">;
+}) {
+  const months = React.useMemo(
+    () => uniqueOptions(rows.map((row) => row.date.slice(0, 7)).filter((month) => /^\d{4}-\d{2}$/.test(month))),
+    [rows]
+  );
+  const [selectedMonth, setSelectedMonth] = React.useState(() => getDefaultRestMonth(months));
+
+  React.useEffect(() => {
+    if (months.length === 0) {
+      setSelectedMonth("");
+      return;
+    }
+
+    if (!months.includes(selectedMonth)) setSelectedMonth(getDefaultRestMonth(months));
+  }, [months, selectedMonth]);
+
+  const selectedRows = rows.filter(
+    (row) => restTypes.includes(row.flightNumber.toUpperCase() as "FR" | "FP") && row.date.startsWith(`${selectedMonth}-`)
+  );
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="mb-4 flex flex-col gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+          <p className="mt-1 text-sm text-gray-500">Quantidade no mês selecionado.</p>
+        </div>
+        <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-gray-600">
+          Mês
+          <select
+            value={selectedMonth}
+            onChange={(event) => setSelectedMonth(event.target.value)}
+            disabled={months.length === 0}
+            className="h-9 w-full min-w-0 rounded-md border border-gray-300 bg-white px-2.5 text-sm text-gray-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 disabled:bg-gray-50 disabled:text-gray-400"
+          >
+            {months.length === 0 ? <option value="">Sem dados</option> : null}
+            {months.map((month) => (
+              <option key={month} value={month}>{formatMonth(month)}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="mt-6 flex items-end gap-3">
+        <p className="text-5xl font-semibold tracking-tight text-gray-900">{selectedRows.length}</p>
+        <p className="pb-1 text-sm font-medium text-gray-500">
+          {selectedRows.length === 1 ? "folga" : "folgas"}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function isRestRow(row: InicioFlightRow) {
+  return row.isRosterActivity && /^(FR|FP)$/i.test(row.flightNumber);
+}
+
+function getDefaultRestMonth(months: string[]) {
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  return months.includes(currentMonth) ? currentMonth : months.at(-1) ?? "";
+}
+
 
 function MobileChartLabels({ items }: { items: { label: string; value: string }[] }) {
   if (items.length === 0) return null;
