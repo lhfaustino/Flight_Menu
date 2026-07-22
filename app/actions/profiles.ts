@@ -16,6 +16,8 @@ export interface ProfileUpdateParams {
     bio?: string | null;
     telegram_chat_id?: string | null;
     timezone?: string | null;
+    company?: "LATAM" | "GOL" | "AZUL";
+    base?: "SAO" | "GIG" | "FOR" | "BSB" | "POA";
 }
 
 const AVATAR_BUCKET = "avatars";
@@ -27,6 +29,8 @@ const normalizeUsername = (value: string) =>
 
 const USERNAME_LENGTH_ERROR = "Use 3 a 24 caracteres no nome de Usu\u00e1rio.";
 const USERNAME_TAKEN_ERROR = "Este nome de Usu\u00e1rio j\u00e1 existe.";
+const COMPANY_OPTIONS = ["LATAM", "GOL", "AZUL"] as const;
+const BASE_OPTIONS = ["SAO", "GIG", "FOR", "BSB", "POA"] as const;
 
 /**
  * Fetches the current user's profile from the database.
@@ -59,6 +63,8 @@ export async function getMyProfile() {
             bio: "",
             telegram_chat_id: "",
             timezone: "America/Sao_Paulo",
+            company: "GOL",
+            base: "SAO",
         };
     }, { action: "getMyProfile" });
 }
@@ -86,6 +92,8 @@ export async function updateMyProfile(updates: ProfileUpdateParams) {
         const avatarUrl = updates.avatar_url === undefined ? undefined : updates.avatar_url?.trim() || null;
         const telegramChatId = updates.telegram_chat_id?.trim() ?? "";
         const timezone = updates.timezone?.trim() || "America/Sao_Paulo";
+        const company = updates.company;
+        const base = updates.base;
 
         if (fullName.length < 2) {
             throw new Error("O nome completo deve ter pelo menos 2 caracteres.");
@@ -97,6 +105,14 @@ export async function updateMyProfile(updates: ProfileUpdateParams) {
 
         if (username && (username.length < 3 || username.length > 24)) {
             throw new Error(USERNAME_LENGTH_ERROR);
+        }
+
+        if (company !== undefined && !COMPANY_OPTIONS.some(option => option === company)) {
+            throw new Error("Escolha uma companhia v\u00e1lida.");
+        }
+
+        if (base !== undefined && !BASE_OPTIONS.some(option => option === base)) {
+            throw new Error("Escolha uma base v\u00e1lida.");
         }
 
         if (username) {
@@ -128,6 +144,14 @@ export async function updateMyProfile(updates: ProfileUpdateParams) {
             timezone,
         };
 
+        if (company !== undefined) {
+            profileUpdates.company = company;
+        }
+
+        if (base !== undefined) {
+            profileUpdates.base = base;
+        }
+
         if (avatarUrl !== undefined) {
             profileUpdates.avatar_url = avatarUrl;
         }
@@ -150,6 +174,8 @@ export async function updateMyProfile(updates: ProfileUpdateParams) {
                 full_name: data.full_name,
                 username: data.username ?? "",
                 avatar_url: data.avatar_url ?? "",
+                company: data.company,
+                base: data.base,
             },
         });
 

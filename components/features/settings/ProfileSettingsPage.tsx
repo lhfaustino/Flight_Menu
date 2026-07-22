@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import { TextArea } from "@/components/ui/Textarea";
 import { useToast } from "@/components/ui/Toast";
 import { deleteMyProfileAvatar, getMyProfile, updateMyProfile, uploadMyProfileAvatar } from "@/app/actions/profiles";
@@ -30,6 +31,11 @@ const USERNAME_CURRENT_TEXT = "Este \u00e9 seu nome de Usu\u00e1rio atual.";
 const USERNAME_TAKEN_TEXT = "Este nome de Usu\u00e1rio j\u00e1 existe.";
 const USERNAME_CHECK_ERROR_TEXT = "N\u00e3o foi poss\u00edvel verificar agora. Confirme a migration de username no Supabase.";
 const VALIDATION_ERROR_TITLE = "Erro de valida\u00e7\u00e3o";
+const COMPANY_OPTIONS = ["LATAM", "GOL", "AZUL"] as const;
+const BASE_OPTIONS = ["SAO", "GIG", "FOR", "BSB", "POA"] as const;
+
+type Company = (typeof COMPANY_OPTIONS)[number];
+type Base = (typeof BASE_OPTIONS)[number];
 
 export const ProfileSettingsPage = () => {
     const { addToast } = useToast();
@@ -42,6 +48,8 @@ export const ProfileSettingsPage = () => {
         email: "",
         bio: "",
         avatarUrl: "",
+        company: "GOL" as Company,
+        base: "SAO" as Base,
         isTelegramConnected: false,
     });
     const [formData, setFormData] = React.useState(initialValues);
@@ -70,6 +78,8 @@ export const ProfileSettingsPage = () => {
                     email: response.data.email ?? "",
                     bio: response.data.bio ?? "",
                     avatarUrl: response.data.avatar_url ?? "",
+                    company: isCompany(response.data.company) ? response.data.company : "GOL",
+                    base: isBase(response.data.base) ? response.data.base : "SAO",
                     isTelegramConnected: Boolean(response.data.telegram_chat_id),
                 };
 
@@ -173,6 +183,8 @@ export const ProfileSettingsPage = () => {
             email: formData.email,
             bio: formData.bio,
             avatar_url: formData.avatarUrl,
+            company: formData.company,
+            base: formData.base,
         });
 
         setIsSaving(false);
@@ -186,6 +198,8 @@ export const ProfileSettingsPage = () => {
                 email: result.data.email ?? formData.email,
                 bio: result.data.bio ?? "",
                 avatarUrl: result.data.avatar_url ?? "",
+                company: isCompany(result.data.company) ? result.data.company : formData.company,
+                base: isBase(result.data.base) ? result.data.base : formData.base,
                 isTelegramConnected: formData.isTelegramConnected,
             };
 
@@ -469,6 +483,42 @@ export const ProfileSettingsPage = () => {
                         required
                     />
 
+                    <div className="grid gap-6 sm:grid-cols-2">
+                        <Select
+                            label="Companhia"
+                            selectedKey={formData.company}
+                            onSelectionChange={(key) => {
+                                const company = String(key);
+                                if (isCompany(company)) {
+                                    setFormData(prev => ({ ...prev, company }));
+                                }
+                            }}
+                            isDisabled={isSaving}
+                            isRequired
+                        >
+                            <Select.Item id="LATAM">Latam</Select.Item>
+                            <Select.Item id="GOL">Gol</Select.Item>
+                            <Select.Item id="AZUL">Azul</Select.Item>
+                        </Select>
+
+                        <Select
+                            label="Base"
+                            selectedKey={formData.base}
+                            onSelectionChange={(key) => {
+                                const base = String(key);
+                                if (isBase(base)) {
+                                    setFormData(prev => ({ ...prev, base }));
+                                }
+                            }}
+                            isDisabled={isSaving}
+                            isRequired
+                        >
+                            {BASE_OPTIONS.map(base => (
+                                <Select.Item key={base} id={base}>{base}</Select.Item>
+                            ))}
+                        </Select>
+                    </div>
+
                     <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
@@ -576,6 +626,12 @@ export const ProfileSettingsPage = () => {
 
 const normalizeUsername = (value: string) =>
     value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24);
+
+const isCompany = (value: unknown): value is Company =>
+    typeof value === "string" && COMPANY_OPTIONS.some(option => option === value);
+
+const isBase = (value: unknown): value is Base =>
+    typeof value === "string" && BASE_OPTIONS.some(option => option === value);
 
 const getUsernameHelperText = (status: UsernameStatus) => {
     switch (status) {
