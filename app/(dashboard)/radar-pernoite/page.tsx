@@ -30,6 +30,8 @@ type ProfileRow = {
   avatar_url: string | null;
 };
 
+const RADAR_QUERY_PAGE_SIZE = 1000;
+
 export default async function RadarPernoitePage() {
   const supabase = await createClient();
   const {
@@ -37,6 +39,7 @@ export default async function RadarPernoitePage() {
   } = await supabase.auth.getUser();
 
   const matches = user ? await fetchRadarMatches(user.id) : [];
+  const uniqueCrewCount = new Set(matches.map((match) => match.userId)).size;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 sm:py-12">
@@ -47,26 +50,26 @@ export default async function RadarPernoitePage() {
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Radar do Pernoite</h1>
           <p className="mt-2 max-w-2xl text-gray-600">
-            Encontre tripulantes com pernoite no mesmo local quando houver pelo menos 6 horas continuas de sobreposicao.
+            Encontre tripulantes com pernoite no mesmo local quando houver mais de 6 horas contínuas de sobreposição.
           </p>
         </div>
 
         <section className="mb-5 grid gap-4 md:grid-cols-3">
-          <Metric icon={UsersRound} label="Tripulantes encontrados" value={String(matches.length)} />
-          <Metric icon={Clock3} label="Sobreposicao minima" value="6 h" />
+          <Metric icon={UsersRound} label="Tripulantes encontrados" value={String(uniqueCrewCount)} />
+          <Metric icon={Clock3} label="Sobreposição exigida" value="> 6 h" />
           <Metric icon={MapPin} label="Base do radar" value="Sua escala importada" />
         </section>
 
         {matches.length > 0 ? (
           <section className="grid gap-4">
             {matches.map((match) => (
-              <RadarMatchCard key={match.userId} match={match} />
+              <RadarMatchCard key={match.id} match={match} />
             ))}
           </section>
         ) : (
           <section className="rounded-lg border border-dashed border-gray-300 bg-white px-6 py-12 text-center shadow-sm">
             <Radar className="mx-auto mb-3 size-8 text-gray-300" />
-            <h2 className="font-semibold text-gray-900">No crew members found for this overnight.</h2>
+            <h2 className="font-semibold text-gray-900">Nenhum tripulante encontrado neste pernoite.</h2>
             <p className="mt-1 text-sm text-gray-500">
               Importe ou atualize sua escala para comparar pernoites futuros com outros tripulantes.
             </p>
@@ -80,22 +83,13 @@ export default async function RadarPernoitePage() {
 async function fetchRadarMatches(currentUserId: string): Promise<OvernightRadarMatch[]> {
   const adminClient = createAdminClient();
 
-  const [{ data: flightRows, error: flightError }, { data: profileRows, error: profileError }] = await Promise.all([
-    adminClient
-      .from("flight_leg_details")
-      .select("id, user_id, flight_number, crew_position, origin, destination, departure_time, arrival_time")
-      .not("departure_time", "is", null)
-      .not("arrival_time", "is", null)
-      .order("user_id", { ascending: true })
-      .order("departure_time", { ascending: true }),
-    adminClient.from("profiles").select("id, full_name, avatar_url"),
+  const [flightRows, profileRows] = await Promise.all([
+    fetchAllRadarFlightRows(adminClient),
+    fetchAllRadarProfiles(adminClient),
   ]);
 
-  if (flightError) throw new Error(`Could not load roster data: ${flightError.message}`);
-  if (profileError) throw new Error(`Could not load crew profiles: ${profileError.message}`);
-
   const stays = buildOvernightStays(
-    ((flightRows ?? []) as FlightLegRow[]).map(
+    flightRows.map(
       (row): FlightLegForStay => ({
         id: row.id,
         userId: row.user_id,
@@ -108,7 +102,7 @@ async function fetchRadarMatches(currentUserId: string): Promise<OvernightRadarM
       }),
     ),
   );
-  const profiles = ((profileRows ?? []) as ProfileRow[]).map(
+  const profiles = profileRows.map(
     (row): CrewProfileForRadar => ({
       userId: row.id,
       name: row.full_name,
@@ -121,6 +115,48 @@ async function fetchRadarMatches(currentUserId: string): Promise<OvernightRadarM
     stays,
     profiles,
   });
+}
+
+type RadarAdminClient = ReturnType<typeof createAdminClient>;
+
+async function fetchAllRadarFlightRows(adminClient: RadarAdminClient): Promise<FlightLegRow[]> {
+  const rows: FlightLegRow[] = [];
+
+  for (let from = 0; ; from += RADAR_QUERY_PAGE_SIZE) {
+    const { data, error } = await adminClient
+      .from("flight_leg_details")
+      .select("id, user_id, flight_number, crew_position, origin, destination, departure_time, arrival_time")
+      .not("departure_time", "is", null)
+      .not("arrival_time", "is", null)
+      .order("user_id", { ascending: true })
+      .order("departure_time", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, from + RADAR_QUERY_PAGE_SIZE - 1);
+
+    if (error) throw new Error(`Could not load roster data: ${error.message}`);
+
+    const page = (data ?? []) as FlightLegRow[];
+    rows.push(...page);
+    if (page.length < RADAR_QUERY_PAGE_SIZE) return rows;
+  }
+}
+
+async function fetchAllRadarProfiles(adminClient: RadarAdminClient): Promise<ProfileRow[]> {
+  const rows: ProfileRow[] = [];
+
+  for (let from = 0; ; from += RADAR_QUERY_PAGE_SIZE) {
+    const { data, error } = await adminClient
+      .from("profiles")
+      .select("id, full_name, avatar_url")
+      .order("id", { ascending: true })
+      .range(from, from + RADAR_QUERY_PAGE_SIZE - 1);
+
+    if (error) throw new Error(`Could not load crew profiles: ${error.message}`);
+
+    const page = (data ?? []) as ProfileRow[];
+    rows.push(...page);
+    if (page.length < RADAR_QUERY_PAGE_SIZE) return rows;
+  }
 }
 
 function RadarMatchCard({ match }: { match: OvernightRadarMatch }) {
@@ -140,14 +176,21 @@ function RadarMatchCard({ match }: { match: OvernightRadarMatch }) {
         </div>
 
         <div className="shrink-0 rounded-lg bg-brand-50 px-3 py-2 text-left sm:text-right">
-          <p className="text-xs font-semibold uppercase text-brand-700">Sobreposicao</p>
+          <p className="text-xs font-semibold uppercase text-brand-700">Sobreposição</p>
           <p className="text-lg font-semibold text-brand-900">{formatOverlapHours(match.overlapHours)}</p>
         </div>
       </div>
 
       <div className="mt-4 grid gap-3 border-t border-gray-100 pt-4 sm:grid-cols-2">
         <TimeBlock label="Chegada" value={match.arrivalTime} />
-        <TimeBlock label="Saida" value={match.departureTime} />
+        <TimeBlock label="Saída" value={match.departureTime} />
+      </div>
+
+      <div className="mt-3 rounded-lg border border-brand-100 bg-brand-50 px-3 py-2">
+        <p className="text-xs font-semibold uppercase text-brand-700">Período em comum</p>
+        <p className="mt-1 text-sm font-semibold text-brand-900">
+          {formatDateTime(match.overlapStart)} – {formatDateTime(match.overlapEnd)}
+        </p>
       </div>
     </article>
   );

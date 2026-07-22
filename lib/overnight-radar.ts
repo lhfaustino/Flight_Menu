@@ -27,6 +27,7 @@ export type OvernightStay = {
 };
 
 export type OvernightRadarMatch = {
+  id: string;
   userId: string;
   name: string;
   avatarUrl: string | null;
@@ -34,11 +35,14 @@ export type OvernightRadarMatch = {
   location: string;
   arrivalTime: Date;
   departureTime: Date;
+  overlapStart: Date;
+  overlapEnd: Date;
   overlapHours: number;
 };
 
 const MIN_STAY_HOURS = 6;
 const MIN_OVERLAP_HOURS = 6;
+const ROSTER_ACTIVITY_POSITION = "ROSTER_ACTIVITY";
 
 export function getOverlapHours(startA: Date, endA: Date, startB: Date, endB: Date) {
   const overlapStart = new Date(Math.max(startA.getTime(), startB.getTime()));
@@ -54,7 +58,14 @@ export function buildOvernightStays(rows: FlightLegForStay[], minStayHours = MIN
   const byUser = new Map<string, FlightLegForStay[]>();
 
   for (const row of rows) {
-    if (!row.userId || !row.departureTime || !row.arrivalTime) continue;
+    if (
+      !row.userId ||
+      !row.departureTime ||
+      !row.arrivalTime ||
+      row.crewPosition?.trim().toUpperCase() === ROSTER_ACTIVITY_POSITION
+    ) {
+      continue;
+    }
     const userRows = byUser.get(row.userId) ?? [];
     userRows.push(row);
     byUser.set(row.userId, userRows);
@@ -64,18 +75,39 @@ export function buildOvernightStays(rows: FlightLegForStay[], minStayHours = MIN
 
   for (const [userId, userRows] of byUser.entries()) {
     const sortedRows = [...userRows].sort((left, right) => getTime(left.departureTime) - getTime(right.departureTime));
+    const arrivalsByDestination = new Map<string, FlightLegForStay[]>();
 
-    for (let index = 0; index < sortedRows.length - 1; index += 1) {
-      const arrivalLeg = sortedRows[index];
-      const departureLeg = sortedRows[index + 1];
-      const location = normalizeLocation(arrivalLeg.destination);
-      const nextOrigin = normalizeLocation(departureLeg.origin);
+    for (const row of sortedRows) {
+      const destination = normalizeLocation(row.destination);
+      if (!destination) continue;
 
-      if (!location || location !== nextOrigin) continue;
+      const arrivals = arrivalsByDestination.get(destination) ?? [];
+      arrivals.push(row);
+      arrivalsByDestination.set(destination, arrivals);
+    }
+
+    for (const arrivals of arrivalsByDestination.values()) {
+      arrivals.sort((left, right) => getTime(left.arrivalTime) - getTime(right.arrivalTime));
+    }
+
+    const previousDepartureByLocation = new Map<string, number>();
+
+    for (const departureLeg of sortedRows) {
+      const location = normalizeLocation(departureLeg.origin);
+      const end = parseDate(departureLeg.departureTime);
+      if (!location || !end) continue;
+
+      const previousDeparture = previousDepartureByLocation.get(location) ?? Number.NEGATIVE_INFINITY;
+      const arrivalLeg = findLatestArrival(
+        arrivalsByDestination.get(location) ?? [],
+        previousDeparture,
+        end.getTime(),
+      );
+      previousDepartureByLocation.set(location, end.getTime());
+      if (!arrivalLeg) continue;
 
       const start = parseDate(arrivalLeg.arrivalTime);
-      const end = parseDate(departureLeg.departureTime);
-      if (!start || !end || end <= start) continue;
+      if (!start || end <= start) continue;
 
       const stayHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
       if (stayHours < minStayHours) continue;
@@ -96,6 +128,17 @@ export function buildOvernightStays(rows: FlightLegForStay[], minStayHours = MIN
   return stays;
 }
 
+function findLatestArrival(rows: FlightLegForStay[], afterTime: number, beforeTime: number) {
+  for (let index = rows.length - 1; index >= 0; index -= 1) {
+    const arrivalTime = getTime(rows[index].arrivalTime);
+    if (arrivalTime >= beforeTime) continue;
+    if (arrivalTime <= afterTime) return undefined;
+    return rows[index];
+  }
+
+  return undefined;
+}
+
 export function findOvernightRadarMatches({
   currentUserId,
   stays,
@@ -111,18 +154,29 @@ export function findOvernightRadarMatches({
 }): OvernightRadarMatch[] {
   const profileByUserId = new Map(profiles.map((profile) => [profile.userId, profile]));
   const currentUserStays = stays.filter((stay) => stay.userId === currentUserId && stay.end >= now);
-  const bestMatchByUserId = new Map<string, OvernightRadarMatch>();
+  const otherStaysByLocation = new Map<string, OvernightStay[]>();
+
+  for (const stay of stays) {
+    if (stay.userId === currentUserId || stay.end < now) continue;
+
+    const locationStays = otherStaysByLocation.get(stay.location) ?? [];
+    locationStays.push(stay);
+    otherStaysByLocation.set(stay.location, locationStays);
+  }
+
+  const matches: OvernightRadarMatch[] = [];
 
   for (const currentStay of currentUserStays) {
-    for (const otherStay of stays) {
-      if (otherStay.userId === currentUserId || otherStay.location !== currentStay.location || otherStay.end < now) continue;
+    for (const otherStay of otherStaysByLocation.get(currentStay.location) ?? []) {
+      const overlapStart = new Date(Math.max(currentStay.start.getTime(), otherStay.start.getTime()));
+      const overlapEnd = new Date(Math.min(currentStay.end.getTime(), otherStay.end.getTime()));
 
       const overlapHours = getOverlapHours(currentStay.start, currentStay.end, otherStay.start, otherStay.end);
-      const overlapEnd = new Date(Math.min(currentStay.end.getTime(), otherStay.end.getTime()));
-      if (overlapHours < minOverlapHours || overlapEnd < now) continue;
+      if (overlapHours <= minOverlapHours || overlapEnd < now) continue;
 
       const profile = profileByUserId.get(otherStay.userId);
-      const match: OvernightRadarMatch = {
+      matches.push({
+        id: `${currentStay.id}:${otherStay.id}`,
         userId: otherStay.userId,
         name: profile?.name?.trim() || "Tripulante",
         avatarUrl: profile?.avatarUrl ?? null,
@@ -130,17 +184,17 @@ export function findOvernightRadarMatches({
         location: otherStay.location,
         arrivalTime: otherStay.start,
         departureTime: otherStay.end,
+        overlapStart,
+        overlapEnd,
         overlapHours,
-      };
-      const previous = bestMatchByUserId.get(match.userId);
-      if (!previous || match.overlapHours > previous.overlapHours) {
-        bestMatchByUserId.set(match.userId, match);
-      }
+      });
     }
   }
 
-  return [...bestMatchByUserId.values()].sort(
+  return matches.sort(
     (left, right) =>
+      left.overlapStart.getTime() - right.overlapStart.getTime() ||
+      left.location.localeCompare(right.location) ||
       right.overlapHours - left.overlapHours ||
       left.departureTime.getTime() - right.departureTime.getTime() ||
       left.name.localeCompare(right.name),

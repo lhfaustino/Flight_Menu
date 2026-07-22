@@ -8,6 +8,7 @@ import { BrandLogo } from "@/components/ui/BrandLogo";
 import { SocialIcon } from "@/components/ui/social-icons";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
 import { AUTH_CONFIG } from "@/lib/constants";
 
@@ -19,6 +20,11 @@ const USERNAME_AVAILABLE_TEXT = "Nome de Usu\u00e1rio dispon\u00edvel.";
 const USERNAME_TAKEN_TEXT = "Este nome de Usu\u00e1rio j\u00e1 existe.";
 const USERNAME_CHECK_ERROR_TEXT = "N\u00e3o foi poss\u00edvel verificar agora. Confirme a migration de username no Supabase.";
 const USERNAME_REQUIRED_TEXT = "Escolha um nome de Usu\u00e1rio dispon\u00edvel antes de continuar.";
+const COMPANY_OPTIONS = ["LATAM", "GOL", "AZUL"] as const;
+const BASE_OPTIONS = ["SAO", "GIG", "FOR", "BSB", "POA"] as const;
+
+type Company = (typeof COMPANY_OPTIONS)[number];
+type Base = (typeof BASE_OPTIONS)[number];
 
 export const SignUpPage = () => {
     const router = useRouter();
@@ -32,6 +38,8 @@ export const SignUpPage = () => {
         username: "",
         email: "",
         password: "",
+        company: "GOL" as Company,
+        base: "SAO" as Base,
     });
 
     const normalizedUsername = useMemo(() => normalizeUsername(formData.username), [formData.username]);
@@ -44,6 +52,20 @@ export const SignUpPage = () => {
             ...prev,
             [name]: name === "username" ? normalizeUsername(value) : value,
         }));
+    };
+
+    const handleCompanyChange = (key: React.Key | null) => {
+        const company = String(key) as Company;
+        if (!COMPANY_OPTIONS.includes(company)) return;
+
+        setFormData(prev => ({ ...prev, company }));
+    };
+
+    const handleBaseChange = (key: React.Key | null) => {
+        const base = String(key) as Base;
+        if (!BASE_OPTIONS.includes(base)) return;
+
+        setFormData(prev => ({ ...prev, base }));
     };
 
     useEffect(() => {
@@ -99,6 +121,8 @@ export const SignUpPage = () => {
                     data: {
                         full_name: formData.fullName,
                         username: normalizedUsername,
+                        company: formData.company,
+                        base: formData.base,
                     },
                     emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(AUTH_CONFIG.afterSignupPath)}`,
                 },
@@ -239,6 +263,28 @@ export const SignUpPage = () => {
                                     onChange={handleChange}
                                     required
                                 />
+
+                                <Select
+                                    label="Companhia"
+                                    selectedKey={formData.company}
+                                    onSelectionChange={handleCompanyChange}
+                                    isRequired
+                                >
+                                    <Select.Item id="LATAM">Latam</Select.Item>
+                                    <Select.Item id="GOL">Gol</Select.Item>
+                                    <Select.Item id="AZUL">Azul</Select.Item>
+                                </Select>
+
+                                <Select
+                                    label="Base"
+                                    selectedKey={formData.base}
+                                    onSelectionChange={handleBaseChange}
+                                    isRequired
+                                >
+                                    {BASE_OPTIONS.map(base => (
+                                        <Select.Item key={base} id={base}>{base}</Select.Item>
+                                    ))}
+                                </Select>
 
                                 <Input
                                     label="Senha"
