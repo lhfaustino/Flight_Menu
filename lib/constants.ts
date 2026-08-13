@@ -11,9 +11,9 @@ export const APP_CONFIG = {
 export const BRAND_CONFIG = {
     name: "Trip Space",
     logo: {
-        light: "/logo.png",
-        dark: "/logo.png",
-        icon: "/logo.png",
+        light: "/logo_tripspace.png",
+        dark: "/logo_tripspace.png",
+        icon: "/logo_tripspace.png",
     },
     name_logo: true, // Show brand name alongside logo
     theme: {
