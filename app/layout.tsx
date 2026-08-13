@@ -12,9 +12,9 @@ export const metadata: Metadata = {
     description: "Aplicativo para escala, serviço de bordo e documentos rápidos.",
     manifest: "/manifest.json",
     icons: {
-        icon: "/logo.png",
-        shortcut: "/logo.png",
-        apple: "/logo.png",
+        icon: "/logo_tripspace.png",
+        shortcut: "/logo_tripspace.png",
+        apple: "/logo_tripspace.png",
     },
     appleWebApp: {
         capable: true,
